@@ -35,8 +35,8 @@ function whenReady(timeout = 10000) {
 }
 
 /** GET an SofaScore API path (e.g. "/api/v1/event/123") from inside the page. */
-export async function browserFetch(path, timeout = 15000) {
-  const ok = await whenReady();
+export async function browserFetch(path, timeout = 15000, readyTimeout = 10000) {
+  const ok = await whenReady(readyTimeout);
   if (!ok || !send) throw new Error('Browser view not ready');
   const id = ++seq;
   return new Promise((resolve, reject) => {

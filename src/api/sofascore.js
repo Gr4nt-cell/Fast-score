@@ -4,6 +4,7 @@
 // Everything is converted into the same shapes the ESPN layer produces, so screens don't change.
 
 import { browserFetch } from './browserBridge';
+import { serverUrl } from './server';
 
 const HOSTS = ['https://api.sofascore.com/api/v1', 'https://www.sofascore.com/api/v1'];
 const IMG = 'https://api.sofascore.app/api/v1';
@@ -35,79 +36,140 @@ const mem = new Map();
 const inflight = new Map();
 let preferred = 0;
 let blockedUntil = 0;
-// after a refusal, go straight to the hidden browser page for a while
-let viaBrowserUntil = 0;
 
 export const ssBlocked = () => Date.now() < blockedUntil;
 
-async function get(path, ttl = 30000) {
+// Three ways to reach SofaScore, tried in order, starting with whichever last worked:
+//  direct  - the phone asks api.sofascore.com / www.sofascore.com itself
+//  server  - our Cloudflare Worker asks for us (/ss/... on the Fast Score server)
+//  browser - a hidden sofascore.com page fetches it, exactly like the website
+const ROUTES = ['direct', 'server', 'browser'];
+let goodRoute = null;
+let goodUntil = 0;
+export const lastRoute = () => goodRoute;
+
+async function viaDirect(path) {
+  let last;
+  for (const i of [preferred, 1 - preferred]) {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 9000);
+    try {
+      const res = await fetch(HOSTS[i] + path, { headers: HEADERS, signal: ctrl.signal });
+      clearTimeout(timer);
+      const body = await res.text();
+      if (res.ok) {
+        preferred = i;
+        return { status: res.status, body };
+      }
+      last = { status: res.status, body };
+    } catch (e) {
+      clearTimeout(timer);
+      last = { status: 0, body: String(e.message || e) };
+    }
+  }
+  return last;
+}
+
+async function viaServer(path) {
+  const base = await serverUrl();
+  if (!base) return { status: 0, body: 'no server' };
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), 12000);
+  try {
+    const res = await fetch(`${base}/ss/api/v1${path}`, { signal: ctrl.signal });
+    clearTimeout(timer);
+    return { status: res.status, body: await res.text() };
+  } catch (e) {
+    clearTimeout(timer);
+    return { status: 0, body: String(e.message || e) };
+  }
+}
+
+async function viaBrowser(path, readyTimeout) {
+  try {
+    return await browserFetch('/api/v1' + path, 15000, readyTimeout);
+  } catch (e) {
+    return { status: 0, body: String(e.message || e) };
+  }
+}
+
+const RUN = { direct: viaDirect, server: viaServer, browser: viaBrowser };
+
+function parse(r) {
+  if (!r || r.status < 200 || r.status >= 300) return null;
+  try {
+    const j = JSON.parse(r.body);
+    if (j && j.error) return null;
+    return j;
+  } catch {
+    return null; // a challenge or error page, not JSON
+  }
+}
+
+/**
+ * GET a SofaScore API path. `must`: the answer has to contain this key with content (e.g. the
+ * day's events); an empty or missing answer then counts as a failure, so the app moves on.
+ */
+async function get(path, ttl = 30000, must = null) {
   const hit = mem.get(path);
   if (hit && Date.now() - hit.t < ttl) return hit.data;
   if (inflight.has(path)) return inflight.get(path);
   const pr = (async () => {
-    let last;
-    const fromBrowser = async () => {
-      const r = await browserFetch('/api/v1' + path);
-      if (r.status === 404) return {};
-      if (r.status >= 200 && r.status < 300) return JSON.parse(r.body);
-      throw new Error(`SofaScore refused (${r.status})`);
-    };
-    if (Date.now() < viaBrowserUntil) {
-      try {
-        const data = await fromBrowser();
+    const order = goodRoute && Date.now() < goodUntil ? [goodRoute, ...ROUTES.filter((r) => r !== goodRoute)] : ROUTES;
+    let lastErr = 'no answer';
+    let notFound = false;
+    for (const route of order) {
+      const r = await RUN[route](path);
+      if (r && r.status === 404 && !must) {
+        notFound = true;
+        continue;
+      }
+      const data = parse(r);
+      const ok = data && (!must || (Array.isArray(data[must]) ? data[must].length > 0 : data[must] != null));
+      if (ok) {
+        goodRoute = route;
+        goodUntil = Date.now() + 30 * 60 * 1000;
         mem.set(path, { t: Date.now(), data });
         return data;
-      } catch (e) {
-        last = e;
       }
+      lastErr = `${route}: ${r ? r.status : 0}`;
     }
-    for (const i of Date.now() < viaBrowserUntil ? [] : [preferred, 1 - preferred]) {
-      const ctrl = new AbortController();
-      const timer = setTimeout(() => ctrl.abort(), 10000);
-      try {
-        const res = await fetch(HOSTS[i] + path, { headers: HEADERS, signal: ctrl.signal });
-        clearTimeout(timer);
-        if (res.status === 404) {
-          // SofaScore answers 404 for "nothing here" (no lineups yet, no odds...)
-          const data = {};
-          mem.set(path, { t: Date.now(), data });
-          return data;
-        }
-        if (res.status === 403 || res.status === 429) {
-          last = new Error(`SofaScore refused (${res.status})`);
-          continue;
-        }
-        if (!res.ok) throw new Error(`SofaScore HTTP ${res.status}`);
-        const data = await res.json();
-        preferred = i;
-        mem.set(path, { t: Date.now(), data });
-        return data;
-      } catch (e) {
-        clearTimeout(timer);
-        last = e;
-      }
-    }
-    // refused directly: try the hidden browser page before giving up
-    if (last && /refused/.test(last.message) && Date.now() >= viaBrowserUntil) {
-      try {
-        const data = await fromBrowser();
-        viaBrowserUntil = Date.now() + 30 * 60 * 1000;
-        mem.set(path, { t: Date.now(), data });
-        return data;
-      } catch (e) {
-        last = e;
-      }
-    }
-    if (last && /refused|not ready|timed out/.test(last.message)) {
-      blockedUntil = Date.now() + 10 * 60 * 1000;
-      viaBrowserUntil = 0;
+    // SofaScore answers 404 for "nothing here" (no lineups yet, no odds...)
+    if (notFound) {
+      mem.set(path, { t: Date.now(), data: {} });
+      return {};
     }
     const old = mem.get(path);
     if (old) return old.data;
-    throw last || new Error('SofaScore unreachable');
+    // football always has games somewhere, so an empty football day means SofaScore isn't really
+    // answering: rest it for 10 minutes (other sports can genuinely have quiet days)
+    if (must && path.startsWith('/sport/football/')) blockedUntil = Date.now() + 10 * 60 * 1000;
+    throw new Error(`SofaScore unavailable (${lastErr})`);
   })().finally(() => inflight.delete(path));
   inflight.set(path, pr);
   return pr;
+}
+
+/** For the Settings test: what each route gets for today's football. */
+export async function diagnose() {
+  const d = new Date();
+  const path = `/sport/football/scheduled-events/${dash(d)}`;
+  const out = [];
+  for (const route of ROUTES) {
+    const t0 = Date.now();
+    const r = route === 'browser' ? await viaBrowser(path, 25000) : await RUN[route](path);
+    const data = parse(r);
+    const n = data && Array.isArray(data.events) ? data.events.length : null;
+    out.push({
+      route,
+      status: r ? r.status : 0,
+      events: n,
+      ms: Date.now() - t0,
+      sample: n == null && r ? String(r.body || '').replace(/\s+/g, ' ').slice(0, 140) : '',
+    });
+  }
+  blockedUntil = 0;
+  return out;
 }
 
 const dash = (d) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -266,7 +328,7 @@ export async function dayBoard(sport, date, ttl = 30000) {
   next.setDate(next.getDate() + 1);
   const offset = date.getTimezoneOffset();
   const days = offset > 0 ? [date, next] : offset < 0 ? [prev, date] : [date];
-  const [main, ...rest] = await Promise.all(days.map((d, i) => (i === 0 ? get(`/sport/${s}/scheduled-events/${dash(d)}`, ttl) : get(`/sport/${s}/scheduled-events/${dash(d)}`, ttl).catch(() => ({})))));
+  const [main, ...rest] = await Promise.all(days.map((d, i) => (i === 0 ? get(`/sport/${s}/scheduled-events/${dash(d)}`, ttl, 'events') : get(`/sport/${s}/scheduled-events/${dash(d)}`, ttl).catch(() => ({})))));
   const events = [...(main.events || []), ...rest.flatMap((r) => r.events || [])];
   const seen = new Set();
   const items = [];

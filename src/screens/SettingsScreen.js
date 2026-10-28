@@ -7,6 +7,7 @@ import { useStore } from '../store';
 import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
+import { diagnose } from '../api/sofascore';
 import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
@@ -30,6 +31,7 @@ export default function SettingsScreen() {
   const [cleared, setCleared] = useState(false);
   const [server, setServer] = useState(null);
   const [notif, setNotif] = useState(null);
+  const [ssTest, setSsTest] = useState(null);
   useEffect(() => {
     permissionStatus().then(setNotif);
   }, []);
@@ -151,6 +153,37 @@ export default function SettingsScreen() {
         <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 22, marginBottom: 14, lineHeight: 18 }}>
           Auto tries SofaScore first (every league worldwide, live minute, lineups, stats, odds), then ESPN (plus news and win probability), then TheSportsDB, switching by itself when one can't be reached. SofaScore isn't an official API and may refuse requests at times; the app then moves on to ESPN.
         </Text>
+        <Card>
+          <Row
+            last={!ssTest}
+            onPress={async () => {
+              setSsTest('running');
+              try {
+                setSsTest(await diagnose());
+              } catch (e) {
+                setSsTest([{ route: 'test', status: 0, events: null, sample: String(e.message || e) }]);
+              }
+            }}
+          >
+            <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Test SofaScore connection</Text>
+            {ssTest === 'running' ? <Text style={{ color: t.secondary }}>Testing… (up to 30 s)</Text> : null}
+          </Row>
+          {Array.isArray(ssTest)
+            ? ssTest.map((r, i) => (
+                <Row key={r.route} last={i === ssTest.length - 1}>
+                  <View style={{ width: 10, height: 10, borderRadius: 5, marginRight: 10, backgroundColor: r.events ? t.green : t.red }} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={{ color: t.text, fontSize: 14.5, fontWeight: '600' }}>
+                      {{ direct: 'Phone → SofaScore', server: 'Your server → SofaScore', browser: 'Hidden browser page' }[r.route] || r.route}
+                    </Text>
+                    <Text style={{ color: t.secondary, fontSize: 12, marginTop: 2 }}>
+                      {r.events ? `Working · ${r.events} football games today · ${r.ms} ms` : `HTTP ${r.status || 'no answer'}${r.events === 0 ? ' · empty' : ''}${r.sample ? ' · ' + r.sample : ''}`}
+                    </Text>
+                  </View>
+                </Row>
+              ))
+            : null}
+        </Card>
         <SectionTitle>Data</SectionTitle>
         <Card>
           <Row

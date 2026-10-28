@@ -37,5 +37,10 @@ jobs:
             L=$(curl -fsS -m 30 "$URL/v1/day?sport=$SP&date=$DAY&tz=0" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const live=[];let n=0;for(const g of j.groups){for(const e of g.events){n++;const cs=e.groupings?e.groupings.flatMap(x=>x.competitions):e.competitions;for(const c of cs||[]){const st=(c.status||e.status||{}).type||{};if(st.state==='in'){const names=(c.competitors||[]).map(k=>(k.team||k.athlete||{}).shortDisplayName||(k.team||k.athlete||{}).displayName).join(' v ');live.push(g.league.slug+': '+names+' '+(st.shortDetail||''))}}}}console.log(n+' events, '+live.length+' live'+(live.length?': '+live.slice(0,6).join('; '):''))})" || echo "error")
             echo "::notice title=$SP::$L"
           done
+          D2=$(date -u +%Y-%m-%d)
+          SS=$(curl -s -m 30 -w "\nHTTP %{http_code}" "$URL/ss/api/v1/sport/football/scheduled-events/$D2")
+          echo "::notice title=sofascore-via-server::$(echo "$SS" | tail -1) · $(echo "$SS" | head -n -1 | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{try{const j=JSON.parse(s);console.log((j.events||[]).length+' events')}catch{console.log('not JSON: '+s.replace(/\s+/g,' ').slice(0,160))}})")"
+          SSD=$(curl -s -m 30 -o /dev/null -w "%{http_code}" -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36" -H "Referer: https://www.sofascore.com/" "https://api.sofascore.com/api/v1/sport/football/scheduled-events/$D2")
+          echo "::notice title=sofascore-from-github::api.sofascore.com answered HTTP $SSD to GitHub's machine"
           CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 20 "$URL/apis/site/v2/sports/soccer/eng.1/scoreboard")
           echo "::notice title=proxy::ESPN proxy answered HTTP $CODE"

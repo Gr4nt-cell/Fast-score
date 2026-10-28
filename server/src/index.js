@@ -356,6 +356,45 @@ async function standingsEndpoint(env, sport, league, ctx) {
   }
 }
 
+// SofaScore's web API, fetched by the server for phones that SofaScore won't answer directly.
+// Short edge cache so many phones share one download.
+const SS_HOSTS = ['https://api.sofascore.com', 'https://www.sofascore.com'];
+async function sofascore(url, ctx) {
+  const path = url.pathname.slice(3) + url.search; // strip "/ss"
+  if (!path.startsWith('/api/v1/')) return json({ error: 'bad path' }, 0, 400);
+  const ttl = /scheduled-events|events\/live/.test(path) ? 20 : /\/event\/\d+$|incidents|statistics/.test(path) ? 15 : /standings|seasons|players|team\//.test(path) ? 600 : 60;
+  const cache = caches.default;
+  const key = new Request(`https://cache.fastscore/ss${path}`);
+  const hit = await cache.match(key);
+  if (hit) return hit;
+  let last = { status: 502, text: 'unreachable' };
+  for (const h of SS_HOSTS) {
+    try {
+      const res = await fetch(h + path, {
+        headers: {
+          Accept: 'application/json, text/plain, */*',
+          'Accept-Language': 'en-GB,en;q=0.9',
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36',
+          Referer: 'https://www.sofascore.com/',
+          Origin: 'https://www.sofascore.com',
+          'Cache-Control': 'no-cache',
+        },
+      });
+      const text = await res.text();
+      if (res.ok) {
+        const out = new Response(text, { status: 200, headers: { 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': `public, max-age=${ttl}`, ...cors } });
+        ctx.waitUntil(cache.put(key, out.clone()));
+        return out;
+      }
+      last = { status: res.status, text };
+      if (res.status === 404) break;
+    } catch (e) {
+      last = { status: 502, text: String(e.message || e) };
+    }
+  }
+  return new Response(last.text.slice(0, 2000), { status: last.status, headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'no-store', ...cors } });
+}
+
 // any other ESPN path, cached at Cloudflare's edge so many phones share one download
 async function proxy(env, url, ctx) {
   const path = url.pathname + url.search;
@@ -430,6 +469,7 @@ export default {
       }
       const m = url.pathname.match(/^\/apis\/v2\/sports\/([^/]+)\/([^/]+)\/standings$/);
       if (m) return await standingsEndpoint(env, m[1], m[2], ctx);
+      if (url.pathname.startsWith('/ss/')) return await sofascore(url, ctx);
       if (url.pathname.startsWith('/apis/')) return await proxy(env, url, ctx);
       return json({ error: 'not found' }, 0, 404);
     } catch (e) {
