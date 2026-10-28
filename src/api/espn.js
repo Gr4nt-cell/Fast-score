@@ -146,9 +146,14 @@ function scoreOf(c) {
 
 export function competitor(c = {}) {
   const team = c.team || {};
-  const ath = c.athlete || (c.athletes && c.athletes[0]) || {};
-  const isAthlete = !c.team && !!(c.athlete || c.athletes);
-  const name = team.displayName || ath.displayName || ath.fullName || c.displayName || team.name || 'TBD';
+  // doubles: a pair listed under roster (or athletes), e.g. "Granollers / Zeballos"
+  const pair = (c.roster && c.roster.athletes) || (c.athletes && c.athletes.length > 1 ? c.athletes : null);
+  const ath = c.athlete || (c.athletes && c.athletes[0]) || (pair && pair[0] && (pair[0].athlete || pair[0])) || {};
+  const isAthlete = !c.team && !!(c.athlete || c.athletes || c.roster);
+  const pairName =
+    (c.roster && (c.roster.displayName || c.roster.shortDisplayName)) ||
+    (pair ? pair.map((p) => (p.athlete || p).shortName || (p.athlete || p).displayName || '').filter(Boolean).join(' / ') : '');
+  const name = team.displayName || (pair && pairName) || ath.displayName || ath.fullName || c.displayName || team.name || pairName || 'TBD';
   const logo =
     team.logo ||
     (team.logos && team.logos[0] && team.logos[0].href) ||
