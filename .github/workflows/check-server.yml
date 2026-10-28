@@ -1,0 +1,31 @@
+# Checks the Fast Score server answers, whenever its address changes, every 6 hours, or on demand.
+# Results appear as notices on the run (and fail the run if the server is down).
+name: Check server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/url.json'
+      - '.github/workflows/check-server.yml'
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+      - name: Ask the server how it's doing
+        run: |
+          URL=$(node -e "console.log(require('./server/url.json').url||'')")
+          if [ -z "$URL" ]; then echo "::notice::No server address published yet"; exit 0; fi
+          STATUS=$(curl -fsS -m 20 "$URL/v1/status") || { echo "::error::Server at $URL did not answer"; exit 1; }
+          echo "::notice title=status::$STATUS"
+          DAY=$(date -u +%Y%m%d)
+          N=$(curl -fsS -m 30 "$URL/v1/day?sport=soccer&date=$DAY&tz=0" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);console.log(j.groups.length+' competitions, '+j.groups.reduce((n,g)=>n+g.events.length,0)+' football events today; checked '+JSON.stringify(j.checked))})")
+          echo "::notice title=today::$N"
+          CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 20 "$URL/apis/site/v2/sports/soccer/eng.1/scoreboard")
+          echo "::notice title=proxy::ESPN proxy answered HTTP $CODE"
