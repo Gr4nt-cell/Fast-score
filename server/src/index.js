@@ -288,8 +288,13 @@ async function dayEndpoint(env, url) {
   const [rows, meta, fresh] = await Promise.all([
     q.all(),
     env.DB.prepare('SELECT league, MAX(league_name) AS name, MAX(league_logo) AS logo FROM boards WHERE sport=? AND league_name IS NOT NULL GROUP BY league').bind(sport).all(),
-    env.DB.prepare(`SELECT MIN(checked_at) AS oldest, MAX(checked_at) AS newest FROM boards WHERE sport=? AND day=?`).bind(sport, date).first(),
+    env.DB.prepare(`SELECT MIN(checked_at) AS oldest, MAX(checked_at) AS newest, COUNT(*) AS boards FROM boards WHERE sport=? AND day=?`).bind(sport, date).first(),
   ]);
+  // only vouch for a day once every competition of the sport has been collected for it;
+  // until then the app asks ESPN directly, so nothing goes missing
+  const covered = (fresh && fresh.boards) || 0;
+  const complete = covered >= sp.leagues.length;
+  const checked = complete ? { oldest: fresh.oldest, newest: fresh.newest, boards: covered } : { oldest: null, newest: null, boards: covered, expected: sp.leagues.length };
   const info = new Map((meta.results || []).map((r) => [r.league, r]));
   const groups = new Map();
   for (const r of rows.results || []) {
@@ -304,7 +309,7 @@ async function dayEndpoint(env, url) {
       const league = JSON.stringify({ slug, name: m.name || null, logo: m.logo || null });
       return `{"league":${league},"events":[${groups.get(slug).join(',')}]}`;
     });
-  const body = `{"source":"fastscore","sport":${JSON.stringify(sport)},"date":${JSON.stringify(date)},"checked":${JSON.stringify(fresh || {})},"groups":[${parts.join(',')}]}`;
+  const body = `{"source":"fastscore","sport":${JSON.stringify(sport)},"date":${JSON.stringify(date)},"checked":${JSON.stringify(checked)},"groups":[${parts.join(',')}]}`;
   return json(body, 15);
 }
 
