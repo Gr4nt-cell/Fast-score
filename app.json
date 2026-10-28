@@ -12,12 +12,26 @@
         "foregroundImage": "./assets/adaptive-icon.png",
         "backgroundColor": "#0A84FF"
       },
-      "permissions": ["android.permission.INTERNET", "android.permission.VIBRATE"],
+      "permissions": [
+        "android.permission.INTERNET",
+        "android.permission.VIBRATE",
+        "android.permission.POST_NOTIFICATIONS",
+        "android.permission.RECEIVE_BOOT_COMPLETED"
+      ],
       "versionCode": 1
     },
     "plugins": [
       "expo-status-bar",
       "expo-web-browser",
+      [
+        "expo-notifications",
+        {
+          "color": "#0A84FF",
+          "defaultChannel": "scores",
+          "icon": "./assets/notification-icon.png"
+        }
+      ],
+      "expo-background-task",
       [
         "expo-splash-screen",
         {
@@ -25,7 +39,10 @@
           "imageWidth": 120,
           "resizeMode": "contain",
           "backgroundColor": "#FFFFFF",
-          "dark": { "image": "./assets/splash-icon.png", "backgroundColor": "#000000" }
+          "dark": {
+            "image": "./assets/splash-icon.png",
+            "backgroundColor": "#000000"
+          }
         }
       ]
     ]

@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState } from 'react-native';
 import { Animated, BackHandler, Modal, View } from 'react-native';
 import { Text } from './src/components/Text';
 import { StatusBar } from 'expo-status-bar';
@@ -8,8 +9,11 @@ import { NavContext } from './src/nav';
 import { useTheme } from './src/theme';
 import { StoreProvider, useStore, load, save } from './src/store';
 import { sportByKey } from './src/sports';
-import { pool, scoreboard } from './src/api/espn';
 import { success } from './src/haptics';
+import { checkFollowed } from './src/watch';
+import { ensurePermission, notifyEvent, onNotificationTap } from './src/notify';
+import { setBackgroundChecks } from './src/background';
+import { pickToMatch } from './src/screens/PicksScreen';
 import TabBar, { TABS } from './src/components/TabBar';
 import { BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext } from './src/components/Glass';
 import { Pressable } from './src/components/Touch';
@@ -34,52 +38,33 @@ const ROUTES = {
   settings: SettingsScreen,
 };
 
-// Watches followed matches and teams while the app is open and raises a banner when they score.
+// Watches followed matches and teams. While the app is on screen a goal shows as a banner;
+// when it's in the background it becomes a phone notification. The background task keeps
+// checking (about every 15 min) after the app is closed.
 function useScoreWatcher() {
-  const { favs, settings, showToast } = useStore();
-  const last = useRef(new Map());
+  const { favs, settings, showToast, ready } = useStore();
+  const following = favs.matches.length + favs.teams.length;
+  const asked = useRef(false);
+
+  // ask for notification permission once there's something to notify about
   useEffect(() => {
-    if (!settings.goalAlerts) return undefined;
-    const check = async () => {
-      const today = new Date();
-      const followed = new Set(favs.matches.map((m) => m.key));
-      const teamIds = new Set(favs.teams.map((tm) => `${tm.sport}:${tm.teamId}`));
-      const leagues = new Map();
-      favs.matches.forEach((m) => {
-        if (Math.abs(new Date(m.date) - today) < 36 * 3600 * 1000 && !sportByKey(m.sport).field) leagues.set(`${m.sport}|${m.league}`, 1);
-      });
-      favs.teams.forEach((tm) => leagues.set(`${tm.sport}|${tm.league}`, 1));
-      if (!leagues.size) return;
-      const res = await pool([...leagues.keys()], 4, (k) => {
-        const [s, l] = k.split('|');
-        return scoreboard(s, l, today, 20000);
-      });
-      res.forEach((r) =>
-        (r ? r.items : []).forEach((m) => {
-          if (m.kind !== 'match') return;
-          const mine = followed.has(m.key) || teamIds.has(`${m.sport}:${m.home.id}`) || teamIds.has(`${m.sport}:${m.away.id}`);
-          if (!mine) return;
-          const sig = `${m.state}|${m.home.score}-${m.away.score}`;
-          const prev = last.current.get(m.key);
-          last.current.set(m.key, sig);
-          if (!prev || prev === sig) return;
-          const [pState, pScore] = prev.split('|');
-          if (m.state === 'in' && pScore !== `${m.home.score}-${m.away.score}`) {
-            const [ph, pa] = pScore.split('-').map(Number);
-            const scorer = Number(m.home.score) > ph ? m.home : Number(m.away.score) > pa ? m.away : null;
-            showToast({ kind: 'score', title: m.sport === 'soccer' ? 'GOAL!' : 'Score update', scorer, match: m });
-          } else if (pState === 'pre' && m.state === 'in') {
-            showToast({ kind: 'start', title: 'Kick-off', match: m });
-          } else if (pState === 'in' && m.state === 'post') {
-            showToast({ kind: 'end', title: 'Full time', match: m });
-          }
-        })
-      );
-    };
+    if (!ready || !settings.goalAlerts || !following || asked.current) return;
+    asked.current = true;
+    ensurePermission(true);
+  }, [ready, settings.goalAlerts, following]);
+
+  useEffect(() => {
+    if (ready) setBackgroundChecks(!!settings.goalAlerts && following > 0);
+  }, [ready, settings.goalAlerts, following]);
+
+  useEffect(() => {
+    if (!settings.goalAlerts || !following) return undefined;
+    const onEvent = (ev) => (AppState.currentState === 'active' ? showToast(ev) : notifyEvent(ev));
+    const check = () => checkFollowed(favs, onEvent).catch(() => {});
     check();
     const iv = setInterval(check, 30000);
     return () => clearInterval(iv);
-  }, [favs.matches, favs.teams, settings.goalAlerts, showToast]);
+  }, [favs, settings.goalAlerts, following, showToast]);
 }
 
 function Toast({ onOpen }) {
@@ -138,6 +123,9 @@ function Main() {
   const [stack, setStack] = useState([]);
   const counter = useRef(0);
   useScoreWatcher();
+
+  // tapping a goal notification opens that match
+  useEffect(() => onNotificationTap((m) => push({ name: 'match', match: pickToMatch(m) })), []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     load('lastTab', 'matches').then((v) => TABS.find((x) => x.key === v) && setTabState(v));

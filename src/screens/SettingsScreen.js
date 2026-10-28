@@ -7,6 +7,7 @@ import { useStore } from '../store';
 import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
+import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
 
@@ -28,6 +29,10 @@ export default function SettingsScreen() {
   const { settings, setSetting } = useStore();
   const [cleared, setCleared] = useState(false);
   const [server, setServer] = useState(null);
+  const [notif, setNotif] = useState(null);
+  useEffect(() => {
+    permissionStatus().then(setNotif);
+  }, []);
   useEffect(() => {
     serverStatus().then(setServer);
   }, []);
@@ -88,9 +93,32 @@ export default function SettingsScreen() {
           ) : null}
         </Card>
 
-        <SectionTitle>Alerts</SectionTitle>
+        <SectionTitle>Notifications</SectionTitle>
         <Card>
-          <Toggle label="Score alerts" sub="A banner and a buzz when a followed match or team scores while the app is open" value={settings.goalAlerts} onChange={(v) => setSetting('goalAlerts', v)} last />
+          <Toggle
+            label="Score notifications"
+            sub="Goals, kick-off and full time for matches and teams you follow. Instant while the app is open; checked about every 15 minutes when it's closed."
+            value={settings.goalAlerts}
+            onChange={async (v) => {
+              setSetting('goalAlerts', v);
+              if (v) setNotif((await ensurePermission(true)) ? 'granted' : await permissionStatus());
+            }}
+            last={!settings.goalAlerts || notif === 'granted'}
+          />
+          {settings.goalAlerts && notif && notif !== 'granted' ? (
+            <Row
+              last
+              onPress={async () => {
+                if (notif === 'denied') openNotificationSettings();
+                else setNotif((await ensurePermission(true)) ? 'granted' : await permissionStatus());
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.orange, fontSize: 15, fontWeight: '600' }}>Notifications are off for Fast Score</Text>
+                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>{notif === 'denied' ? 'Tap to open the phone’s settings and allow them.' : 'Tap to allow notifications.'}</Text>
+              </View>
+            </Row>
+          ) : null}
         </Card>
 
         <SectionTitle>Fast Score server</SectionTitle>
