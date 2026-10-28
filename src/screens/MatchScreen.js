@@ -132,9 +132,28 @@ function AIPrediction({ m, pred }) {
           <Ionicons name="sparkles" size={16} color="#fff" />
         </View>
         <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>AI prediction</Text>
-        <Text style={{ color: t.secondary, fontSize: 12 }}>{pred.quality === 'high' ? 'Model + market' : pred.quality === 'medium' ? 'Model' : 'Market'}</Text>
+        <Text style={{ color: t.secondary, fontSize: 12 }}>Last 10 matches{pred.market ? ' + odds' : ''}</Text>
       </View>
       <Probability probs={pred.probs} home={m.home.short || m.home.name} away={m.away.short || m.away.name} draws={sp.draws} />
+      {pred.last ? (
+        <View style={{ marginTop: 14, gap: 8 }}>
+          {[
+            [m.home, pred.last.homeForm],
+            [m.away, pred.last.awayForm],
+          ].map(([c, f]) => (
+            <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <Logo uri={c.logo} name={c.name} size={18} />
+              <Text style={{ color: t.text, fontSize: 13, fontWeight: '600', marginLeft: 6, width: 82 }} numberOfLines={1}>
+                {c.short || c.name}
+              </Text>
+              <View style={{ flex: 1, alignItems: 'flex-end' }}>
+                <FormPills form={f} count={10} size={17} />
+              </View>
+            </View>
+          ))}
+          <Text style={{ color: t.tertiary, fontSize: 11 }}>Oldest → newest</Text>
+        </View>
+      ) : null}
       <View style={{ marginTop: 14, padding: 12, borderRadius: 14, backgroundColor: t.dark ? 'rgba(191,90,242,0.16)' : 'rgba(175,82,222,0.09)' }}>
         <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '700' }}>Best call</Text>
         <Text style={{ color: t.text, fontSize: 16, fontWeight: '800', marginTop: 2 }}>

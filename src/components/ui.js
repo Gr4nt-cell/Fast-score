@@ -267,10 +267,10 @@ export function SectionTitle({ children, right }) {
   );
 }
 
-export function FormPills({ form, size = 20 }) {
+export function FormPills({ form, size = 20, count = 5 }) {
   const t = useTheme();
   if (!form) return null;
-  const letters = String(form).toUpperCase().replace(/[^WDLT]/g, '').slice(-5).split('');
+  const letters = String(form).toUpperCase().replace(/[^WDLT]/g, '').slice(-count).split('');
   return (
     <View style={{ flexDirection: 'row', gap: 3 }}>
       {letters.map((c, i) => (

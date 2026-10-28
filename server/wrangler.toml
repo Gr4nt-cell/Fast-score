@@ -1,0 +1,20 @@
+# Fast Score API — Cloudflare Worker + D1 (free plan).
+# Deployed by .github/workflows/deploy-server.yml, which fills in database_id.
+name = "fast-score-api"
+main = "src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# every minute: refresh live competitions, rotate through the rest
+[triggers]
+crons = ["* * * * *"]
+
+[[d1_databases]]
+binding = "DB"
+database_name = "fastscore"
+database_id = "REPLACED_BY_DEPLOY"
+migrations_dir = "migrations"
+
+[vars]
+# ESPN downloads per minute; the free plan allows 50 subrequests per run
+MAX_FETCH = "14"

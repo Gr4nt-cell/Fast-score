@@ -5,6 +5,9 @@ name: Build APK
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'server/**'
+      - '.github/workflows/deploy-server.yml'
   workflow_dispatch:
 
 permissions:

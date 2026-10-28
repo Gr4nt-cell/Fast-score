@@ -1,10 +1,11 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { ScrollView, Switch, Text, View } from 'react-native';
 import Constants from 'expo-constants';
 import { useTheme } from '../theme';
 import { useStore } from '../store';
 import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
+import { serverStatus } from '../api/server';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
 
@@ -25,6 +26,10 @@ export default function SettingsScreen() {
   const t = useTheme();
   const { settings, setSetting } = useStore();
   const [cleared, setCleared] = useState(false);
+  const [server, setServer] = useState(null);
+  useEffect(() => {
+    serverStatus().then(setServer);
+  }, []);
   const version = (Constants.expoConfig && Constants.expoConfig.version) || '1.0.0';
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -87,6 +92,20 @@ export default function SettingsScreen() {
           <Toggle label="Score alerts" sub="A banner and a buzz when a followed match or team scores while the app is open" value={settings.goalAlerts} onChange={(v) => setSetting('goalAlerts', v)} last />
         </Card>
 
+        <SectionTitle>Fast Score server</SectionTitle>
+        <Card>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, marginRight: 10, backgroundColor: !server ? t.tertiary : server.connected ? t.green : t.orange }} />
+            <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '600', flex: 1 }}>{!server ? 'Checking…' : server.connected ? 'Connected' : 'Not connected'}</Text>
+          </View>
+          <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 6, lineHeight: 18 }}>
+            {!server
+              ? ''
+              : server.connected
+              ? `${(server.events || 0).toLocaleString()} games stored${server.history_since ? ` since ${new Date(server.history_since).toLocaleDateString()}` : ''} · ${server.live_now || 0} live now · last sync ${server.last_sync ? new Date(server.last_sync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}`
+              : 'The app is fetching from ESPN directly. Everything still works; the server adds a shared cache and match history.'}
+          </Text>
+        </Card>
         <SectionTitle>Data source</SectionTitle>
         <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
           <Segmented

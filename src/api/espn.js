@@ -5,6 +5,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPORTS, leagueMeta, sportByKey } from '../sports';
 import * as tsdb from './sportsdb';
+import { markServerDown, serverJson, serverUrl } from './server';
 
 // 'auto' = ESPN, falling back to TheSportsDB when ESPN can't be reached; 'espn'; 'tsdb'
 let MODE = 'auto';
@@ -22,7 +23,24 @@ let preferred = 0;
 const mem = new Map(); // key -> { t, data }
 const inflight = new Map();
 
-async function rawFetch(path, { webOnly = false, timeout = 12000 } = {}) {
+async function rawFetch(path, { webOnly = false, timeout = 12000, direct = false } = {}) {
+  // our own server first (shared cache, one download for everyone), ESPN directly after
+  if (!direct && MODE !== 'tsdb') {
+    const base = await serverUrl();
+    if (base) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 8000);
+      try {
+        const res = await fetch(base + path, { signal: ctrl.signal, headers: { Accept: 'application/json' } });
+        clearTimeout(timer);
+        if (res.ok) return await res.json();
+        if (res.status >= 500) markServerDown();
+      } catch {
+        clearTimeout(timer);
+        markServerDown();
+      }
+    }
+  }
   const order = webOnly ? [0] : [preferred, 1 - preferred];
   let lastErr;
   for (const i of order) {
@@ -338,6 +356,8 @@ export async function dayBoard(sportKey, date, { ttl = 30000, leagues } = {}) {
     return r;
   };
   if (useTsdbFirst()) return fallback();
+  const viaServer = await serverDay(sp, date, leagues, ttl).catch(() => null);
+  if (viaServer) return viaServer;
   const list = leagues || sp.leagues;
   const jobs = [];
   list.forEach((l) => {
@@ -374,6 +394,52 @@ export async function dayBoard(sportKey, date, { ttl = 30000, leagues } = {}) {
     }
   });
   out.source = 'espn';
+  return out;
+}
+
+/**
+ * The whole day for a sport in one call from our server. Competitions with games in play are
+ * then refreshed straight away so live scores are never more than a few seconds old.
+ * Returns null when the server can't answer (the caller then asks ESPN league by league).
+ */
+async function serverDay(sp, date, leagues, ttl) {
+  if (MODE === 'tsdb') return null;
+  const tz = date.getTimezoneOffset();
+  const key = `/v1/day?sport=${sp.key}&date=${ymd(date)}&tz=${tz}`;
+  const hit = mem.get('srv:' + key);
+  let j = hit && Date.now() - hit.t < Math.min(ttl, 20000) ? hit.data : null;
+  if (!j) {
+    j = await serverJson(key);
+    if (!j) return null;
+    mem.set('srv:' + key, { t: Date.now(), data: j });
+  }
+  // the server hasn't collected this day yet (e.g. far in the future): ask ESPN
+  if (!j.checked || !j.checked.newest) return null;
+  const allow = leagues ? new Set(leagues.map((l) => l.slug)) : null;
+  const out = [];
+  for (const g of j.groups || []) {
+    const slug = g.league.slug;
+    if (allow && !allow.has(slug)) continue;
+    const meta = leagueMeta(sp.key, slug);
+    const items = [];
+    (g.events || []).forEach((e) =>
+      normalizeEvent(e, sp.key, slug, meta.name || g.league.name).forEach((it) => {
+        if (!sp.multiDay && !sameDay(new Date(it.date), date) && it.state !== 'in') return;
+        if (!items.find((x) => x.key === it.key)) items.push(it);
+      })
+    );
+    if (items.length) out.push({ league: { slug, sport: sp.key, name: meta.name || g.league.name || slug, logo: g.league.logo }, items });
+  }
+  // live overlay
+  const liveGroups = out.filter((g) => g.items.some((m) => m.state === 'in' || (m.state === 'pre' && new Date(m.date) < new Date())));
+  await pool(liveGroups, 4, async (g) => {
+    const fresh = await scoreboard(sp.key, g.league.slug, date, 10000);
+    const map = new Map(fresh.items.map((m) => [m.key, m]));
+    g.items = g.items.map((m) => map.get(m.key) || m);
+    if (fresh.league.logo) g.league.logo = fresh.league.logo;
+  });
+  out.forEach((g) => g.items.sort((a, b) => new Date(a.date) - new Date(b.date)));
+  out.source = 'server';
   return out;
 }
 

@@ -7,7 +7,7 @@ import { useNav } from '../nav';
 import { getDailyPicks, pickHistory } from '../predict';
 import { Glass } from '../components/Glass';
 import { Pressable } from '../components/Touch';
-import { Card, Empty, GlassCircle, LargeHeader, Loading, Logo, SectionTitle, SportIcon } from '../components/ui';
+import { Card, Empty, FormPills, GlassCircle, LargeHeader, Loading, Logo, SectionTitle, SportIcon } from '../components/ui';
 import { sportByKey } from '../sports';
 
 const side = (c) => ({ ...c, linescores: [], tiebreaks: [], isAthlete: false, score: null, form: null });
@@ -59,12 +59,16 @@ function PickCard({ p, i }) {
           <Text style={{ color: t.secondary, fontSize: 12.5, fontWeight: '700' }}>{d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
         </View>
         <View style={{ marginTop: 12, gap: 8 }}>
-          {[p.home, p.away].map((c) => (
+          {[
+            [p.home, p.homeForm],
+            [p.away, p.awayForm],
+          ].map(([c, f]) => (
             <View key={c.id} style={{ flexDirection: 'row', alignItems: 'center' }}>
               <Logo uri={c.logo} name={c.name} size={24} />
               <Text style={{ marginLeft: 10, color: t.text, fontSize: 16, fontWeight: '700', flex: 1 }} numberOfLines={1}>
                 {c.name}
               </Text>
+              {f ? <FormPills form={f} count={10} size={13} /> : null}
             </View>
           ))}
         </View>
@@ -161,7 +165,7 @@ export default function PicksScreen() {
         <Card>
           <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>How the picks are made</Text>
           <Text style={{ color: t.secondary, fontSize: 13.5, lineHeight: 20 }}>
-            Every morning the app scans the day's football, NBA, NHL, NFL, MLB and rugby fixtures. For football a Poisson goals model uses each side's scoring and conceding rates from the current table, home advantage and recent form; other sports use win rates, points difference and home advantage. When bookmaker odds are available they're blended in 50/50. The five most confident calls (at most two per competition) become the day's picks and are locked once the first one kicks off, so the track record is honest.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
+            Every morning the app scans the day's football, NBA, NHL, NFL, MLB and rugby fixtures and looks at each team's last 10 finished matches. For football, a Poisson goals model uses the goals each side scored and conceded in those games, with recent games and games at the same venue counting a little more, plus home advantage. Other sports use win rate and points difference over the last 10. Bookmaker odds, when available, count for 25% as a sanity check. The five most confident calls (at most two per competition) become the day's picks and are locked once the first one kicks off, so the track record is honest.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
           </Text>
         </Card>
       ) : null}

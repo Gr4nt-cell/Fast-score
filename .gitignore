@@ -7,3 +7,6 @@ dist/
 *.aab
 npm-debug.log*
 .DS_Store
+server/node_modules/
+server/.wrangler/
+server/deploy.log

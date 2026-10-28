@@ -1,0 +1,102 @@
+# Deploys the Fast Score server (server/) to Cloudflare Workers + D1 and publishes its address
+# in server/url.json, where the app picks it up — no app rebuild needed.
+#
+# One-time setup (repo → Settings → Secrets and variables → Actions → New repository secret):
+#   CLOUDFLARE_API_TOKEN   token from the "Edit Cloudflare Workers" template, plus D1 → Edit
+#   CLOUDFLARE_ACCOUNT_ID  shown on the right of your Cloudflare dashboard's Workers page
+# Until both exist this workflow just says so and stops (it doesn't fail).
+name: Deploy server
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'server/**'
+      - 'src/sports.js'
+      - '.github/workflows/deploy-server.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: deploy-server
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+      CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+    steps:
+      - name: Check the Cloudflare secrets
+        id: check
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ] || [ -z "$CLOUDFLARE_ACCOUNT_ID" ]; then
+            echo "::notice::Add CLOUDFLARE_API_TOKEN and CLOUDFLARE_ACCOUNT_ID repo secrets to deploy the server."
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v5
+        if: steps.check.outputs.ready == 'true'
+
+      - uses: actions/setup-node@v5
+        if: steps.check.outputs.ready == 'true'
+        with:
+          node-version: 22
+
+      - name: Install wrangler
+        if: steps.check.outputs.ready == 'true'
+        working-directory: server
+        run: npm ci --no-audit --no-fund
+
+      - name: Create the database the first time, then point wrangler.toml at it
+        if: steps.check.outputs.ready == 'true'
+        working-directory: server
+        run: |
+          set -e
+          ID=$(npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const l=JSON.parse(s);const d=l.find(x=>x.name==='fastscore');process.stdout.write(d?d.uuid:'')})")
+          if [ -z "$ID" ]; then
+            npx wrangler d1 create fastscore
+            ID=$(npx wrangler d1 list --json | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const l=JSON.parse(s);process.stdout.write(l.find(x=>x.name==='fastscore').uuid)})")
+          fi
+          echo "database: $ID"
+          sed -i "s/REPLACED_BY_DEPLOY/$ID/" wrangler.toml
+
+      - name: Apply database migrations
+        if: steps.check.outputs.ready == 'true'
+        working-directory: server
+        run: npx wrangler d1 migrations apply fastscore --remote
+
+      - name: Deploy the Worker
+        if: steps.check.outputs.ready == 'true'
+        id: deploy
+        working-directory: server
+        run: |
+          set -o pipefail
+          npx wrangler deploy 2>&1 | tee deploy.log
+          URL=$(grep -oE 'https://[a-zA-Z0-9.-]+\.workers\.dev' deploy.log | head -1)
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "Deployed to $URL"
+
+      - name: Check it answers
+        if: steps.check.outputs.ready == 'true' && steps.deploy.outputs.url != ''
+        run: |
+          sleep 5
+          curl -fsS "${{ steps.deploy.outputs.url }}/v1/status" && echo
+
+      - name: Publish the address for the app
+        if: steps.check.outputs.ready == 'true' && steps.deploy.outputs.url != ''
+        run: |
+          echo "{ \"url\": \"${{ steps.deploy.outputs.url }}\" }" > server/url.json
+          if ! git diff --quiet server/url.json; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
+            git add server/url.json
+            git commit -m "Publish the Fast Score server address"
+            git push origin HEAD:main
+          fi

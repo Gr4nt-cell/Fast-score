@@ -1,32 +1,73 @@
-// Fast Score's prediction model. It runs on the phone, so it needs no API key and costs nothing:
-//  - football: a Poisson goals model built from each side's scoring and conceding rates in the
-//    current table, adjusted for home advantage and recent form;
-//  - other team sports: log5 on win rates blended with points difference and home advantage;
-//  - both are blended 50/50 with the bookmakers' implied probabilities whenever ESPN carries odds.
+// Fast Score's prediction model. It runs on the phone, so it needs no API key and costs nothing.
+// Every prediction is built from each team's last 10 finished matches:
+//  - football: a Poisson goals model from the goals each side scored and conceded in those
+//    games (recent games count a little more, games at the same venue as this one a little more),
+//    plus home advantage;
+//  - other team sports: win rate and points difference over the last 10 (log5), plus home advantage.
+// Bookmaker odds, when ESPN has them, are blended in at 25% as a sanity check.
 // Every day the five most confident calls become the "AI Picks" and are saved, so the next day the
 // app can show how they did.
 import { americanToProb, load, save } from './store';
 import { SPORTS, sportByKey } from './sports';
-import { addDays, dayBoard, pool, scoreboard, standings, ymd } from './api/espn';
+import { addDays, dayBoard, pool, scoreboard, teamSchedule, ymd } from './api/espn';
 
+export const LAST_N = 10;
+const MARKET_WEIGHT = 0.25;
+const RECENCY = 0.92; // each older game counts 8% less than the one after it
 const HOME_ADV = { soccer: [1.12, 0.9], rugby: 0.06, basketball: 0.06, football: 0.05, hockey: 0.04, baseball: 0.03, volleyball: 0.04 };
 const PD_SCALE = { basketball: 11, football: 13, hockey: 1.4, baseball: 2.2, rugby: 12, volleyball: 0.6 };
+const AVG_GOALS = 1.35; // a typical football side's goals per game, used to steady small samples
 
-const standingsCache = new Map();
-async function tableFor(sport, league) {
-  const k = sport + '/' + league;
-  if (!standingsCache.has(k)) standingsCache.set(k, standings(sport, league).catch(() => []));
-  return standingsCache.get(k);
+// ---------- last 10 matches ----------
+
+const recentCache = new Map();
+
+/** A team's last 10 finished games before `before`, newest first. */
+export async function lastMatches(sport, league, teamId, before = new Date()) {
+  const k = `${sport}/${league}/${teamId}`;
+  if (!recentCache.has(k)) recentCache.set(k, teamSchedule(sport, league, teamId).catch(() => []));
+  const games = await recentCache.get(k);
+  const cutoff = new Date(before).getTime();
+  return games
+    .filter((g) => g.state === 'post' && new Date(g.date).getTime() < cutoff && g.home && g.away)
+    .map((g) => {
+      const home = String(g.home.id) === String(teamId);
+      const me = home ? g.home : g.away;
+      const op = home ? g.away : g.home;
+      const gf = Number(me.score);
+      const ga = Number(op.score);
+      if (!Number.isFinite(gf) || !Number.isFinite(ga)) return null;
+      return { date: g.date, home, gf, ga, opponent: op.name, opLogo: op.logo, result: gf > ga ? 'W' : gf < ga ? 'L' : 'D', key: g.key };
+    })
+    .filter(Boolean)
+    .sort((a, b) => new Date(b.date) - new Date(a.date))
+    .slice(0, LAST_N);
 }
 
-function findRow(groups, teamId, name) {
-  for (const g of groups) {
-    for (const r of g.rows) {
-      if ((teamId && r.teamId === String(teamId)) || (name && r.name === name)) return { row: r, group: g };
+/** Weighted summary of a run of games. `atHome`: weight games at the same venue a bit more. */
+function summarise(games, atHome) {
+  let w = 0;
+  let gf = 0;
+  let ga = 0;
+  let pts = 0;
+  const rec = { W: 0, D: 0, L: 0 };
+  const venue = { W: 0, D: 0, L: 0, n: 0 };
+  games.forEach((g, i) => {
+    const wt = Math.pow(RECENCY, i) * (atHome == null ? 1 : g.home === atHome ? 1.25 : 1);
+    w += wt;
+    gf += g.gf * wt;
+    ga += g.ga * wt;
+    pts += (g.result === 'W' ? 1 : g.result === 'D' ? 0.5 : 0) * wt;
+    rec[g.result]++;
+    if (atHome != null && g.home === atHome) {
+      venue[g.result]++;
+      venue.n++;
     }
-  }
-  return null;
+  });
+  return { n: games.length, gf: w ? gf / w : 0, ga: w ? ga / w : 0, win: w ? pts / w : 0.5, rec, venue, form: games.map((g) => g.result).reverse().join('') };
 }
+
+// ---------- models ----------
 
 function poisson(k, l) {
   let f = 1;
@@ -34,48 +75,18 @@ function poisson(k, l) {
   return (Math.exp(-l) * Math.pow(l, k)) / f;
 }
 
-function formScore(form) {
-  if (!form) return 0;
-  const s = String(form).toUpperCase().replace(/[^WDL]/g, '').slice(-5);
-  if (!s.length) return 0;
-  let p = 0;
-  for (const c of s) p += c === 'W' ? 1 : c === 'D' ? 0.4 : 0;
-  return p / s.length - 0.45; // about -0.45 .. +0.55
-}
-
-function marketProbs(odds, draws) {
-  if (!odds) return null;
-  const h = americanToProb(odds.home);
-  const a = americanToProb(odds.away);
-  const d = draws ? americanToProb(odds.draw) : 0;
-  if (h == null || a == null || (draws && d == null)) return null;
-  const sum = h + a + (d || 0);
-  return { home: h / sum, away: a / sum, draw: (d || 0) / sum };
-}
-
-const pct = (p) => `${Math.round(p * 100)}%`;
-const ord = (n) => {
-  const s = ['th', 'st', 'nd', 'rd'];
-  const v = n % 100;
-  return n + (s[(v - 20) % 10] || s[v] || s[0]);
-};
-
-function soccerModel(m, H, A, groups) {
-  const all = groups.flatMap((g) => g.rows).filter((r) => r.gp > 0 && r.gf != null);
-  if (all.length < 4) return null;
-  const avg = all.reduce((s, r) => s + r.gf / r.gp, 0) / all.length || 1.35;
-  const rate = (r, k) => {
-    const raw = r[k] / r.gp / avg;
-    const w = r.gp / (r.gp + 6);
-    return 1 + w * (raw - 1);
-  };
+function soccerModel(m, H, A) {
+  // league scoring level from both teams' recent games, steadied towards a typical value
+  const sample = H.n + A.n;
+  const avg = sample ? (((H.gf + H.ga) * H.n + (A.gf + A.ga) * A.n) / (2 * sample)) * (sample / (sample + 6)) + AVG_GOALS * (6 / (sample + 6)) : AVG_GOALS;
+  const steady = (v, n) => (v * n + avg * 3) / (n + 3);
+  const attH = steady(H.gf, H.n) / avg;
+  const defH = steady(H.ga, H.n) / avg;
+  const attA = steady(A.gf, A.n) / avg;
+  const defA = steady(A.ga, A.n) / avg;
   const [ha, aa] = m.neutral ? [1, 1] : HOME_ADV.soccer;
-  const fh = formScore(m.home.form);
-  const fa = formScore(m.away.form);
-  let lh = avg * rate(H, 'gf') * rate(A, 'ga') * ha * (1 + 0.1 * (fh - fa));
-  let la = avg * rate(A, 'gf') * rate(H, 'ga') * aa * (1 + 0.1 * (fa - fh));
-  lh = Math.min(Math.max(lh, 0.15), 4.5);
-  la = Math.min(Math.max(la, 0.15), 4.5);
+  const lh = Math.min(Math.max(avg * attH * defA * ha, 0.15), 4.5);
+  const la = Math.min(Math.max(avg * attA * defH * aa, 0.15), 4.5);
   let ph = 0;
   let pd = 0;
   let pa = 0;
@@ -96,48 +107,57 @@ function soccerModel(m, H, A, groups) {
 }
 
 function genericModel(m, H, A, sport) {
-  const wr = (r) => ((r.w || 0) + 2) / ((r.w || 0) + (r.l || 0) + (r.d || 0) + 4);
+  const wr = (x) => (x.win * x.n + 1) / (x.n + 2);
   const a = wr(H);
   const b = wr(A);
   let p = (a - a * b) / (a + b - 2 * a * b || 1);
-  if (H.gp && A.gp && H.gf != null && H.ga != null && A.gf != null && A.ga != null) {
-    const pdH = (H.gf - H.ga) / H.gp;
-    const pdA = (A.gf - A.ga) / A.gp;
-    const k = PD_SCALE[sport] || 10;
-    const q = 1 / (1 + Math.exp(-(pdH - pdA) / k));
-    p = (p + q) / 2;
-  }
+  const k = PD_SCALE[sport] || 10;
+  const q = 1 / (1 + Math.exp(-((H.gf - H.ga) - (A.gf - A.ga)) / k));
+  p = (p + q) / 2;
   if (!m.neutral) p += HOME_ADV[sport] || 0.04;
   p = Math.min(Math.max(p, 0.03), 0.97);
   return { home: p, away: 1 - p, draw: 0 };
 }
 
+function marketProbs(odds, draws) {
+  if (!odds) return null;
+  const h = americanToProb(odds.home);
+  const a = americanToProb(odds.away);
+  const d = draws ? americanToProb(odds.draw) : 0;
+  if (h == null || a == null || (draws && d == null)) return null;
+  const sum = h + a + (d || 0);
+  return { home: h / sum, away: a / sum, draw: (d || 0) / sum };
+}
+
+const pct = (p) => `${Math.round(p * 100)}%`;
+const recText = (r) => `${r.W}W ${r.D}D ${r.L}L`;
+
 /** Prediction for one match, or null when there isn't enough to go on. */
 export async function predictMatch(m) {
   if (!m || m.kind !== 'match' || sportByKey(m.sport).individual) return null;
   const sp = sportByKey(m.sport);
-  const groups = await tableFor(m.sport, m.league);
-  const h = findRow(groups, m.home.id, m.home.name);
-  const a = findRow(groups, m.away.id, m.away.name);
+  const [hg, ag] = await Promise.all([lastMatches(m.sport, m.league, m.home.id, m.date), lastMatches(m.sport, m.league, m.away.id, m.date)]);
+  const H = summarise(hg, true);
+  const A = summarise(ag, false);
   const market = marketProbs(m.odds, sp.draws);
-  let model = null;
-  if (h && a && h.row.gp >= 2 && a.row.gp >= 2) {
-    model = m.sport === 'soccer' ? soccerModel(m, h.row, a.row, groups) : genericModel(m, h.row, a.row, m.sport);
-  }
-  if (!model && !market) return null;
-  const blend = (k) => (model && market ? 0.5 * model[k] + 0.5 * market[k] : model ? model[k] : market[k]);
+  // need at least 3 recent games for each side
+  const model = H.n >= 3 && A.n >= 3 ? (m.sport === 'soccer' ? soccerModel(m, H, A) : genericModel(m, H, A, m.sport)) : null;
+  if (!model) return null;
+  const blend = (k) => (market ? (1 - MARKET_WEIGHT) * model[k] + MARKET_WEIGHT * market[k] : model[k]);
   const probs = { home: blend('home'), draw: sp.draws ? blend('draw') : 0, away: blend('away') };
   const n = probs.home + probs.draw + probs.away;
   probs.home /= n;
   probs.draw /= n;
   probs.away /= n;
 
+  const hn = m.home.short || m.home.name;
+  const an = m.away.short || m.away.name;
   const cands = [
-    { market: '1X2', label: `${m.home.short || m.home.name} to win`, short: '1', prob: probs.home, side: 'home' },
-    { market: '1X2', label: `${m.away.short || m.away.name} to win`, short: '2', prob: probs.away, side: 'away' },
+    { market: '1X2', label: `${hn} to win`, short: '1', prob: probs.home, side: 'home' },
+    { market: '1X2', label: `${an} to win`, short: '2', prob: probs.away, side: 'away' },
   ];
   if (sp.draws) cands.push({ market: '1X2', label: 'Draw', short: 'X', prob: probs.draw, side: 'draw' });
-  if (model && model.over != null) {
+  if (model.over != null) {
     cands.push({ market: 'Goals', label: 'Over 2.5 goals', short: 'O2.5', prob: model.over, side: 'over' });
     cands.push({ market: 'Goals', label: 'Under 2.5 goals', short: 'U2.5', prob: 1 - model.over, side: 'under' });
     cands.push({ market: 'BTTS', label: 'Both teams to score', short: 'GG', prob: model.btts, side: 'btts' });
@@ -146,29 +166,34 @@ export async function predictMatch(m) {
   cands.forEach((c) => (c.score = c.prob - (c.market === '1X2' ? 0 : 0.04)));
   const tip = cands.sort((x, y) => y.score - x.score)[0];
 
-  const reasons = [];
-  if (h && a) {
-    const hr = h.row;
-    const ar = a.row;
-    if (hr.rank && ar.rank && h.group === a.group) {
-      reasons.push(`${m.home.short || m.home.name} are ${ord(hr.rank)}${hr.pts != null ? ` (${hr.pts} pts)` : ''}, ${m.away.short || m.away.name} ${ord(ar.rank)}${ar.pts != null ? ` (${ar.pts} pts)` : ''}`);
-    } else if (hr.w != null && ar.w != null) {
-      reasons.push(`Records: ${m.home.short || m.home.name} ${hr.w}-${hr.l}${hr.d ? '-' + hr.d : ''}, ${m.away.short || m.away.name} ${ar.w}-${ar.l}${ar.d ? '-' + ar.d : ''}`);
-    }
-    if (m.sport === 'soccer' && hr.gp && ar.gp && hr.gf != null) {
-      reasons.push(`${m.home.short || m.home.name} score ${(hr.gf / hr.gp).toFixed(1)} and concede ${(hr.ga / hr.gp).toFixed(1)} a game; ${m.away.short || m.away.name} ${(ar.gf / ar.gp).toFixed(1)} and ${(ar.ga / ar.gp).toFixed(1)}`);
-    }
+  const unit = m.sport === 'soccer' ? '' : ' pts';
+  const reasons = [
+    `${hn} last ${H.n}: ${recText(H.rec)} · ${H.gf.toFixed(1)}${unit} scored, ${H.ga.toFixed(1)} conceded a game`,
+    `${an} last ${A.n}: ${recText(A.rec)} · ${A.gf.toFixed(1)}${unit} scored, ${A.ga.toFixed(1)} conceded a game`,
+  ];
+  if (H.venue.n >= 2) reasons.push(`${hn} at home in that run: ${recText(H.venue)}`);
+  if (A.venue.n === 0 && A.n >= 3) {
+    const away = ag.filter((g) => !g.home);
+    if (away.length >= 2) reasons.push(`${an} away in that run: ${recText(summarise(away, null).rec)}`);
   }
-  if (m.home.form || m.away.form) reasons.push(`Form: ${m.home.form || '–'} vs ${m.away.form || '–'}`);
-  if (model && model.xg) reasons.push(`Expected goals ${model.xg.home.toFixed(1)} – ${model.xg.away.toFixed(1)}`);
+  if (model.xg) reasons.push(`Expected goals ${model.xg.home.toFixed(1)} – ${model.xg.away.toFixed(1)}`);
   if (market) {
     const mk = tip.side === 'home' || tip.side === 'away' || tip.side === 'draw' ? market[tip.side] : null;
-    if (mk != null) reasons.push(`Bookmakers imply ${pct(mk)} for this outcome`);
+    if (mk != null) reasons.push(`Bookmakers imply ${pct(mk)} for this outcome (counted at 25%)`);
   }
-  if (!m.neutral && sp.key !== 'tennis') reasons.push(`Home advantage factored in for ${m.home.short || m.home.name}`);
 
-  const quality = model && market ? 'high' : model ? 'medium' : 'market';
-  return { probs, tip, reasons, xg: model && model.xg, over: model && model.over, btts: model && model.btts, quality, market };
+  const quality = H.n >= 8 && A.n >= 8 ? (market ? 'high' : 'medium') : 'low';
+  return {
+    probs,
+    tip,
+    reasons,
+    xg: model.xg,
+    over: model.over,
+    btts: model.btts,
+    quality,
+    market,
+    last: { home: hg, away: ag, homeForm: H.form, awayForm: A.form },
+  };
 }
 
 // ---------- daily top 5 ----------
@@ -198,6 +223,8 @@ function slim(m, p) {
     xg: p.xg,
     reasons: p.reasons,
     quality: p.quality,
+    homeForm: p.last && p.last.homeForm,
+    awayForm: p.last && p.last.awayForm,
   };
 }
 
@@ -224,7 +251,7 @@ export async function generatePicks(date = new Date(), onProgress) {
   });
   const ranked = preds
     .filter(Boolean)
-    .filter((x) => x.p.quality !== 'market' || x.p.tip.prob > 0.7)
+    .filter((x) => x.p.quality !== 'low' || x.p.tip.prob > 0.7)
     .map((x) => {
       const top = !!(sportByKey(x.m.sport).leagues.find((l) => l.slug === x.m.league) || {}).top;
       return { ...x, rank: x.p.tip.prob + (x.p.quality === 'high' ? 0.02 : 0) + (top ? 0.015 : 0) };
