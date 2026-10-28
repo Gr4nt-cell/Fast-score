@@ -26,7 +26,7 @@ export function Logo({ uri, name, size = 24, round = false }) {
   if (uri && !failed) {
     return (
       <Image
-        source={{ uri }}
+        source={/sofascore/.test(uri) ? { uri, headers: { Referer: 'https://www.sofascore.com/', 'User-Agent': 'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 Chrome/130.0 Mobile Safari/537.36' } } : { uri }}
         style={{ width: size, height: size, borderRadius: round ? r : 0 }}
         contentFit={round ? 'cover' : 'contain'}
         cachePolicy="memory-disk"

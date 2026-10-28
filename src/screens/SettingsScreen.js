@@ -140,15 +140,16 @@ export default function SettingsScreen() {
           <Segmented
             options={[
               { key: 'auto', label: 'Auto' },
+              { key: 'sofascore', label: 'Sofa' },
               { key: 'espn', label: 'ESPN' },
-              { key: 'tsdb', label: 'SportsDB' },
+              { key: 'tsdb', label: 'TSDB' },
             ]}
             value={settings.source || 'auto'}
             onChange={(v) => setSetting('source', v)}
           />
         </View>
         <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 22, marginBottom: 14, lineHeight: 18 }}>
-          Auto uses ESPN (live clock, lineups, stats, odds, news) and switches to TheSportsDB by itself if ESPN can't be reached. TheSportsDB's free tier has scores, tables, lineups and events but no odds or live clock.
+          Auto tries SofaScore first (every league worldwide, live minute, lineups, stats, odds), then ESPN (plus news and win probability), then TheSportsDB, switching by itself when one can't be reached. SofaScore isn't an official API and may refuse requests at times; the app then moves on to ESPN.
         </Text>
         <SectionTitle>Data</SectionTitle>
         <Card>

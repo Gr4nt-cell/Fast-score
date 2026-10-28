@@ -118,7 +118,7 @@ export default function MatchesScreen({ liveMode = false }) {
         {live ? <LiveDot /> : null}
         <Text style={{ color: live ? t.live : t.secondary, fontSize: 13, fontWeight: '700', flex: 1 }} numberOfLines={1}>
           {live ? `Live · ${sportName}` : sportName} · {summary}
-          {groups && groups.source === 'tsdb' ? ' · via TheSportsDB' : ''}
+          {groups && groups.source === 'tsdb' ? ' · via TheSportsDB' : groups && groups.source === 'sofascore' ? ' · SofaScore' : ''}
         </Text>
       </View>
     </View>
