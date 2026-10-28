@@ -7,7 +7,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'server/url.json'
+      - 'server/**'
+      - 'wrangler.toml'
       - '.github/workflows/check-server.yml'
   schedule:
     - cron: '17 */6 * * *'
@@ -23,6 +24,10 @@ jobs:
         run: |
           URL=$(node -e "console.log(require('./server/url.json').url||'')")
           if [ -z "$URL" ]; then echo "::notice::No server address published yet"; exit 0; fi
+          # a push also redeploys the server on Cloudflare; give that a moment
+          if [ "${{ github.event_name }}" = "push" ]; then sleep 150; fi
+          SYNC=$(curl -sS -m 60 "$URL/v1/sync" || true)
+          echo "::notice title=sync::$(echo "$SYNC" | head -c 900)"
           STATUS=$(curl -fsS -m 20 "$URL/v1/status") || { echo "::error::Server at $URL did not answer"; exit 1; }
           echo "::notice title=status::$STATUS"
           DAY=$(date -u +%Y%m%d)

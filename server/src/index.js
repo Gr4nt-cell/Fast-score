@@ -31,6 +31,7 @@ const SCHEMA = [
   `CREATE INDEX IF NOT EXISTS events_league_start ON events(sport, league, start_ts)`,
   `CREATE INDEX IF NOT EXISTS events_state ON events(state, start_ts)`,
   `CREATE TABLE IF NOT EXISTS standings ( key TEXT PRIMARY KEY, updated INTEGER, data TEXT )`,
+  `CREATE TABLE IF NOT EXISTS meta ( k TEXT PRIMARY KEY, v TEXT )`,
 ];
 let schemaReady = null;
 function ensureSchema(env) {
@@ -39,6 +40,27 @@ function ensureSchema(env) {
     throw e;
   });
   return schemaReady;
+}
+
+async function setMeta(env, k, v) {
+  try {
+    await env.DB.prepare('INSERT INTO meta (k, v) VALUES (?, ?) ON CONFLICT(k) DO UPDATE SET v=excluded.v').bind(k, typeof v === 'string' ? v : JSON.stringify(v)).run();
+  } catch {}
+}
+
+/** One sync run with its outcome recorded, so /v1/status can show what the timer is doing. */
+async function recordedSync(env, via) {
+  const started = Date.now();
+  await setMeta(env, 'last_run', { via, started: new Date(started).toISOString() });
+  try {
+    const r = await runSync(env);
+    const errors = r.done.filter((d) => d.error || d.standings).slice(0, 5);
+    await setMeta(env, 'last_result', { via, at: r.at, ms: Date.now() - started, fetched: r.done.length, pending: r.pending, errors });
+    return r;
+  } catch (e) {
+    await setMeta(env, 'last_result', { via, at: new Date().toISOString(), error: String((e && e.stack) || e).slice(0, 500) });
+    throw e;
+  }
 }
 
 // ---------- helpers ----------
@@ -341,6 +363,15 @@ async function proxy(env, url, ctx) {
 }
 
 async function statusEndpoint(env) {
+  const meta = await env.DB.prepare(`SELECT k, v FROM meta WHERE k IN ('last_run', 'last_result')`).all().catch(() => ({ results: [] }));
+  const m = {};
+  (meta.results || []).forEach((r) => {
+    try {
+      m[r.k] = JSON.parse(r.v);
+    } catch {
+      m[r.k] = r.v;
+    }
+  });
   const [ev, live, boards, st] = await Promise.all([
     env.DB.prepare('SELECT COUNT(*) AS n, MIN(start_ts) AS first FROM events').first(),
     env.DB.prepare(`SELECT COUNT(*) AS n FROM events WHERE state='in' AND start_ts > ?`).bind(Date.now() - 6 * HOUR).first(),
@@ -356,6 +387,8 @@ async function statusEndpoint(env) {
     last_sync: boards.last ? new Date(boards.last).toISOString() : null,
     tables: st.n,
     competitions: LEAGUES.length,
+    last_run: m.last_run || null,
+    last_result: m.last_result || null,
   });
 }
 
@@ -376,7 +409,13 @@ export default {
         return res;
       }
       if (url.pathname === '/v1/results') return await resultsEndpoint(env, url);
-      if (url.pathname === '/v1/sync' && env.SYNC_KEY && url.searchParams.get('key') === env.SYNC_KEY) return json(await runSync(env));
+      if (url.pathname === '/v1/sync') {
+        const row = await env.DB.prepare(`SELECT v FROM meta WHERE k='last_manual'`).first().catch(() => null);
+        if (row && Date.now() - Number(row.v) < 55000) return json({ ok: false, error: 'a sync ran less than a minute ago' }, 0, 429);
+        await setMeta(env, 'last_manual', String(Date.now()));
+        const r = await recordedSync(env, 'manual');
+        return json({ ok: true, fetched: r.done.length, pending: r.pending, sample: r.done.slice(0, 8) });
+      }
       const m = url.pathname.match(/^\/apis\/v2\/sports\/([^/]+)\/([^/]+)\/standings$/);
       if (m) return await standingsEndpoint(env, m[1], m[2], ctx);
       if (url.pathname.startsWith('/apis/')) return await proxy(env, url, ctx);
@@ -387,6 +426,6 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(ensureSchema(env).then(() => runSync(env)).then((r) => console.log(JSON.stringify({ synced: r.done.length, pending: r.pending }))));
+    ctx.waitUntil(ensureSchema(env).then(() => recordedSync(env, 'timer')).then((r) => console.log(JSON.stringify({ synced: r.done.length, pending: r.pending }))));
   },
 };
