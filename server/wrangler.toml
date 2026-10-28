@@ -1,5 +1,7 @@
 # Fast Score API — Cloudflare Worker + D1 (free plan).
-# Deployed by .github/workflows/deploy-server.yml, which fills in database_id.
+# Deployed by Cloudflare's GitHub integration (Workers Builds) with root directory "server".
+# The D1 database is created automatically on the first deploy (wrangler's resource
+# provisioning), and the Worker creates its own tables the first time it runs.
 name = "fast-score-api"
 main = "src/index.js"
 compatibility_date = "2026-09-01"
@@ -12,7 +14,6 @@ crons = ["* * * * *"]
 [[d1_databases]]
 binding = "DB"
 database_name = "fastscore"
-database_id = "REPLACED_BY_DEPLOY"
 migrations_dir = "migrations"
 
 [vars]

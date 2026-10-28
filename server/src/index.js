@@ -21,6 +21,26 @@ const HOUR = 60 * MIN;
 
 const LEAGUES = SPORTS.flatMap((s) => s.leagues.map((l) => ({ sport: s.key, league: l.slug, name: l.name, multiDay: !!s.multiDay })));
 
+// ---------- schema ----------
+// Created on first use, so a fresh database needs no separate migration step.
+const SCHEMA = [
+  `CREATE TABLE IF NOT EXISTS boards ( key TEXT PRIMARY KEY, sport TEXT NOT NULL, league TEXT NOT NULL, day TEXT NOT NULL, hash TEXT, checked_at INTEGER, changed_at INTEGER, live INTEGER DEFAULT 0, next_ko INTEGER, pending INTEGER DEFAULT 0, league_name TEXT, league_logo TEXT )`,
+  `CREATE INDEX IF NOT EXISTS boards_day ON boards(day)`,
+  `CREATE TABLE IF NOT EXISTS events ( id TEXT PRIMARY KEY, sport TEXT NOT NULL, league TEXT NOT NULL, start_ts INTEGER NOT NULL, end_ts INTEGER, state TEXT, hash TEXT, updated INTEGER, data TEXT NOT NULL )`,
+  `CREATE INDEX IF NOT EXISTS events_sport_start ON events(sport, start_ts)`,
+  `CREATE INDEX IF NOT EXISTS events_league_start ON events(sport, league, start_ts)`,
+  `CREATE INDEX IF NOT EXISTS events_state ON events(state, start_ts)`,
+  `CREATE TABLE IF NOT EXISTS standings ( key TEXT PRIMARY KEY, updated INTEGER, data TEXT )`,
+];
+let schemaReady = null;
+function ensureSchema(env) {
+  if (!schemaReady) schemaReady = env.DB.batch(SCHEMA.map((q) => env.DB.prepare(q))).catch((e) => {
+    schemaReady = null;
+    throw e;
+  });
+  return schemaReady;
+}
+
 // ---------- helpers ----------
 
 const ymd = (ms) => {
@@ -344,6 +364,7 @@ export default {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     try {
+      await ensureSchema(env);
       if (url.pathname === '/' || url.pathname === '/v1/status') return await statusEndpoint(env);
       if (url.pathname === '/v1/day') {
         const cache = caches.default;
@@ -366,6 +387,6 @@ export default {
   },
 
   async scheduled(event, env, ctx) {
-    ctx.waitUntil(runSync(env).then((r) => console.log(JSON.stringify({ synced: r.done.length, pending: r.pending }))));
+    ctx.waitUntil(ensureSchema(env).then(() => runSync(env)).then((r) => console.log(JSON.stringify({ synced: r.done.length, pending: r.pending }))));
   },
 };
