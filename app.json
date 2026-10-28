@@ -13,8 +13,7 @@
         "backgroundColor": "#0A84FF"
       },
       "permissions": ["android.permission.INTERNET", "android.permission.VIBRATE"],
-      "versionCode": 1,
-      "edgeToEdgeEnabled": true
+      "versionCode": 1
     },
     "plugins": [
       "expo-status-bar",
