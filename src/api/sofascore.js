@@ -387,7 +387,7 @@ export async function summary(sport, eventId) {
   let pickcenter;
   if (choices && choices.length) {
     const c = (n) => fracToMl((choices.find((x) => x.name === n) || {}).fractionalValue);
-    pickcenter = [{ provider: { name: 'SofaScore' }, homeTeamOdds: { moneyLine: c('1') }, awayTeamOdds: { moneyLine: c('2') }, drawOdds: { moneyLine: c('X') } }];
+    pickcenter = [{ provider: { name: '' }, homeTeamOdds: { moneyLine: c('1') }, awayTeamOdds: { moneyLine: c('2') }, drawOdds: { moneyLine: c('X') } }];
   }
 
   // head to head
