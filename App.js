@@ -19,6 +19,7 @@ import { BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTarg
 import { Pressable } from './src/components/Touch';
 import { Logo } from './src/components/ui';
 import Boundary from './src/components/Boundary';
+import { SofaBridge } from './src/api/browserBridge';
 import MatchesScreen from './src/screens/MatchesScreen';
 import LeaguesScreen from './src/screens/LeaguesScreen';
 import PicksScreen from './src/screens/PicksScreen';
@@ -187,6 +188,7 @@ function Main() {
               <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg }}>
                 <Boundary resetKey={tab}>{screen}</Boundary>
               </BlurTargetView>
+              <SofaBridge />
               <TabBar tabs={TABS} active={tab} onChange={setTab} />
               {!stack.length ? <Toast onOpen={(m) => push({ name: 'match', match: m })} /> : null}
             </View>

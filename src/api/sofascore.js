@@ -3,6 +3,8 @@
 // is allowed to fail and the app then falls back to ESPN.
 // Everything is converted into the same shapes the ESPN layer produces, so screens don't change.
 
+import { browserFetch } from './browserBridge';
+
 const HOSTS = ['https://api.sofascore.com/api/v1', 'https://www.sofascore.com/api/v1'];
 const IMG = 'https://api.sofascore.app/api/v1';
 const HEADERS = {
@@ -33,6 +35,8 @@ const mem = new Map();
 const inflight = new Map();
 let preferred = 0;
 let blockedUntil = 0;
+// after a refusal, go straight to the hidden browser page for a while
+let viaBrowserUntil = 0;
 
 export const ssBlocked = () => Date.now() < blockedUntil;
 
@@ -42,7 +46,22 @@ async function get(path, ttl = 30000) {
   if (inflight.has(path)) return inflight.get(path);
   const pr = (async () => {
     let last;
-    for (const i of [preferred, 1 - preferred]) {
+    const fromBrowser = async () => {
+      const r = await browserFetch('/api/v1' + path);
+      if (r.status === 404) return {};
+      if (r.status >= 200 && r.status < 300) return JSON.parse(r.body);
+      throw new Error(`SofaScore refused (${r.status})`);
+    };
+    if (Date.now() < viaBrowserUntil) {
+      try {
+        const data = await fromBrowser();
+        mem.set(path, { t: Date.now(), data });
+        return data;
+      } catch (e) {
+        last = e;
+      }
+    }
+    for (const i of Date.now() < viaBrowserUntil ? [] : [preferred, 1 - preferred]) {
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 10000);
       try {
@@ -68,7 +87,21 @@ async function get(path, ttl = 30000) {
         last = e;
       }
     }
-    if (last && /refused/.test(last.message)) blockedUntil = Date.now() + 10 * 60 * 1000;
+    // refused directly: try the hidden browser page before giving up
+    if (last && /refused/.test(last.message) && Date.now() >= viaBrowserUntil) {
+      try {
+        const data = await fromBrowser();
+        viaBrowserUntil = Date.now() + 30 * 60 * 1000;
+        mem.set(path, { t: Date.now(), data });
+        return data;
+      } catch (e) {
+        last = e;
+      }
+    }
+    if (last && /refused|not ready|timed out/.test(last.message)) {
+      blockedUntil = Date.now() + 10 * 60 * 1000;
+      viaBrowserUntil = 0;
+    }
     const old = mem.get(path);
     if (old) return old.data;
     throw last || new Error('SofaScore unreachable');
