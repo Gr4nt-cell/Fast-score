@@ -33,5 +33,9 @@ jobs:
           DAY=$(date -u +%Y%m%d)
           N=$(curl -fsS -m 30 "$URL/v1/day?sport=soccer&date=$DAY&tz=0" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);console.log(j.groups.length+' competitions, '+j.groups.reduce((n,g)=>n+g.events.length,0)+' football events today; checked '+JSON.stringify(j.checked))})")
           echo "::notice title=today::$N"
+          for SP in soccer basketball tennis hockey football baseball mma racing golf rugby volleyball; do
+            L=$(curl -fsS -m 30 "$URL/v1/day?sport=$SP&date=$DAY&tz=0" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>{const j=JSON.parse(s);const live=[];let n=0;for(const g of j.groups){for(const e of g.events){n++;const cs=e.groupings?e.groupings.flatMap(x=>x.competitions):e.competitions;for(const c of cs||[]){const st=(c.status||e.status||{}).type||{};if(st.state==='in'){const names=(c.competitors||[]).map(k=>(k.team||k.athlete||{}).shortDisplayName||(k.team||k.athlete||{}).displayName).join(' v ');live.push(g.league.slug+': '+names+' '+(st.shortDetail||''))}}}}console.log(n+' events, '+live.length+' live'+(live.length?': '+live.slice(0,6).join('; '):''))})" || echo "error")
+            echo "::notice title=$SP::$L"
+          done
           CODE=$(curl -s -o /dev/null -w "%{http_code}" -m 20 "$URL/apis/site/v2/sports/soccer/eng.1/scoreboard")
           echo "::notice title=proxy::ESPN proxy answered HTTP $CODE"
