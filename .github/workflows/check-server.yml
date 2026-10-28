@@ -1,5 +1,6 @@
 # Checks the Fast Score server answers, whenever its address changes, every 6 hours, or on demand.
 # Results appear as notices on the run (and fail the run if the server is down).
+# The status line shows how many games are stored and when the minute timer last ran.
 name: Check server
 
 on:
