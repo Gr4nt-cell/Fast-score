@@ -2,8 +2,9 @@
 # to the "latest" release of this repo, plus a workflow artifact.
 name: Build APK
 
-# Manual only (Actions tab → Run workflow). Codemagic builds automatically on every push.
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:

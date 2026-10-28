@@ -34,6 +34,6 @@ If Codemagic says the `linux_x2` machine isn't on your plan, change `instance_ty
 
 For the Play Store, add a keystore in Codemagic (Teams → Code signing identities → Android keystores, reference name `fastscore`) and run **Fast Score App Bundle**.
 
-A GitHub Actions workflow is also included but only runs when started by hand (Actions → Build APK → Run workflow), since Actions needs billing on private repos.
+GitHub Actions also builds the APK on every push to `main` and attaches `fast-score.apk` to the repo's **latest** release (needs Actions billing on a private repo, or a public repo).
 
 Local development: `npm install`, then `npx expo run:android`.
