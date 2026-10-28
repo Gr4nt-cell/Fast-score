@@ -272,6 +272,48 @@ export function SportBar({ value, onChange, counts = {} }) {
   );
 }
 
+/** The sketch's top bar: compact sport pill that sits between the two circle buttons.
+ *  The chosen sport shows its icon and name; the others show just their icon. */
+export function SportPill({ value, onChange, counts = {} }) {
+  const t = useTheme();
+  return (
+    <Glass radius={23} strong style={{ flex: 1, height: 46, marginHorizontal: 10 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 4, alignItems: 'center' }}>
+        {SPORTS.map((s) => {
+          const on = s.key === value;
+          return (
+            <Pressable
+              key={s.key}
+              hitSlop={4}
+              onPress={() => {
+                tap();
+                onChange(s.key);
+              }}
+            >
+              <View
+                style={{
+                  height: 38,
+                  minWidth: 38,
+                  paddingHorizontal: on ? 12 : 9,
+                  borderRadius: 19,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  backgroundColor: on ? (t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.07)') : 'transparent',
+                }}
+              >
+                <SportIcon name={s.icon} size={20} color={on ? t.blue : t.text} />
+                {on ? <Text style={{ marginLeft: 6, color: t.blue, fontWeight: '700', fontSize: 14 }}>{s.name}</Text> : null}
+                {counts[s.key] ? <View style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, borderRadius: 4, backgroundColor: t.live }} /> : null}
+              </View>
+            </Pressable>
+          );
+        })}
+      </ScrollView>
+    </Glass>
+  );
+}
+
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 9, paddingHorizontal: 4 },
 });

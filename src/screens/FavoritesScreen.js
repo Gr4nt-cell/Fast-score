@@ -1,5 +1,7 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { RefreshControl, ScrollView, Text, View } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
@@ -7,13 +9,14 @@ import { leagueMeta, sportByKey } from '../sports';
 import { pool, scoreboard, teamSchedule } from '../api/espn';
 import { Glass } from '../components/Glass';
 import { MatchRow } from '../components/match';
-import { Card, Chevron, Empty, GlassCircle, LargeHeader, Loading, Logo, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
+import { Card, Chevron, Empty, GlassCircle, Loading, Logo, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { pickToMatch } from './PicksScreen';
 
 export default function FavoritesScreen() {
   const t = useTheme();
   const nav = useNav();
   const { favs, toggle } = useStore();
+  const insets = useSafeAreaInsets();
   const [mode, setMode] = useState('matches');
   const [matches, setMatches] = useState(null);
   const [teamGames, setTeamGames] = useState({});
@@ -61,23 +64,18 @@ export default function FavoritesScreen() {
   const finished = (matches || []).filter((m) => m.state === 'post' && Date.now() - new Date(m.date) > 24 * 3600 * 1000);
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: t.bg }}
-      contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          tintColor={t.secondary}
-          onRefresh={async () => {
-            setRefreshing(true);
-            await Promise.all([loadMatches(), mode === 'teams' ? loadTeams() : null]);
-            setRefreshing(false);
-          }}
-        />
-      }
-    >
-      <LargeHeader title="Favorites" right={<GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />} />
-      <View style={{ paddingHorizontal: 16, marginTop: 14, marginBottom: 14 }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      {/* fixed: title pill + settings circle, then the section bar (from the sketch) */}
+      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
+        <Glass radius={23} strong style={{ flex: 1, height: 46, justifyContent: 'center', paddingHorizontal: 20, marginRight: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Ionicons name="star" size={18} color={t.yellow} />
+            <Text style={{ color: t.text, fontSize: 18, fontWeight: '800', marginLeft: 8 }}>Favorites</Text>
+          </View>
+        </Glass>
+        <GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />
+      </View>
+      <View style={{ paddingHorizontal: 16, marginTop: 12, marginBottom: 12 }}>
         <Segmented
           options={[
             { key: 'matches', label: `Matches${favs.matches.length ? ' ' + favs.matches.length : ''}` },
@@ -89,6 +87,21 @@ export default function FavoritesScreen() {
           onChange={setMode}
         />
       </View>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            tintColor={t.secondary}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await Promise.all([loadMatches(), mode === 'teams' ? loadTeams() : null]);
+              setRefreshing(false);
+            }}
+          />
+        }
+      >
 
       {mode === 'matches' ? (
         !favs.matches.length ? (
@@ -182,6 +195,7 @@ export default function FavoritesScreen() {
           </>
         )
       ) : null}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

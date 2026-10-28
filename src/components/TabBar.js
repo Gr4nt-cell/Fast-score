@@ -14,6 +14,7 @@ export const TABS = [
   { key: 'matches', label: 'Matches', icon: 'football' },
   { key: 'leagues', label: 'Leagues', icon: 'trophy' },
   { key: 'picks', label: 'AI Picks', icon: 'sparkles' },
+  { key: 'live', label: 'Live', icon: 'radio' },
   { key: 'favorites', label: 'Favorites', icon: 'star' },
   { key: 'search', label: 'Search', icon: 'search' },
 ];

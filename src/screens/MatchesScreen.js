@@ -1,29 +1,32 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FlatList, RefreshControl, Text, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useStore } from '../store';
 import { useNav } from '../nav';
 import { sportByKey } from '../sports';
 import { dayBoard, sameDay } from '../api/espn';
-import { LeagueBlock, SportBar } from '../components/match';
+import { LeagueBlock, SportPill } from '../components/match';
 import DateStrip, { startOfDay } from '../components/DateStrip';
-import { Glass } from '../components/Glass';
-import { Pressable } from '../components/Touch';
-import { Empty, GlassCircle, LargeHeader, Loading } from '../components/ui';
-import { tap } from '../haptics';
+import { Empty, GlassCircle, LiveDot, Loading } from '../components/ui';
 
-export default function MatchesScreen() {
+/**
+ * Matches tab and Live tab. Layout from the sketch: a fixed top bar (filter circle · sport
+ * pill · settings circle), then on Matches the calendar, also fixed; only the list scrolls.
+ */
+export default function MatchesScreen({ liveMode = false }) {
   const t = useTheme();
   const nav = useNav();
+  const insets = useSafeAreaInsets();
   const { settings, setSetting, favs } = useStore();
   const [sport, setSport] = useState(settings.sport || 'soccer');
   const [date, setDate] = useState(startOfDay(new Date()));
-  const [live, setLive] = useState(false);
   const [groups, setGroups] = useState(null);
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState('all'); // all | odds
   const reqId = useRef(0);
+  const live = liveMode;
 
   const load = useCallback(
     async (quiet) => {
@@ -76,95 +79,77 @@ export default function MatchesScreen() {
   // days holding a match you follow get a dot, like days with calls in the dialer
   const marked = useMemo(() => new Set(favs.matches.filter((m) => m.sport === sport).map((m) => new Date(m.date).toDateString())), [favs.matches, sport]);
 
-  const header = (
-    <View>
-      <LargeHeader
-        title="Matches"
-        subtitle={live ? `${liveCount} live now` : `${sameDay(date, new Date()) ? 'Today' : date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}${groups ? ` · ${total} events` : ''}${groups && groups.source === 'tsdb' ? ' · via TheSportsDB' : ''}`}
-        left={
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <GlassCircle icon={view === 'odds' ? 'stats-chart' : 'options-outline'} active={view === 'odds'} onPress={() => setView(view === 'odds' ? 'all' : 'odds')} />
-            <Pressable
-              style={{ marginLeft: 10 }}
-              onPress={() => {
-                tap();
-                setLive(!live);
-              }}
-            >
-              {({ pressed }) => (
-                <Glass radius={23} strong pressed={pressed} tint={live ? t.live : undefined} tintOpacity={0.95} style={{ height: 46, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-                  <View style={{ width: 26, height: 26, borderRadius: 8, backgroundColor: live ? 'rgba(255,255,255,0.25)' : t.live, alignItems: 'center', justifyContent: 'center', marginRight: 8 }}>
-                    <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: '#fff' }} />
-                  </View>
-                  <Text style={{ color: live ? '#fff' : t.text, fontSize: 17, fontWeight: '600' }}>Live{liveCount ? ` ${liveCount}` : ''}</Text>
-                </Glass>
-              )}
-            </Pressable>
-          </View>
-        }
-        right={<GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />}
-      />
-      <View style={{ height: 14 }} />
-      <SportBar
-        value={sport}
-        counts={{ [sport]: liveCount }}
-        onChange={(k) => {
-          setSport(k);
-          setSetting('sport', k);
-        }}
-      />
-      <DateStrip
-        value={date}
-        live={liveCount > 0}
-        marked={marked}
-        onChange={(d) => {
-          setLive(false);
-          setDate(d);
-        }}
-      />
-      <View style={{ height: 14 }} />
+  const summary = live
+    ? `${liveCount} live now`
+    : `${sameDay(date, new Date()) ? 'Today' : date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}${groups ? ` · ${total} events` : ''}`;
+
+  // ---- fixed part: top bar (+ calendar on Matches) ----
+  const fixed = (
+    <View style={{ paddingTop: insets.top + 8, backgroundColor: t.bg }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 14 }}>
+        <GlassCircle icon={view === 'odds' ? 'stats-chart' : 'options-outline'} active={view === 'odds'} onPress={() => setView(view === 'odds' ? 'all' : 'odds')} />
+        <SportPill
+          value={sport}
+          counts={{ [sport]: liveCount }}
+          onChange={(k) => {
+            setSport(k);
+            setSetting('sport', k);
+          }}
+        />
+        <GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />
+      </View>
+      {live ? null : <DateStrip value={date} live={liveCount > 0} marked={marked} onChange={setDate} />}
+      <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 22, paddingTop: 12, paddingBottom: 10 }}>
+        {live ? <LiveDot /> : null}
+        <Text style={{ color: live ? t.live : t.secondary, fontSize: 13, fontWeight: '700', flex: 1 }} numberOfLines={1}>
+          {live ? `Live · ${sp.name}` : sp.name} · {summary}
+          {groups && groups.source === 'tsdb' ? ' · via TheSportsDB' : ''}
+        </Text>
+      </View>
     </View>
   );
 
   return (
-    <FlatList
-      style={{ flex: 1, backgroundColor: t.bg }}
-      data={groups ? shown : []}
-      keyExtractor={(g) => g.league.slug}
-      ListHeaderComponent={header}
-      renderItem={({ item }) => <LeagueBlock group={item} sport={sport} showOdds={view === 'odds'} />}
-      ListEmptyComponent={
-        !groups ? (
-          <Loading label={`Loading ${sp.name.toLowerCase()}…`} />
-        ) : error ? (
-          <Empty icon="cloud-offline-outline" title="Couldn't load scores" body={error} action="Try again" onAction={() => load(false)} />
-        ) : (
-          <Empty
-            icon={live ? 'radio-outline' : 'calendar-outline'}
-            title={live ? `No live ${sp.name.toLowerCase()} right now` : `No ${sp.name.toLowerCase()} on this day`}
-            body={live ? 'Turn off Live to see the full schedule.' : 'Try another date or sport.'}
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
+      {fixed}
+      <FlatList
+        style={{ flex: 1 }}
+        data={groups ? shown : []}
+        keyExtractor={(g) => g.league.slug}
+        renderItem={({ item }) => <LeagueBlock group={item} sport={sport} showOdds={view === 'odds'} />}
+        ListEmptyComponent={
+          !groups ? (
+            <Loading label={`Loading ${sp.name.toLowerCase()}…`} />
+          ) : error ? (
+            <Empty icon="cloud-offline-outline" title="Couldn't load scores" body={error} action="Try again" onAction={() => load(false)} />
+          ) : (
+            <Empty
+              icon={live ? 'radio-outline' : 'calendar-outline'}
+              title={live ? `No live ${sp.name.toLowerCase()} right now` : `No ${sp.name.toLowerCase()} on this day`}
+              body={live ? 'Pick another sport above, or check Matches for what’s coming up.' : 'Try another date or sport.'}
+            />
+          )
+        }
+        ListFooterComponent={
+          groups && shown.length ? (
+            <Text style={{ textAlign: 'center', color: t.tertiary, fontSize: 12, marginTop: 4 }}>Pin a competition to keep it at the top</Text>
+          ) : null
+        }
+        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            tintColor={t.secondary}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await load(true);
+              setRefreshing(false);
+            }}
           />
-        )
-      }
-      ListFooterComponent={
-        groups && shown.length ? (
-          <Text style={{ textAlign: 'center', color: t.tertiary, fontSize: 12, marginTop: 4 }}>Pin a competition to keep it at the top</Text>
-        ) : null
-      }
-      contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          tintColor={t.secondary}
-          onRefresh={async () => {
-            setRefreshing(true);
-            await load(true);
-            setRefreshing(false);
-          }}
-        />
-      }
-      initialNumToRender={4}
-      windowSize={7}
-    />
+        }
+        initialNumToRender={4}
+        windowSize={7}
+      />
+    </View>
   );
 }

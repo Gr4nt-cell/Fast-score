@@ -124,21 +124,7 @@ export default function PicksScreen() {
   const today = new Date();
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: t.bg }}
-      contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}
-      refreshControl={
-        <RefreshControl
-          refreshing={refreshing}
-          tintColor={t.secondary}
-          onRefresh={async () => {
-            setRefreshing(true);
-            await run(true);
-            setRefreshing(false);
-          }}
-        />
-      }
-    >
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <LargeHeader
         title="AI Picks"
         subtitle={`Top 5 for ${today.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}`}
@@ -156,6 +142,21 @@ export default function PicksScreen() {
           <Text style={{ color: t.purple, fontWeight: '900', fontSize: 30 }}>{settled.length ? `${Math.round((hits / settled.length) * 100)}%` : '—'}</Text>
         </View>
       </Glass>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}
+        refreshControl={
+          <RefreshControl
+            refreshing={refreshing}
+            tintColor={t.secondary}
+            onRefresh={async () => {
+              setRefreshing(true);
+              await run(true);
+              setRefreshing(false);
+            }}
+          />
+        }
+      >
       {about ? (
         <Card>
           <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>How the picks are made</Text>
@@ -202,6 +203,7 @@ export default function PicksScreen() {
           ))}
         </Card>
       ))}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

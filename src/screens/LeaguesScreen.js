@@ -43,7 +43,7 @@ export default function LeaguesScreen() {
   const open = (s, l) => nav.push({ name: 'league', sport: s, league: l.slug, title: l.name });
 
   return (
-    <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}>
+    <View style={{ flex: 1, backgroundColor: t.bg }}>
       <LargeHeader
         title="Leagues"
         left={
@@ -61,6 +61,7 @@ export default function LeaguesScreen() {
       />
       <View style={{ height: 14 }} />
       <SportBar value={sport} onChange={setSport} />
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}>
       {mode === 'news' ? (
         <NewsList items={newsItems} />
       ) : (
@@ -109,6 +110,7 @@ export default function LeaguesScreen() {
           ))}
         </>
       )}
-    </ScrollView>
+      </ScrollView>
+    </View>
   );
 }

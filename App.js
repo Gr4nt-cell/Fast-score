@@ -167,6 +167,9 @@ function Main() {
 
   let screen;
   switch (tab) {
+    case 'live':
+      screen = <MatchesScreen key="live" liveMode />;
+      break;
     case 'leagues':
       screen = <LeaguesScreen />;
       break;
@@ -180,7 +183,7 @@ function Main() {
       screen = <SearchScreen />;
       break;
     default:
-      screen = <MatchesScreen />;
+      screen = <MatchesScreen key="matches" />;
   }
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
