@@ -1,0 +1,20 @@
+# Cloudflare Workers config for the Fast Score server, at the repo root so Cloudflare's GitHub
+# builds work whether or not the project's root directory is set to "server".
+# The code lives in server/; server/wrangler.toml is the same config for running from there.
+# `name` must match the Worker's name in the Cloudflare dashboard.
+name = "fast-score"
+main = "server/src/index.js"
+compatibility_date = "2026-09-01"
+workers_dev = true
+
+# every minute: refresh live competitions, rotate through the rest
+[triggers]
+crons = ["* * * * *"]
+
+# created automatically on the first deploy; the Worker makes its own tables
+[[d1_databases]]
+binding = "DB"
+database_name = "fastscore"
+
+[vars]
+MAX_FETCH = "14"
