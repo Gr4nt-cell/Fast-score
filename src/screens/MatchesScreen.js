@@ -5,8 +5,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useStore } from '../store';
 import { useNav } from '../nav';
-import { sportByKey } from '../sports';
-import { dayBoard, sameDay } from '../api/espn';
+import { SPORTS, sportByKey } from '../sports';
+import { dayBoard, pool, sameDay } from '../api/espn';
 import { LeagueBlock, SportPill } from '../components/match';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { Empty, GlassCircle, LiveDot, Loading } from '../components/ui';
@@ -20,7 +20,8 @@ export default function MatchesScreen({ liveMode = false }) {
   const nav = useNav();
   const insets = useSafeAreaInsets();
   const { settings, setSetting, favs } = useStore();
-  const [sport, setSport] = useState(settings.sport || 'soccer');
+  // the Live tab starts on every sport at once
+  const [sport, setSport] = useState(liveMode ? 'all' : settings.sport || 'soccer');
   const [date, setDate] = useState(startOfDay(new Date()));
   const [groups, setGroups] = useState(null);
   const [error, setError] = useState(null);
@@ -36,7 +37,17 @@ export default function MatchesScreen({ liveMode = false }) {
       setError(null);
       try {
         const isToday = sameDay(date, new Date());
-        const res = await dayBoard(sport, live ? new Date() : date, { ttl: isToday || live ? 20000 : 5 * 60 * 1000 });
+        const day = live ? new Date() : date;
+        const ttl = isToday || live ? 20000 : 5 * 60 * 1000;
+        let res;
+        if (sport === 'all') {
+          const per = await pool(SPORTS, 4, async (s) => (await dayBoard(s.key, day, { ttl })).map((g) => ({ ...g, sport: s.key })));
+          res = per.filter(Boolean).flat();
+        } else {
+          const b = await dayBoard(sport, day, { ttl });
+          res = b.map((g) => ({ ...g, sport }));
+          res.source = b.source;
+        }
         if (id !== reqId.current) return;
         setGroups(res);
       } catch (e) {
@@ -63,22 +74,24 @@ export default function MatchesScreen({ liveMode = false }) {
   const sp = sportByKey(sport);
   const shown = useMemo(() => {
     let gs = (groups || []).map((g) => ({ ...g, items: live ? g.items.filter((m) => m.state === 'in') : g.items })).filter((g) => g.items.length);
-    const pinned = (slug) => favs.leagues.includes(`${sport}/${slug}`);
-    const top = (slug) => !!(sp.leagues.find((l) => l.slug === slug) || {}).top;
-    const idx = (slug) => sp.leagues.findIndex((l) => l.slug === slug);
+    const pinned = (g) => favs.leagues.includes(`${g.sport}/${g.league.slug}`);
+    const meta = (g) => sportByKey(g.sport).leagues.find((l) => l.slug === g.league.slug) || {};
+    const sIdx = (g) => SPORTS.findIndex((x) => x.key === g.sport);
+    const idx = (g) => sportByKey(g.sport).leagues.findIndex((l) => l.slug === g.league.slug);
     gs = gs.sort((a, b) => {
-      const pa = pinned(a.league.slug) ? 0 : top(a.league.slug) ? 1 : 2;
-      const pb = pinned(b.league.slug) ? 0 : top(b.league.slug) ? 1 : 2;
-      return pa - pb || idx(a.league.slug) - idx(b.league.slug);
+      const pa = pinned(a) ? 0 : meta(a).top ? 1 : 2;
+      const pb = pinned(b) ? 0 : meta(b).top ? 1 : 2;
+      return pa - pb || sIdx(a) - sIdx(b) || idx(a) - idx(b);
     });
     return gs;
-  }, [groups, live, favs.leagues, sport, sp]);
+  }, [groups, live, favs.leagues]);
 
   const total = shown.reduce((n, g) => n + g.items.length, 0);
   const liveCount = (groups || []).reduce((n, g) => n + g.items.filter((m) => m.state === 'in').length, 0);
 
   // days holding a match you follow get a dot, like days with calls in the dialer
-  const marked = useMemo(() => new Set(favs.matches.filter((m) => m.sport === sport).map((m) => new Date(m.date).toDateString())), [favs.matches, sport]);
+  const marked = useMemo(() => new Set(favs.matches.filter((m) => sport === 'all' || m.sport === sport).map((m) => new Date(m.date).toDateString())), [favs.matches, sport]);
+  const sportName = sport === 'all' ? 'All sports' : sp.name;
 
   const summary = live
     ? `${liveCount} live now`
@@ -91,10 +104,11 @@ export default function MatchesScreen({ liveMode = false }) {
         <GlassCircle icon={view === 'odds' ? 'stats-chart' : 'options-outline'} active={view === 'odds'} onPress={() => setView(view === 'odds' ? 'all' : 'odds')} />
         <SportPill
           value={sport}
+          withAll={live}
           counts={{ [sport]: liveCount }}
           onChange={(k) => {
             setSport(k);
-            setSetting('sport', k);
+            if (k !== 'all') setSetting('sport', k);
           }}
         />
         <GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />
@@ -103,7 +117,7 @@ export default function MatchesScreen({ liveMode = false }) {
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 22, paddingTop: 12, paddingBottom: 10 }}>
         {live ? <LiveDot /> : null}
         <Text style={{ color: live ? t.live : t.secondary, fontSize: 13, fontWeight: '700', flex: 1 }} numberOfLines={1}>
-          {live ? `Live · ${sp.name}` : sp.name} · {summary}
+          {live ? `Live · ${sportName}` : sportName} · {summary}
           {groups && groups.source === 'tsdb' ? ' · via TheSportsDB' : ''}
         </Text>
       </View>
@@ -116,18 +130,18 @@ export default function MatchesScreen({ liveMode = false }) {
       <FlatList
         style={{ flex: 1 }}
         data={groups ? shown : []}
-        keyExtractor={(g) => g.league.slug}
-        renderItem={({ item }) => <LeagueBlock group={item} sport={sport} showOdds={view === 'odds'} />}
+        keyExtractor={(g) => `${g.sport}/${g.league.slug}`}
+        renderItem={({ item }) => <LeagueBlock group={item} sport={item.sport || sport} showOdds={view === 'odds'} />}
         ListEmptyComponent={
           !groups ? (
-            <Loading label={`Loading ${sp.name.toLowerCase()}…`} />
+            <Loading label={`Loading ${sportName.toLowerCase()}…`} />
           ) : error ? (
             <Empty icon="cloud-offline-outline" title="Couldn't load scores" body={error} action="Try again" onAction={() => load(false)} />
           ) : (
             <Empty
               icon={live ? 'radio-outline' : 'calendar-outline'}
-              title={live ? `No live ${sp.name.toLowerCase()} right now` : `No ${sp.name.toLowerCase()} on this day`}
-              body={live ? 'Pick another sport above, or check Matches for what’s coming up.' : 'Try another date or sport.'}
+              title={live ? `No live ${sport === 'all' ? 'games' : sp.name.toLowerCase()} right now` : `No ${sp.name.toLowerCase()} on this day`}
+              body={live ? (sport === 'all' ? 'Nothing is in play in any sport at the moment. Check Matches for what’s coming up today.' : 'Pick All or another sport above, or check Matches for what’s coming up.') : 'Try another date or sport.'}
             />
           )
         }

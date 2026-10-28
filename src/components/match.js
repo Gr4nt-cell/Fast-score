@@ -282,12 +282,12 @@ export function SportBar({ value, onChange, counts = {} }) {
 
 /** The sketch's top bar: compact sport pill that sits between the two circle buttons.
  *  The chosen sport shows its icon and name; the others show just their icon. */
-export function SportPill({ value, onChange, counts = {} }) {
+export function SportPill({ value, onChange, counts = {}, withAll = false }) {
   const t = useTheme();
   return (
     <Glass radius={23} strong style={{ flex: 1, height: 46, marginHorizontal: 10 }}>
       <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ padding: 4, alignItems: 'center' }}>
-        {SPORTS.map((s) => {
+        {(withAll ? [{ key: 'all', name: 'All', icon: 'view-grid-outline' }, ...SPORTS] : SPORTS).map((s) => {
           const on = s.key === value;
           return (
             <Pressable

@@ -37,7 +37,7 @@ export const SPORTS = [
       { slug: 'tur.1', name: 'Süper Lig', country: 'Türkiye' },
       { slug: 'sco.1', name: 'Premiership', country: 'Scotland' },
       { slug: 'bel.1', name: 'Pro League', country: 'Belgium' },
-      { slug: 'sau.1', name: 'Saudi Pro League', country: 'Saudi Arabia' },
+      { slug: 'ksa.1', name: 'Saudi Pro League', country: 'Saudi Arabia' },
       { slug: 'gha.1', name: 'Premier League', country: 'Ghana' },
       { slug: 'rsa.1', name: 'Premiership', country: 'South Africa' },
       { slug: 'usa.1', name: 'MLS', country: 'USA', am: true },

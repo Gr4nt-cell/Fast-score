@@ -234,7 +234,14 @@ async function runSync(env) {
     try {
       out.push(await syncBoard(env, j, now));
     } catch (e) {
-      out.push({ key: `${j.sport}/${j.league}/${j.day}`, error: String(e.message || e) });
+      const key = `${j.sport}/${j.league}/${j.day}`;
+      out.push({ key, error: String(e.message || e) });
+      // note the attempt so a competition ESPN rejects is retried on the normal schedule,
+      // not every minute, and still counts as covered for the day
+      await env.DB.prepare(
+        `INSERT INTO boards (key, sport, league, day, checked_at, live, pending) VALUES (?,?,?,?,?,0,0)
+         ON CONFLICT(key) DO UPDATE SET checked_at=excluded.checked_at`
+      ).bind(key, j.sport, j.league, j.day, now).run().catch(() => {});
     }
   }
   // one table per run: the stalest, sooner for competitions whose games just finished
