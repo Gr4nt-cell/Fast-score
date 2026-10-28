@@ -17,10 +17,23 @@ A SofaScore-style live score app for Android with the Liquid Glass look of the i
 
 ## Data
 
-ESPN's public sports API (`site.api.espn.com` / `site.web.api.espn.com`): free, no key, no sign-up. Nothing to configure.
+Two free sources, no keys or sign-up:
 
-## Building
+1. **ESPN's public sports API** (`site.api.espn.com` / `site.web.api.espn.com`) — the main source: live clock, lineups, stats, commentary, odds, news.
+2. **TheSportsDB** (free key `123`) — used automatically if ESPN can't be reached (the app says "via TheSportsDB" under the title). It has scores, tables, lineups, match events and stats, but no odds or news, and its free tier allows ~30 calls a minute, so the app spaces its requests.
 
-Every push to `main` builds a release APK on GitHub Actions (`.github/workflows/build-apk.yml`) and attaches it to the **latest** release of this repo as `fast-score.apk` (also kept as a workflow artifact). You can also run it from the Actions tab with *Run workflow*.
+Settings → Data source lets you force either one.
+
+## Building with Codemagic
+
+1. Sign in at [codemagic.io](https://codemagic.io) with GitHub → **Add application** → pick `Gr4nt-cell/Fast-score` → choose **codemagic.yaml**.
+2. **Start new build** → workflow **Fast Score APK**, branch `main`.
+3. The APK (`fast-score.apk`) appears under the build's Artifacts and is emailed to you. Every later push to `main` builds by itself.
+
+If Codemagic says the `linux_x2` machine isn't on your plan, change `instance_type` to `mac_mini_m2` in `codemagic.yaml`.
+
+For the Play Store, add a keystore in Codemagic (Teams → Code signing identities → Android keystores, reference name `fastscore`) and run **Fast Score App Bundle**.
+
+A GitHub Actions workflow is also included but only runs when started by hand (Actions → Build APK → Run workflow), since Actions needs billing on private repos.
 
 Local development: `npm install`, then `npx expo run:android`.

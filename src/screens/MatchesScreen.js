@@ -41,7 +41,7 @@ export default function MatchesScreen() {
         setGroups([]);
       }
     },
-    [sport, date, live]
+    [sport, date, live, settings.source] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
@@ -80,7 +80,7 @@ export default function MatchesScreen() {
     <View>
       <LargeHeader
         title="Matches"
-        subtitle={live ? `${liveCount} live now` : `${sameDay(date, new Date()) ? 'Today' : date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}${groups ? ` · ${total} events` : ''}`}
+        subtitle={live ? `${liveCount} live now` : `${sameDay(date, new Date()) ? 'Today' : date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}${groups ? ` · ${total} events` : ''}${groups && groups.source === 'tsdb' ? ' · via TheSportsDB' : ''}`}
         left={
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <GlassCircle icon={view === 'odds' ? 'stats-chart' : 'options-outline'} active={view === 'odds'} onPress={() => setView(view === 'odds' ? 'all' : 'odds')} />

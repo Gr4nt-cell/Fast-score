@@ -4,6 +4,17 @@
 // works, so every call falls through to the next host.
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPORTS, leagueMeta, sportByKey } from '../sports';
+import * as tsdb from './sportsdb';
+
+// 'auto' = ESPN, falling back to TheSportsDB when ESPN can't be reached; 'espn'; 'tsdb'
+let MODE = 'auto';
+let espnDownUntil = 0;
+export function setSourceMode(m) {
+  MODE = m || 'auto';
+  espnDownUntil = 0;
+}
+const isTsdb = (league) => String(league || '').startsWith('tsdb');
+const useTsdbFirst = () => MODE === 'tsdb' || (MODE === 'auto' && Date.now() < espnDownUntil);
 
 const HOSTS = ['https://site.web.api.espn.com', 'https://site.api.espn.com'];
 let preferred = 0;
@@ -305,6 +316,7 @@ export function normalizeEvent(e, sport, slug, leagueName) {
 const site = (sport, league) => `/apis/site/v2/sports/${sport}/${league}`;
 
 export async function scoreboard(sport, league, date, ttl = 30000) {
+  if (isTsdb(league)) return tsdb.leagueDay(sport, league, date || new Date());
   const q = date ? `?dates=${ymd(date)}&limit=300` : '?limit=300';
   const json = await get(`${site(sport, league)}/scoreboard${q}`, { ttl });
   const lg = json.leagues && json.leagues[0];
@@ -320,6 +332,12 @@ export async function scoreboard(sport, league, date, ttl = 30000) {
  */
 export async function dayBoard(sportKey, date, { ttl = 30000, leagues } = {}) {
   const sp = sportByKey(sportKey);
+  const fallback = async () => {
+    const r = await tsdb.dayBoard(sp.key, date, ttl);
+    r.source = 'tsdb';
+    return r;
+  };
+  if (useTsdbFirst()) return fallback();
   const list = leagues || sp.leagues;
   const jobs = [];
   list.forEach((l) => {
@@ -327,6 +345,14 @@ export async function dayBoard(sportKey, date, { ttl = 30000, leagues } = {}) {
     if (l.am && !sp.multiDay) jobs.push({ l, d: addDays(date, -1) });
   });
   const res = await pool(jobs, 8, (j) => scoreboard(sp.key, j.l.slug, j.d, ttl));
+  if (jobs.length && res.every((r) => !r)) {
+    // ESPN unreachable: switch to TheSportsDB for the next few minutes
+    if (MODE === 'auto') {
+      espnDownUntil = Date.now() + 5 * 60 * 1000;
+      return fallback();
+    }
+    throw new Error('ESPN could not be reached');
+  }
   const byLeague = new Map();
   res.forEach((r, i) => {
     if (!r) return;
@@ -347,15 +373,18 @@ export async function dayBoard(sportKey, date, { ttl = 30000, leagues } = {}) {
       out.push(g);
     }
   });
+  out.source = 'espn';
   return out;
 }
 
 export async function summary(sport, league, eventId, ttl = 15000) {
+  if (isTsdb(league)) return tsdb.summary(sport, eventId);
   return get(`${site(sport, league)}/summary?event=${eventId}`, { ttl });
 }
 
 /** Standings of a competition as groups of rows. */
 export async function standings(sport, league, ttl = 10 * 60 * 1000) {
+  if (isTsdb(league)) return tsdb.standings(league);
   const json = await get(`/apis/v2/sports/${sport}/${league}/standings`, { ttl, persist: true });
   return parseStandings(json);
 }
@@ -409,6 +438,7 @@ function row(e) {
 }
 
 export async function teams(sport, league) {
+  if (isTsdb(league)) return [];
   const json = await get(`${site(sport, league)}/teams?limit=500`, { ttl: 24 * 3600 * 1000, persist: true });
   const lst = (json.sports && json.sports[0] && json.sports[0].leagues && json.sports[0].leagues[0] && json.sports[0].leagues[0].teams) || [];
   return lst.map((x) => {
@@ -418,11 +448,13 @@ export async function teams(sport, league) {
 }
 
 export async function team(sport, league, id) {
+  if (isTsdb(league)) return tsdb.team(id);
   const json = await get(`${site(sport, league)}/teams/${id}`, { ttl: 10 * 60 * 1000 });
   return json.team || {};
 }
 
 export async function teamSchedule(sport, league, id) {
+  if (isTsdb(league)) return tsdb.teamSchedule(sport, id);
   const urls = [`${site(sport, league)}/teams/${id}/schedule`];
   if (sport === 'soccer') urls.push(`${site(sport, league)}/teams/${id}/schedule?fixture=true`);
   const res = await pool(urls, 2, (u) => get(u, { ttl: 60000 }));
@@ -445,6 +477,7 @@ export async function teamSchedule(sport, league, id) {
 }
 
 export async function roster(sport, league, id) {
+  if (isTsdb(league)) return tsdb.roster(id);
   const json = await get(`${site(sport, league)}/teams/${id}/roster`, { ttl: 6 * 3600 * 1000, persist: true });
   const groups = [];
   const ath = json.athletes || [];
@@ -476,6 +509,7 @@ export async function roster(sport, league, id) {
 }
 
 export async function news(sport, league, limit = 25) {
+  if (isTsdb(league)) return [];
   const json = await get(`${site(sport, league)}/news?limit=${limit}`, { ttl: 5 * 60 * 1000 });
   return (json.articles || []).map((a) => ({
     id: String(a.id || a.headline),
@@ -490,6 +524,7 @@ export async function news(sport, league, limit = 25) {
 }
 
 export async function athlete(sport, league, id) {
+  if (isTsdb(league)) return tsdb.player(id);
   const paths = [`/apis/common/v3/sports/${sport}/${league}/athletes/${id}`, `/apis/common/v3/sports/${sport}/athletes/${id}`];
   let a = null;
   for (const p of paths) {
@@ -510,8 +545,15 @@ export async function athlete(sport, league, id) {
   return { athlete: a || {}, overview, gamelog };
 }
 
-/** ESPN search: teams, players and competitions. Falls back to [] if unavailable. */
+/** Search ESPN and TheSportsDB together; either may come back empty. */
 export async function search(q) {
+  const [a, b] = await Promise.all([MODE === 'tsdb' ? [] : espnSearch(q), MODE === 'espn' ? [] : tsdb.search(q).catch(() => [])]);
+  const seen = new Set(a.map((x) => x.type + norm(x.name)));
+  return [...a, ...b.filter((x) => !seen.has(x.type + norm(x.name)))];
+}
+const norm = (s) => String(s || '').toLowerCase();
+
+async function espnSearch(q) {
   try {
     const j = await get(`/apis/common/v3/search?query=${encodeURIComponent(q)}&limit=30&mode=prefix`, { ttl: 60000, webOnly: true });
     const out = [];

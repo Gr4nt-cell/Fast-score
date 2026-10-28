@@ -212,6 +212,11 @@ export async function generatePicks(date = new Date(), onProgress) {
       gs.forEach((g) => g.items.forEach((m) => m.state === 'pre' && !m.postponed && boards.push(m)));
     } catch {}
   }
+  // TheSportsDB allows ~30 calls a minute, so model its 12 busiest competitions only
+  const tsdbCounts = {};
+  boards.forEach((m) => m.source === 'tsdb' && (tsdbCounts[m.league] = (tsdbCounts[m.league] || 0) + 1));
+  const keepTsdb = new Set(Object.keys(tsdbCounts).sort((a, b) => tsdbCounts[b] - tsdbCounts[a]).slice(0, 12));
+  for (let i = boards.length - 1; i >= 0; i--) if (boards[i].source === 'tsdb' && !keepTsdb.has(boards[i].league)) boards.splice(i, 1);
   onProgress && onProgress(`Modelling ${boards.length} matches…`);
   const preds = await pool(boards, 6, async (m) => {
     const p = await predictMatch(m);

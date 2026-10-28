@@ -1,0 +1,108 @@
+# Codemagic builds for Fast Score.
+#
+# Setup, once:
+#   1. codemagic.io → Add application → GitHub → Gr4nt-cell/Fast-score → "codemagic.yaml".
+#   2. Press "Start new build" and pick the `android-apk` workflow (branch main).
+#      Every later push to main builds by itself.
+#
+# The APK is debug-signed, which is fine for installing straight on a phone. For Google Play,
+# use `android-aab` after adding a keystore under Teams → Code signing identities →
+# Android keystores with the reference name `fastscore`.
+#
+# If your plan refuses linux_x2, change instance_type to mac_mini_m2 (the free tier's machine).
+
+workflows:
+  android-apk:
+    name: Fast Score APK
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      java: 17
+      node: 22
+    triggering:
+      events:
+        - push
+      branch_patterns:
+        - pattern: main
+          include: true
+      cancel_previous_builds: true
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - $CM_BUILD_DIR/node_modules
+    scripts:
+      - name: Install dependencies
+        script: npm install --no-audit --no-fund
+      - name: Build number from the commit count
+        script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
+      - name: Generate the native Android project
+        script: CI=1 npx expo prebuild --platform android --no-install
+      - name: More memory for Gradle
+        script: |
+          cd android
+          sed -i.bak 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
+          grep -q jvmargs gradle.properties || echo "org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g" >> gradle.properties
+      # arm64 + armv7: covers practically every Android phone
+      - name: Build the APK
+        script: |
+          cd android
+          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a
+          cp app/build/outputs/apk/release/app-release.apk $CM_BUILD_DIR/fast-score.apk
+    artifacts:
+      - fast-score.apk
+    publishing:
+      email:
+        recipients:
+          - gstephen116@gmail.com
+        notify:
+          success: true
+          failure: true
+
+  android-aab:
+    name: Fast Score App Bundle (Play Store)
+    instance_type: linux_x2
+    max_build_duration: 60
+    environment:
+      java: 17
+      node: 22
+      android_signing:
+        - fastscore
+    cache:
+      cache_paths:
+        - ~/.gradle/caches
+        - $CM_BUILD_DIR/node_modules
+    scripts:
+      - name: Install dependencies
+        script: npm install --no-audit --no-fund
+      - name: Build number from the commit count
+        script: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> $CM_ENV
+      - name: Generate the native Android project
+        script: CI=1 npx expo prebuild --platform android --no-install
+      - name: Sign release builds with the Codemagic keystore
+        script: |
+          cat >> android/app/build.gradle <<'GRADLE'
+
+          android {
+              signingConfigs {
+                  codemagic {
+                      storeFile file(System.getenv("CM_KEYSTORE_PATH"))
+                      storePassword System.getenv("CM_KEYSTORE_PASSWORD")
+                      keyAlias System.getenv("CM_KEY_ALIAS")
+                      keyPassword System.getenv("CM_KEY_PASSWORD")
+                  }
+              }
+              buildTypes { release { signingConfig signingConfigs.codemagic } }
+          }
+          GRADLE
+      - name: More memory for Gradle
+        script: |
+          cd android
+          sed -i.bak 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
+      - name: Build the bundle
+        script: cd android && ./gradlew bundleRelease --no-daemon
+    artifacts:
+      - android/app/build/outputs/bundle/**/*.aab
+    publishing:
+      email:
+        recipients:
+          - gstephen116@gmail.com

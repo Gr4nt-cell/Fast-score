@@ -765,7 +765,10 @@ export default function MatchScreen({ route }) {
       if (teamGame) {
         const s = await fetchSummary(sport, m.league, m.eventId, 15000);
         setSum(s);
-        if (s && s.header && s.header.competitions) {
+        if (s && s.__match) {
+          const n = s.__match;
+          setM((old) => ({ ...old, ...n, home: { ...old.home, ...n.home, logo: n.home.logo || old.home.logo }, away: { ...old.away, ...n.away, logo: n.away.logo || old.away.logo } }));
+        } else if (s && s.header && s.header.competitions) {
           const n = normalizeEvent({ id: s.header.id, date: s.header.competitions[0].date, competitions: s.header.competitions }, sport, m.league, m.leagueName)[0];
           if (n) setM((old) => ({ ...old, ...n, odds: old.odds || n.odds, venue: n.venue || old.venue, details: n.details.length ? n.details : old.details, home: { ...old.home, ...n.home, form: n.home.form || old.home.form }, away: { ...old.away, ...n.away, form: n.away.form || old.away.form } }));
         }

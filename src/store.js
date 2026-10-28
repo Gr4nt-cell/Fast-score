@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setSourceMode } from './api/espn';
 
 export async function load(key, fallback) {
   try {
@@ -21,6 +22,7 @@ const DEFAULT_SETTINGS = {
   oddsFormat: 'decimal', // decimal | fractional | american
   showOdds: true,
   goalAlerts: true,
+  source: 'auto', // auto | espn | tsdb
 };
 
 const EMPTY_FAVS = { teams: [], leagues: [], matches: [], players: [] };
@@ -35,6 +37,7 @@ export function StoreProvider({ children }) {
 
   useEffect(() => {
     Promise.all([load('settings', DEFAULT_SETTINGS), load('favs', EMPTY_FAVS)]).then(([s, f]) => {
+      setSourceMode((s && s.source) || 'auto');
       setSettings({ ...DEFAULT_SETTINGS, ...s });
       setFavs({ ...EMPTY_FAVS, ...f });
       setReady(true);
@@ -50,6 +53,7 @@ export function StoreProvider({ children }) {
   const setSetting = useCallback((k, v) => {
     setSettings((s) => {
       const n = { ...s, [k]: v };
+      if (k === 'source') setSourceMode(v);
       save('settings', n);
       return n;
     });

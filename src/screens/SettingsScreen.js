@@ -87,6 +87,21 @@ export default function SettingsScreen() {
           <Toggle label="Score alerts" sub="A banner and a buzz when a followed match or team scores while the app is open" value={settings.goalAlerts} onChange={(v) => setSetting('goalAlerts', v)} last />
         </Card>
 
+        <SectionTitle>Data source</SectionTitle>
+        <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
+          <Segmented
+            options={[
+              { key: 'auto', label: 'Auto' },
+              { key: 'espn', label: 'ESPN' },
+              { key: 'tsdb', label: 'SportsDB' },
+            ]}
+            value={settings.source || 'auto'}
+            onChange={(v) => setSetting('source', v)}
+          />
+        </View>
+        <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 22, marginBottom: 14, lineHeight: 18 }}>
+          Auto uses ESPN (live clock, lineups, stats, odds, news) and switches to TheSportsDB by itself if ESPN can't be reached. TheSportsDB's free tier has scores, tables, lineups and events but no odds or live clock.
+        </Text>
         <SectionTitle>Data</SectionTitle>
         <Card>
           <Row
@@ -101,7 +116,7 @@ export default function SettingsScreen() {
           <Row last>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '600' }}>Data source</Text>
-              <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Live scores, stats and news from ESPN's public sports API. AI Picks run on your phone.</Text>
+              <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>ESPN's public sports API, with TheSportsDB as backup. Both are free. AI Picks run on your phone.</Text>
             </View>
           </Row>
         </Card>
