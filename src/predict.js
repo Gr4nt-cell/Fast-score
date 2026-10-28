@@ -12,7 +12,8 @@ import { SPORTS, sportByKey } from './sports';
 import { addDays, dayBoard, pool, scoreboard, teamSchedule, ymd } from './api/espn';
 
 export const LAST_N = 10;
-export const PICK_THRESHOLD = 0.9; // AI Picks only lists calls the model rates at 90% or more
+export const PICK_THRESHOLD = 0.9; // calls at or above this are marked 90%+ and listed first
+export const PICKS_PER_DAY = 5;
 const MARKET_WEIGHT = 0.25;
 const RECENCY = 0.92; // each older game counts 8% less than the one after it
 const HOME_ADV = { soccer: [1.12, 0.9], rugby: 0.06, basketball: 0.06, football: 0.05, hockey: 0.04, baseball: 0.03, volleyball: 0.04 };
@@ -182,9 +183,8 @@ export async function predictMatch(m) {
     safeCands.push({ market: 'Goals', label: 'Under 3.5 goals', short: 'U3.5', prob: model.under35, side: 'under35' });
   }
   // prefer a result call over a goals call when both clear the bar
-  const safe = safeCands
-    .filter((c) => c.prob >= PICK_THRESHOLD)
-    .sort((x, y) => y.prob + (y.market === 'Goals' ? 0 : 0.01) - (x.prob + (x.market === 'Goals' ? 0 : 0.01)))[0] || null;
+  // the strongest call for this match (a result call wins a near-tie with a goals call)
+  const safe = [...safeCands].sort((x, y) => y.prob + (y.market === 'Goals' ? 0 : 0.01) - (x.prob + (x.market === 'Goals' ? 0 : 0.01)))[0] || null;
 
   const unit = m.sport === 'soccer' ? '' : ' pts';
   const reasons = [
@@ -249,7 +249,7 @@ function slim(m, p) {
   };
 }
 
-export async function generatePicks(date = new Date(), onProgress) {
+async function upcoming(date, onProgress) {
   const boards = [];
   for (const ps of PICK_SPORTS) {
     const sp = sportByKey(ps.sport);
@@ -257,8 +257,18 @@ export async function generatePicks(date = new Date(), onProgress) {
     onProgress && onProgress(`Scanning ${sp.name.toLowerCase()}…`);
     try {
       const gs = await dayBoard(ps.sport, date, { leagues, ttl: 120000 });
-      gs.forEach((g) => g.items.forEach((m) => m.state === 'pre' && !m.postponed && boards.push(m)));
+      gs.forEach((g) => g.items.forEach((m) => m.state === 'pre' && !m.postponed && new Date(m.date) > new Date() && boards.push(m)));
     } catch {}
+  }
+  return boards;
+}
+
+export async function generatePicks(date = new Date(), onProgress) {
+  const boards = await upcoming(date, onProgress);
+  // late in the day there may be too few games left: look at tomorrow too
+  if (boards.length < PICKS_PER_DAY * 3) {
+    const more = await upcoming(addDays(date, 1), onProgress);
+    more.forEach((m) => !boards.find((b) => b.key === m.key) && boards.push(m));
   }
   // TheSportsDB allows ~30 calls a minute, so model its 12 busiest competitions only
   const tsdbCounts = {};
@@ -270,34 +280,42 @@ export async function generatePicks(date = new Date(), onProgress) {
     const p = await predictMatch(m);
     return p ? { m, p } : null;
   });
+  // always five: most confident first; teams with a full 10-game record before thinner ones;
+  // at most two per competition unless that's the only way to reach five
+  const full = (x) => x.p.quality !== 'low' && x.p.last.home.length >= LAST_N && x.p.last.away.length >= LAST_N;
   const ranked = preds
-    .filter(Boolean)
-    .filter((x) => x.p.safe && x.p.quality !== 'low' && x.p.last.home.length >= LAST_N && x.p.last.away.length >= LAST_N)
-    .map((x) => ({ ...x, p: { ...x.p, tip: x.p.safe }, rank: x.p.safe.prob }))
+    .filter((x) => x && x.p.safe)
+    .map((x) => ({ ...x, p: { ...x.p, tip: x.p.safe }, rank: x.p.safe.prob + (full(x) ? 1 : 0) }))
     .sort((a, b) => b.rank - a.rank);
-  const perLeague = {};
   const picks = [];
-  for (const x of ranked) {
-    const k = x.m.sport + x.m.league;
-    if ((perLeague[k] || 0) >= 2) continue;
-    perLeague[k] = (perLeague[k] || 0) + 1;
-    picks.push(slim(x.m, x.p));
-    if (picks.length === 5) break;
+  const taken = new Set();
+  for (const cap of [2, Infinity]) {
+    const perLeague = {};
+    picks.forEach((p) => (perLeague[p.sport + p.league] = (perLeague[p.sport + p.league] || 0) + 1));
+    for (const x of ranked) {
+      if (picks.length === PICKS_PER_DAY) break;
+      const k = x.m.sport + x.m.league;
+      if (taken.has(x.m.key) || (perLeague[k] || 0) >= cap) continue;
+      perLeague[k] = (perLeague[k] || 0) + 1;
+      taken.add(x.m.key);
+      picks.push(slim(x.m, x.p));
+    }
   }
+  picks.sort((a, b) => b.tip.prob - a.tip.prob);
   return { date: ymd(date), generatedAt: Date.now(), scanned: boards.length, modelled: preds.filter(Boolean).length, threshold: PICK_THRESHOLD, picks };
 }
 
 export async function getDailyPicks({ force = false, onProgress } = {}) {
   const today = new Date();
-  const key = 'picks90:' + ymd(today);
+  const key = 'picks5:' + ymd(today);
   const saved = await load(key, null);
   if (saved && !force) return saved;
   // once a pick has kicked off, the day's list is locked so the track record stays honest
   if (saved && force && saved.picks.some((p) => new Date(p.date) < new Date())) return saved;
   const fresh = await generatePicks(today, onProgress);
   save(key, fresh);
-  const idx = await load('picks90:index', []);
-  if (!idx.includes(fresh.date)) save('picks90:index', [...idx, fresh.date].slice(-30));
+  const idx = await load('picks5:index', []);
+  if (!idx.includes(fresh.date)) save('picks5:index', [...idx, fresh.date].slice(-30));
   return fresh;
 }
 
@@ -333,12 +351,12 @@ function judge(p, m) {
 
 /** Fill in the results of past picks; returns [{ date, picks }] newest first */
 export async function pickHistory(days = 14) {
-  const idx = await load('picks90:index', []);
+  const idx = await load('picks5:index', []);
   const today = ymd(new Date());
   const out = [];
   for (const d of idx.slice(-days).reverse()) {
     if (d === today) continue;
-    const key = 'picks90:' + d;
+    const key = 'picks5:' + d;
     const day = await load(key, null);
     if (!day) continue;
     let changed = false;

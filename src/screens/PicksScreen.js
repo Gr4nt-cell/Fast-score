@@ -57,7 +57,15 @@ function PickCard({ p, i }) {
           <Text style={{ flex: 1, color: t.secondary, fontSize: 12.5, fontWeight: '600', marginLeft: 4 }} numberOfLines={1}>
             {p.leagueName}
           </Text>
-          <Text style={{ color: t.secondary, fontSize: 12.5, fontWeight: '700' }}>{d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</Text>
+          {conf >= 90 ? (
+            <View style={{ backgroundColor: t.green, borderRadius: 8, paddingHorizontal: 7, height: 20, justifyContent: 'center', marginRight: 8 }}>
+              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>90%+</Text>
+            </View>
+          ) : null}
+          <Text style={{ color: t.secondary, fontSize: 12.5, fontWeight: '700' }}>
+            {d.toDateString() !== new Date().toDateString() ? d.toLocaleDateString([], { weekday: 'short' }) + ' ' : ''}
+            {d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+          </Text>
         </View>
         <View style={{ marginTop: 12, gap: 8 }}>
           {[
@@ -132,7 +140,7 @@ export default function PicksScreen() {
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <LargeHeader
         title="AI Picks"
-        subtitle={`90%+ calls for ${today.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}`}
+        subtitle={`Top 5 for ${today.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}`}
         left={<GlassCircle icon="information-circle-outline" active={about} onPress={() => setAbout(!about)} />}
         right={<GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />}
       />
@@ -166,7 +174,7 @@ export default function PicksScreen() {
         <Card>
           <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>How the picks are made</Text>
           <Text style={{ color: t.secondary, fontSize: 13.5, lineHeight: 20 }}>
-            Every morning the app scans the day's football, NBA, NHL, NFL, MLB and rugby fixtures and looks at each team's last 10 finished matches. For football, a Poisson goals model uses the goals each side scored and conceded in those games, with recent games and games at the same venue counting a little more, plus home advantage. Other sports use win rate and points difference over the last 10. Bookmaker odds, when available, count for 25% as a sanity check. Only calls the model rates at 90% or more make the list, up to five a day (at most two per competition), and only for teams with a full 10-match record. To reach that bar it also considers safer bets: double chance (team or draw), over 1.5 goals and under 3.5 goals. Many days nothing qualifies, and then the list stays empty. The list locks once the first pick kicks off, so the track record is honest. A 90% rating is the model's estimate, not a guarantee; the track record shows how often these actually land.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
+            Every morning the app scans the day's football, NBA, NHL, NFL, MLB and rugby fixtures and looks at each team's last 10 finished matches. For football, a Poisson goals model uses the goals each side scored and conceded in those games, with recent games and games at the same venue counting a little more, plus home advantage. Other sports use win rate and points difference over the last 10. Bookmaker odds, when available, count for 25% as a sanity check. Every day the five most confident calls make the list (at most two per competition), drawn from today's games, or tomorrow's when few are left. Calls the model rates at 90% or more come first and carry a 90%+ badge; the rest show their real confidence, so you can see which are strong and which are weaker. Teams with a full 10-match record are preferred. Besides the result, the model also considers double chance (team or draw), over 1.5 goals and under 3.5 goals. The list locks once the first pick kicks off, so the track record is honest. A percentage is the model's estimate, not a guarantee.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
           </Text>
         </Card>
       ) : null}
@@ -182,8 +190,8 @@ export default function PicksScreen() {
       ) : (
         <Empty
           icon="sparkles-outline"
-          title={error ? 'Couldn’t build picks' : 'No 90% calls today'}
-          body={error || `${day.modelled === 1 ? 'The 1 match the model could rate' : `None of the ${day.modelled || 0} matches the model could rate`} didn't reach 90% confidence. Rather than lower the bar, the list stays empty. Pull down to check again later.`}
+          title={error ? 'Couldn’t build picks' : 'No picks yet'}
+          body={error || 'There aren’t enough upcoming games with data right now. Pull down to try again.'}
           action="Check again"
           onAction={() => run(true)}
         />
