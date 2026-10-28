@@ -12,6 +12,7 @@ import { SPORTS, sportByKey } from './sports';
 import { addDays, dayBoard, pool, scoreboard, teamSchedule, ymd } from './api/espn';
 
 export const LAST_N = 10;
+export const PICK_THRESHOLD = 0.9; // AI Picks only lists calls the model rates at 90% or more
 const MARKET_WEIGHT = 0.25;
 const RECENCY = 0.92; // each older game counts 8% less than the one after it
 const HOME_ADV = { soccer: [1.12, 0.9], rugby: 0.06, basketball: 0.06, football: 0.05, hockey: 0.04, baseball: 0.03, volleyball: 0.04 };
@@ -91,6 +92,8 @@ function soccerModel(m, H, A) {
   let pd = 0;
   let pa = 0;
   let over = 0;
+  let over15 = 0;
+  let under35 = 0;
   let btts = 0;
   for (let i = 0; i <= 10; i++) {
     for (let j = 0; j <= 10; j++) {
@@ -99,11 +102,13 @@ function soccerModel(m, H, A) {
       else if (i === j) pd += p;
       else pa += p;
       if (i + j >= 3) over += p;
+      if (i + j >= 2) over15 += p;
+      if (i + j <= 3) under35 += p;
       if (i > 0 && j > 0) btts += p;
     }
   }
   const s = ph + pd + pa;
-  return { home: ph / s, draw: pd / s, away: pa / s, over, btts, xg: { home: lh, away: la } };
+  return { home: ph / s, draw: pd / s, away: pa / s, over, over15, under35, btts, xg: { home: lh, away: la } };
 }
 
 function genericModel(m, H, A, sport) {
@@ -164,7 +169,22 @@ export async function predictMatch(m) {
   }
   // a goals tip has to clear the result tip by a margin to be preferred
   cands.forEach((c) => (c.score = c.prob - (c.market === '1X2' ? 0 : 0.04)));
-  const tip = cands.sort((x, y) => y.score - x.score)[0];
+  const tip = [...cands].sort((x, y) => y.score - x.score)[0];
+
+  // safer calls that can reach the 90% bar for AI Picks
+  const safeCands = [...cands];
+  if (sp.draws) {
+    safeCands.push({ market: 'Double chance', label: `${hn} or draw`, short: '1X', prob: probs.home + probs.draw, side: 'dc1x' });
+    safeCands.push({ market: 'Double chance', label: `${an} or draw`, short: 'X2', prob: probs.away + probs.draw, side: 'dcx2' });
+  }
+  if (model.over15 != null) {
+    safeCands.push({ market: 'Goals', label: 'Over 1.5 goals', short: 'O1.5', prob: model.over15, side: 'over15' });
+    safeCands.push({ market: 'Goals', label: 'Under 3.5 goals', short: 'U3.5', prob: model.under35, side: 'under35' });
+  }
+  // prefer a result call over a goals call when both clear the bar
+  const safe = safeCands
+    .filter((c) => c.prob >= PICK_THRESHOLD)
+    .sort((x, y) => y.prob + (y.market === 'Goals' ? 0 : 0.01) - (x.prob + (x.market === 'Goals' ? 0 : 0.01)))[0] || null;
 
   const unit = m.sport === 'soccer' ? '' : ' pts';
   const reasons = [
@@ -192,6 +212,7 @@ export async function predictMatch(m) {
     btts: model.btts,
     quality,
     market,
+    safe,
     last: { home: hg, away: ag, homeForm: H.form, awayForm: A.form },
   };
 }
@@ -251,11 +272,8 @@ export async function generatePicks(date = new Date(), onProgress) {
   });
   const ranked = preds
     .filter(Boolean)
-    .filter((x) => x.p.quality !== 'low' || x.p.tip.prob > 0.7)
-    .map((x) => {
-      const top = !!(sportByKey(x.m.sport).leagues.find((l) => l.slug === x.m.league) || {}).top;
-      return { ...x, rank: x.p.tip.prob + (x.p.quality === 'high' ? 0.02 : 0) + (top ? 0.015 : 0) };
-    })
+    .filter((x) => x.p.safe && x.p.quality !== 'low' && x.p.last.home.length >= LAST_N && x.p.last.away.length >= LAST_N)
+    .map((x) => ({ ...x, p: { ...x.p, tip: x.p.safe }, rank: x.p.safe.prob }))
     .sort((a, b) => b.rank - a.rank);
   const perLeague = {};
   const picks = [];
@@ -266,20 +284,20 @@ export async function generatePicks(date = new Date(), onProgress) {
     picks.push(slim(x.m, x.p));
     if (picks.length === 5) break;
   }
-  return { date: ymd(date), generatedAt: Date.now(), scanned: boards.length, modelled: preds.filter(Boolean).length, picks };
+  return { date: ymd(date), generatedAt: Date.now(), scanned: boards.length, modelled: preds.filter(Boolean).length, threshold: PICK_THRESHOLD, picks };
 }
 
 export async function getDailyPicks({ force = false, onProgress } = {}) {
   const today = new Date();
-  const key = 'picks:' + ymd(today);
+  const key = 'picks90:' + ymd(today);
   const saved = await load(key, null);
   if (saved && !force) return saved;
   // once a pick has kicked off, the day's list is locked so the track record stays honest
   if (saved && force && saved.picks.some((p) => new Date(p.date) < new Date())) return saved;
   const fresh = await generatePicks(today, onProgress);
   save(key, fresh);
-  const idx = await load('picks:index', []);
-  if (!idx.includes(fresh.date)) save('picks:index', [...idx, fresh.date].slice(-30));
+  const idx = await load('picks90:index', []);
+  if (!idx.includes(fresh.date)) save('picks90:index', [...idx, fresh.date].slice(-30));
   return fresh;
 }
 
@@ -300,6 +318,14 @@ function judge(p, m) {
       return hs + as < 3;
     case 'btts':
       return hs > 0 && as > 0;
+    case 'dc1x':
+      return hs >= as;
+    case 'dcx2':
+      return as >= hs;
+    case 'over15':
+      return hs + as >= 2;
+    case 'under35':
+      return hs + as <= 3;
     default:
       return null;
   }
@@ -307,12 +333,12 @@ function judge(p, m) {
 
 /** Fill in the results of past picks; returns [{ date, picks }] newest first */
 export async function pickHistory(days = 14) {
-  const idx = await load('picks:index', []);
+  const idx = await load('picks90:index', []);
   const today = ymd(new Date());
   const out = [];
   for (const d of idx.slice(-days).reverse()) {
     if (d === today) continue;
-    const key = 'picks:' + d;
+    const key = 'picks90:' + d;
     const day = await load(key, null);
     if (!day) continue;
     let changed = false;

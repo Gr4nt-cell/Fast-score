@@ -81,7 +81,7 @@ function PickCard({ p, i }) {
             </Text>
           </View>
           <View style={{ marginLeft: 10, alignItems: 'flex-end' }}>
-            <Text style={{ color: conf >= 70 ? t.green : conf >= 55 ? t.orange : t.text, fontWeight: '900', fontSize: 22 }}>{conf}%</Text>
+            <Text style={{ color: conf >= 90 ? t.green : conf >= 70 ? t.orange : t.text, fontWeight: '900', fontSize: 22 }}>{conf}%</Text>
             <Text style={{ color: t.secondary, fontSize: 10.5, fontWeight: '600' }}>confidence</Text>
           </View>
         </View>
@@ -132,7 +132,7 @@ export default function PicksScreen() {
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <LargeHeader
         title="AI Picks"
-        subtitle={`Top 5 for ${today.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}`}
+        subtitle={`90%+ calls for ${today.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}`}
         left={<GlassCircle icon="information-circle-outline" active={about} onPress={() => setAbout(!about)} />}
         right={<GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />}
       />
@@ -166,7 +166,7 @@ export default function PicksScreen() {
         <Card>
           <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>How the picks are made</Text>
           <Text style={{ color: t.secondary, fontSize: 13.5, lineHeight: 20 }}>
-            Every morning the app scans the day's football, NBA, NHL, NFL, MLB and rugby fixtures and looks at each team's last 10 finished matches. For football, a Poisson goals model uses the goals each side scored and conceded in those games, with recent games and games at the same venue counting a little more, plus home advantage. Other sports use win rate and points difference over the last 10. Bookmaker odds, when available, count for 25% as a sanity check. The five most confident calls (at most two per competition) become the day's picks and are locked once the first one kicks off, so the track record is honest.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
+            Every morning the app scans the day's football, NBA, NHL, NFL, MLB and rugby fixtures and looks at each team's last 10 finished matches. For football, a Poisson goals model uses the goals each side scored and conceded in those games, with recent games and games at the same venue counting a little more, plus home advantage. Other sports use win rate and points difference over the last 10. Bookmaker odds, when available, count for 25% as a sanity check. Only calls the model rates at 90% or more make the list, up to five a day (at most two per competition), and only for teams with a full 10-match record. To reach that bar it also considers safer bets: double chance (team or draw), over 1.5 goals and under 3.5 goals. Many days nothing qualifies, and then the list stays empty. The list locks once the first pick kicks off, so the track record is honest. A 90% rating is the model's estimate, not a guarantee; the track record shows how often these actually land.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
           </Text>
         </Card>
       ) : null}
@@ -180,7 +180,13 @@ export default function PicksScreen() {
           ))}
         </>
       ) : (
-        <Empty icon="sparkles-outline" title={error ? 'Couldn’t build picks' : 'No picks today'} body={error || 'There aren’t enough upcoming matches with data today. Pull down to try again later.'} action="Try again" onAction={() => run(true)} />
+        <Empty
+          icon="sparkles-outline"
+          title={error ? 'Couldn’t build picks' : 'No 90% calls today'}
+          body={error || `${day.modelled === 1 ? 'The 1 match the model could rate' : `None of the ${day.modelled || 0} matches the model could rate`} didn't reach 90% confidence. Rather than lower the bar, the list stays empty. Pull down to check again later.`}
+          action="Check again"
+          onAction={() => run(true)}
+        />
       )}
       {history.length ? <SectionTitle>Previous days</SectionTitle> : null}
       {history.map((h) => (
