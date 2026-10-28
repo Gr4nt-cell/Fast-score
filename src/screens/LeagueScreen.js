@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, ScrollView, Text, View } from 'react-native';
+import { Linking, ScrollView, View } from 'react-native';
+import { Text } from '../components/Text';
 import { Image } from 'expo-image';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';

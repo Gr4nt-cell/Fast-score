@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './Text';
 import { Pressable } from './Touch';
 import { Logo } from './ui';
 import { useTheme } from '../theme';

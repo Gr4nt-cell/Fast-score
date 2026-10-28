@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, ScrollView, Text, TextInput, View } from 'react-native';
+import { Keyboard, ScrollView, TextInput, View } from 'react-native';
+import { Text } from '../components/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useNav } from '../nav';

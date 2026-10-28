@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, PanResponder, StyleSheet, Text, View } from 'react-native';
+import { Animated, PanResponder, StyleSheet, View } from 'react-native';
+import { Text } from './Text';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -156,7 +157,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                       </View>
                     ) : null}
                   </View>
-                  <Text style={[styles.label, { color }]} numberOfLines={1} allowFontScaling={false}>
+                  <Text style={[styles.label, { color, fontSize: tabs.length > 5 ? 9.5 : 10 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} allowFontScaling={false}>
                     {tab.label}
                   </Text>
                 </View>
@@ -172,7 +173,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
 const styles = StyleSheet.create({
   wrap: { position: 'absolute', left: 0, right: 0, bottom: 0, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'flex-end' },
   item: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  label: { fontSize: 10, fontWeight: '600', marginTop: 2, letterSpacing: -0.1 },
+  label: { fontSize: 10, fontWeight: '600', marginTop: 2, letterSpacing: -0.2, alignSelf: 'stretch', textAlign: 'center' },
   badge: { position: 'absolute', top: -4, right: -12, minWidth: 18, height: 18, borderRadius: 9, paddingHorizontal: 5, alignItems: 'center', justifyContent: 'center' },
   badgeText: { color: '#fff', fontSize: 11, fontWeight: '700' },
 });

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from './Text';
 import { Pressable } from './Touch';
 import { tap as scrollTick } from '../haptics';
 import { useTheme } from '../theme';
@@ -82,7 +83,7 @@ export default function DateStrip({ value, onChange, marked, live, dimPast = fal
           const has = marked && marked.has(d.toDateString());
           return (
             <Pressable key={d.getDate()} onPress={() => select(d)} style={{ width: DAY_W, alignItems: 'center' }}>
-              <Text style={{ color: t.tertiary, fontSize: 9.5, fontWeight: '600', marginBottom: 3 }}>{WEEKDAYS[d.getDay()]}</Text>
+              <Text allowFontScaling={false} style={{ color: t.tertiary, fontSize: 9.5, fontWeight: '600', marginBottom: 3 }}>{WEEKDAYS[d.getDay()]}</Text>
               <View
                 style={{
                   width: 29,
@@ -96,9 +97,13 @@ export default function DateStrip({ value, onChange, marked, live, dimPast = fal
                 }}
               >
                 <Text
+                  numberOfLines={1}
+                  allowFontScaling={false}
                   style={{
                     color: selected ? '#fff' : isToday ? t.blue : past ? t.tertiary : t.text,
                     fontSize: 14,
+                    width: 29,
+                    textAlign: 'center',
                     fontWeight: selected || isToday ? '700' : '500',
                   }}
                 >

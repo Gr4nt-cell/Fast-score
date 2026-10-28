@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, Switch, Text, View } from 'react-native';
+import { ScrollView, Switch, View } from 'react-native';
+import { Text } from '../components/Text';
 import Constants from 'expo-constants';
 import { useTheme } from '../theme';
 import { useStore } from '../store';

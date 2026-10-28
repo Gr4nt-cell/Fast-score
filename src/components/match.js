@@ -1,5 +1,6 @@
 import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { ScrollView, StyleSheet, View } from 'react-native';
+import { Text } from './Text';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable } from './Touch';
 import { Glass } from './Glass';
@@ -34,16 +35,23 @@ function StatusCol({ m }) {
   let bottom = null;
   if (m.postponed) top = m.status.name.includes('POSTPONED') ? 'PPD' : m.short;
   else if (m.state === 'pre') {
-    top = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    if (!sameDay(d, new Date())) bottom = d.toLocaleDateString([], { day: 'numeric', month: 'short' });
+    const time = d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+    const ampm = time.match(/\s?([AaPp]\.?\s?[Mm]\.?)$/);
+    top = ampm ? time.slice(0, ampm.index).trim() : time;
+    const day = !sameDay(d, new Date()) ? d.toLocaleDateString([], { day: 'numeric', month: 'short' }) : '';
+    bottom = [ampm ? ampm[1].replace(/\./g, '').toUpperCase() : '', day].filter(Boolean).join(' · ') || null;
   } else if (m.state === 'post') top = /FT|Final/i.test(m.short) ? 'FT' : m.short.replace('Final', 'FT');
   else top = m.short;
   return (
     <View style={{ width: 60, alignItems: 'center' }}>
-      <Text style={{ fontSize: 12, fontWeight: live ? '800' : '600', color: live ? t.live : m.postponed ? t.orange : t.secondary, textAlign: 'center' }} numberOfLines={2}>
+      <Text style={{ fontSize: 13, fontWeight: live ? '800' : '600', color: live ? t.live : m.postponed ? t.orange : t.secondary, textAlign: 'center', alignSelf: 'stretch' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {top}
       </Text>
-      {bottom ? <Text style={{ fontSize: 11, color: t.tertiary, marginTop: 2 }}>{bottom}</Text> : null}
+      {bottom ? (
+        <Text style={{ fontSize: 10.5, color: t.tertiary, marginTop: 1, textAlign: 'center', alignSelf: 'stretch' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+          {bottom}
+        </Text>
+      ) : null}
     </View>
   );
 }
@@ -303,7 +311,7 @@ export function SportPill({ value, onChange, counts = {} }) {
                 }}
               >
                 <SportIcon name={s.icon} size={20} color={on ? t.blue : t.text} />
-                {on ? <Text style={{ marginLeft: 6, color: t.blue, fontWeight: '700', fontSize: 14 }}>{s.name}</Text> : null}
+                {on ? <Text numberOfLines={1} style={{ marginLeft: 6, paddingRight: 1, color: t.blue, fontWeight: '700', fontSize: 14 }}>{s.name}</Text> : null}
                 {counts[s.key] ? <View style={{ position: 'absolute', top: 4, right: 4, width: 7, height: 7, borderRadius: 4, backgroundColor: t.live }} /> : null}
               </View>
             </Pressable>
