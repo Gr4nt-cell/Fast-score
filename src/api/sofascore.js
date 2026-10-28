@@ -43,7 +43,10 @@ export const ssBlocked = () => Date.now() < blockedUntil;
 //  direct  - the phone asks api.sofascore.com / www.sofascore.com itself
 //  server  - our Cloudflare Worker asks for us (/ss/... on the Fast Score server)
 //  browser - a hidden sofascore.com page fetches it, exactly like the website
-const ROUTES = ['direct', 'server', 'browser'];
+// SofaScore refuses data-centre addresses (our server and GitHub both get 403), so the server
+// route is only kept for the Settings test; the phone's own routes do the work.
+const ROUTES = ['direct', 'browser'];
+const TEST_ROUTES = ['direct', 'server', 'browser'];
 let goodRoute = null;
 let goodUntil = 0;
 export const lastRoute = () => goodRoute;
@@ -155,7 +158,7 @@ export async function diagnose() {
   const d = new Date();
   const path = `/sport/football/scheduled-events/${dash(d)}`;
   const out = [];
-  for (const route of ROUTES) {
+  for (const route of TEST_ROUTES) {
     const t0 = Date.now();
     const r = route === 'browser' ? await viaBrowser(path, 25000) : await RUN[route](path);
     const data = parse(r);
