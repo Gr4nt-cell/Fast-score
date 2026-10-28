@@ -1,0 +1,9 @@
+node_modules/
+.expo/
+android/
+ios/
+dist/
+*.apk
+*.aab
+npm-debug.log*
+.DS_Store
