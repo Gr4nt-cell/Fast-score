@@ -1,0 +1,27 @@
+name: probe-crash
+on: { push: { branches: [probe-crash] } }
+permissions: { contents: write, actions: read }
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/download-artifact@v4
+        with: { name: fast-score-apk, run-id: 40863406255, github-token: '${{ github.token }}', path: apk }
+      - run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          script: |
+            mkdir -p out; ls apk; adb install -r $(ls apk/*.apk | head -1); adb logcat -c; python3 drive.py news | tee out/drive-news.txt; adb logcat -d > out/logcat-news.txt; adb logcat -c; adb shell am force-stop com.gr4nt.fastscore; python3 drive.py privacy | tee out/drive-priv.txt; adb logcat -d > out/logcat-priv.txt
+      - if: always()
+        run: |
+          grep -E "FATAL|AndroidRuntime|ReactNativeJS|Exception|chromium" out/logcat-*.txt | head -150 || true
+          git config user.name probe; git config user.email probe@x
+          git checkout --orphan probe-out; git rm -rqf . ; git add -f out; git commit -qm out; git push -f origin probe-out
