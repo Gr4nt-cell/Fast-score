@@ -6,4 +6,4 @@ jobs:
     steps:
       - run: |
           sleep 60
-          for i in 1 2 3 4 5; do c=$(curl -s https://fast-score.gstephen116.workers.dev/privacy | grep -ci flashscore); echo "::notice::flashscore mentions=$c"; [ "$c" = 0 ] && break; sleep 60; done
+          for i in 1 2 3 4 5; do c=$(curl -s https://fast-score.gstephen116.workers.dev/privacy | grep -ci flashscore || true); echo "::notice::flashscore mentions=$c"; [ "$c" = 0 ] && break; sleep 60; done
