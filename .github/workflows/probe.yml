@@ -16,7 +16,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
-          disable-animations: false
+          disable-animations: true
           script: mkdir -p out; adb install -r apk/t.apk; adb logcat -c; python3 drive.py | tee out/drive.txt; adb logcat -d > out/logcat.txt
       - if: always()
         run: |

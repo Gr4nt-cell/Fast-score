@@ -4,6 +4,7 @@ def shot(n): sh(f"adb exec-out screencap -p > out/{n}.png")
 def tap(x,y): sh(f"adb shell input tap {x} {y}"); print('tap',x,y,flush=True)
 sh("adb shell settings put global hide_error_dialogs 1")
 sh("adb shell monkey -p com.gr4nt.fastscore -c android.intent.category.LAUNCHER 1"); time.sleep(35); shot('m0')
+sh('adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS'); tap(322,1360); time.sleep(2)
 tap(622,2262); time.sleep(10); shot('l1')     # Live tab
 tap(600,1104); time.sleep(14); shot('x0')
 for i in range(3):
