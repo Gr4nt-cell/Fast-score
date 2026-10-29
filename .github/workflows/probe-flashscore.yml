@@ -12,30 +12,33 @@ jobs:
           UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'
           H=https://global.flashscore.ninja/2/x/feed
           get() { curl -sS -m 20 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
-          E=vcTsZaNE
-          for f in df_sui df_st df_li df_hh df_dos df_sur df_mh df_ml df_lc df_ii df_od dc df_hl df_ps; do get "d_${f}.txt" "$H/${f}_1_$E"; done
-          get d_dc.txt "$H/dc_1_$E"
-          # standings candidates (tournament Gl9hUCqn, stage 4CWHXGM1, ZEE hUIdt7w8?)
-          get s1.txt "$H/to_Gl9hUCqn_4CWHXGM1_1"
-          get s2.txt "$H/to_hUIdt7w8_4CWHXGM1_1"
-          get s3.txt "$H/to_4CWHXGM1_Gl9hUCqn_1"
-          get s4.txt "$H/ss_1_Gl9hUCqn_4CWHXGM1_table_overall"
-          # match page html (has ids/urls), team page html
-          get mpage.html "https://www.flashscore.com/match/$E/"
-          get tpage.html "https://www.flashscore.com/team/carlisle/"
+          for s in 1 2 3 4 5 6 7 8 12 13 19 14 15 16 17 18 21 22 23 24 25 26 36 42; do get "sport$s.txt" "$H/f_${s}_0_0_en_1"; done
+          get s1.txt "$H/ss_1_Gl9hUCqn_hUIdt7w8_table_overall"
+          get s2.txt "$H/to_Gl9hUCqn_hUIdt7w8_1"
+          get s3.txt "$H/ss_1_hUIdt7w8_Gl9hUCqn_table_overall"
+          get s4.txt "$H/st_1_Gl9hUCqn_hUIdt7w8_table_overall"
           get lpage.html "https://www.flashscore.com/football/england/national-league/standings/"
-          get f1.txt "$H/f_1_0_0_en_1"
+          get tpage.html "https://www.flashscore.com/team/carlisle/dUzTIwSF/"
+          get tres.html "https://www.flashscore.com/team/carlisle/dUzTIwSF/results/"
+          get srch.txt "https://s.livesport.services/api/v2/search/?q=arsenal&lang-id=1&type-ids=1,2,3,4&project-id=2&project-type-id=1"
           python3 - <<'PY' >> status.txt
-          import re
-          t=open('f1.txt',encoding='utf8').read()
+          import re,subprocess
+          t=open('sport1.txt',encoding='utf8').read()
           live=[r for r in t.split('~') if r.startswith('AA') and '¬AB÷2¬' in r]
-          print('live', len(live)); print(live[0][:900] if live else '')
-          for n in ['lpage.html','mpage.html']:
-              h=open(n,encoding='utf8',errors='ignore').read()
-              for k in ['feed_sign','fsign','tournament_id','tournamentStage','environment','standings','x/feed/']:
-                  for m in re.finditer(k,h):
-                      print(n,k,h[max(0,m.start()-80):m.start()+160].replace('\n',' ')); break
+          ids=[re.search('AA÷([^¬]+)',r).group(1) for r in live][:2]
+          print('liveids',ids)
+          open('liveids','w').write(' '.join(ids))
+          h=open('lpage.html',encoding='utf8',errors='ignore').read()
+          js=sorted(set(re.findall(r'https://static\.flashscore\.com/res/_fs/build/[a-zA-Z0-9_.\-]+\.js',h)))
+          open('jslist','w').write('\n'.join(js))
+          print('js',len(js))
           PY
+          for id in $(cat liveids); do get "live_dc_$id.txt" "$H/dc_1_$id"; get "live_sui_$id.txt" "$H/df_sui_1_$id"; done
+          mkdir js && for u in $(cat jslist); do curl -sS -m 20 "$u" -o "js/$(basename $u)"; done
+          grep -ohE '.{60}(_hash|pq_graphql|table_overall|ss_1_|to_%|x/feed|/feed/).{100}' js/*.js | sort -u | head -80 > jsgrep.txt
+          grep -ohE '"[a-z]{2,6}_?[a-z]*"\s*:\s*"[a-z]{2,8}"' js/*.js | sort -u | head -60 >> jsgrep.txt
+          rm -rf js
+          cat status.txt
       - name: Save to the probe branch
         run: |
           cd out
