@@ -14,7 +14,8 @@ import { Glass } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import Standings from '../components/Standings';
 import { favMatch } from '../components/match';
-import { Card, Empty, FormPills, GlassCircle, Loading, Logo, PushHeader, Row, StatBar, TabStrip } from '../components/ui';
+import { Card, Empty, FormPills, GlassCircle, Loading, Logo, Row, StatBar, TabStrip } from '../components/ui';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const LOWER_BETTER = /foul|card|offside|turnover|error|penalt|giveaway/i;
 
@@ -319,6 +320,54 @@ function WinProb({ m, sum }) {
   );
 }
 
+
+// ---------- fixed top part ----------
+
+function MatchTopBar({ m, fav, onFav }) {
+  const t = useTheme();
+  const nav = useNav();
+  const insets = useSafeAreaInsets();
+  const title = m.kind === 'field' ? m.eventName : `${m.home.short || m.home.name} vs ${m.away.short || m.away.name}`;
+  return (
+    <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, paddingBottom: 10, flexDirection: 'row', alignItems: 'center' }}>
+      <GlassCircle icon="chevron-back" onPress={nav.pop} />
+      <Glass radius={23} strong style={{ flex: 1, height: 46, justifyContent: 'center', paddingHorizontal: 14, marginHorizontal: 10 }}>
+        <Text style={{ color: t.text, fontSize: 16, fontWeight: '800', textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.75}>
+          {title}
+        </Text>
+      </Glass>
+      <GlassCircle icon={fav ? 'star' : 'star-outline'} color={fav ? t.yellow : undefined} onPress={onFav} />
+    </View>
+  );
+}
+
+/** One-line 1 · X · 2 prices under the tabs (MSport, or the provider the match came with). */
+function OddsBar({ m }) {
+  const t = useTheme();
+  const { settings } = useStore();
+  const o = m.odds && m.odds.home != null ? m.odds : null;
+  if (!o || !settings.showOdds) return null;
+  const sp = sportByKey(m.sport);
+  const fmtDec = (d) => (settings.oddsFormat === 'decimal' ? Number(d).toFixed(2) : formatOdds(d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1)), settings.oddsFormat));
+  const val = (k) => (o.dec && o.dec[k] ? fmtDec(o.dec[k]) : formatOdds(Number(o[k]), settings.oddsFormat));
+  const items = [['1', 'home'], ...(sp.draws && o.draw != null ? [['X', 'draw']] : []), ['2', 'away']];
+  return (
+    <View style={{ paddingHorizontal: 16, marginBottom: 10 }}>
+      <Glass radius={20} strong style={{ height: 44, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 }}>
+        <Text style={{ color: t.secondary, fontSize: 11.5, fontWeight: '800', marginHorizontal: 8 }} numberOfLines={1}>
+          {o.provider || 'Odds'}
+          {o.live ? <Text style={{ color: t.live }}> · LIVE</Text> : null}
+        </Text>
+        {items.map(([lbl, k]) => (
+          <View key={k} style={{ flex: 1, height: 34, marginHorizontal: 3, borderRadius: 14, backgroundColor: t.track, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+            <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '700', marginRight: 6 }}>{lbl}</Text>
+            <Text style={{ color: t.text, fontSize: 15, fontWeight: '800' }}>{val(k)}</Text>
+          </View>
+        ))}
+      </Glass>
+    </View>
+  );
+}
 
 // ---------- momentum & live action ----------
 
@@ -1127,7 +1176,7 @@ export default function MatchScreen({ route }) {
             <MomentumGraph m={m} mom={sum.momentum} />
             {m.state !== 'post' ? <AIPrediction m={m} pred={pred} /> : null}
             <WinProb m={m} sum={sum} />
-            <OddsCard m={m} pick={sum.pickcenter} />
+            {m.odds && m.odds.provider === 'MSport' ? null : <OddsCard m={m} pick={sum.pickcenter} />}
             <MSportMarkets m={m} />
             {m.state === 'post' && pred ? <AIPrediction m={m} pred={pred} /> : null}
             <InfoCard m={m} sum={sum} />
@@ -1138,10 +1187,12 @@ export default function MatchScreen({ route }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <PushHeader title={m.kind === 'field' ? m.eventName : `${m.home.short} vs ${m.away.short}`} subtitle={m.leagueName} right={<GlassCircle icon={fav ? 'star' : 'star-outline'} color={fav ? t.yellow : undefined} onPress={() => toggle('matches', favMatch(m))} />} />
-      <ScrollView contentContainerStyle={{ paddingBottom: 40, paddingTop: 6 }}>
-        {m.kind === 'match' ? <ScoreHeader m={m} sport={sport} /> : null}
-        {tabs.length > 1 ? <TabStrip tabs={tabs} value={tab} onChange={setTab} /> : null}
+      {/* fixed (from the sketch): back · "Home vs Away" pill · star, the score card, the tabs, the odds */}
+      <MatchTopBar m={m} fav={fav} onFav={() => toggle('matches', favMatch(m))} />
+      {m.kind === 'match' ? <ScoreHeader m={m} sport={sport} /> : null}
+      {tabs.length > 1 ? <TabStrip tabs={tabs} value={tab} onChange={setTab} /> : null}
+      {teamGame ? <OddsBar m={m} /> : null}
+      <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40, paddingTop: 2 }}>
         {body()}
       </ScrollView>
     </View>
