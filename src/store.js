@@ -23,6 +23,7 @@ const DEFAULT_SETTINGS = {
   showOdds: true,
   goalAlerts: true,
   source: 'auto', // auto | espn | tsdb
+  language: 'system', // system | en | zh | hi | es | fr | ar | bn | pt | ru | ur
 };
 
 const EMPTY_FAVS = { teams: [], leagues: [], matches: [], players: [] };

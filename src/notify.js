@@ -2,6 +2,7 @@
 import { Linking, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { favMatch } from './components/match';
+import { tr } from './i18n';
 
 const CHANNEL = 'scores';
 
@@ -52,6 +53,11 @@ export async function ensurePermission(ask = true) {
 export const openNotificationSettings = () => Linking.openSettings().catch(() => {});
 
 function text(ev) {
+  const r = rawText(ev);
+  return { title: tr(r.title), body: r.body };
+}
+
+function rawText(ev) {
   const m = ev.match;
   const score = `${m.home.short || m.home.name} ${m.home.score ?? 0}–${m.away.score ?? 0} ${m.away.short || m.away.name}`;
   const where = [m.state === 'in' ? m.short : null, m.leagueName].filter(Boolean).join(' · ');

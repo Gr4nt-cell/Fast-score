@@ -17,6 +17,7 @@ import { ensurePermission, notifyEvent, onNotificationTap } from './src/notify';
 import { setBackgroundChecks } from './src/background';
 import { onLiveTap, syncLive, trackedKeys } from './src/live';
 import { warmOdds } from './src/api/msport';
+import { setLanguage } from './src/i18n';
 import { pickToMatch } from './src/screens/PicksScreen';
 import TabBar, { TABS } from './src/components/TabBar';
 import { BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext } from './src/components/Glass';
@@ -39,14 +40,14 @@ const PANE_ROUTES = new Set(['match', 'league', 'team', 'player']);
 
 function PanePlaceholder({ tab }) {
   const t = useTheme();
-  const what = tab === 'leagues' ? 'a competition' : tab === 'search' ? 'a result' : 'a match';
+  const hint = tab === 'leagues' ? 'Choose a competition on the left to see it here.' : tab === 'search' ? 'Choose a result on the left to see it here.' : 'Choose a match on the left to see it here.';
   return (
     <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
       <View style={{ width: 84, height: 84, borderRadius: 28, backgroundColor: t.track, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
         <Ionicons name={tab === 'leagues' ? 'trophy-outline' : tab === 'picks' ? 'sparkles-outline' : 'football-outline'} size={38} color={t.tertiary} />
       </View>
       <Text style={{ color: t.text, fontSize: 19, fontWeight: '800' }}>Nothing selected</Text>
-      <Text style={{ color: t.secondary, fontSize: 14, marginTop: 6, textAlign: 'center' }}>Choose {what} on the left to see it here.</Text>
+      <Text style={{ color: t.secondary, fontSize: 14, marginTop: 6, textAlign: 'center' }}>{hint}</Text>
     </View>
   );
 }
@@ -334,11 +335,20 @@ function Main() {
   );
 }
 
+// the chosen language; changing it rebuilds the screens so every text switches at once
+function LanguageGate({ children }) {
+  const { settings } = useStore();
+  const lang = setLanguage(settings.language || 'system');
+  return <React.Fragment key={lang}>{children}</React.Fragment>;
+}
+
 export default function App() {
   return (
     <SafeAreaProvider>
       <StoreProvider>
-        <Main />
+        <LanguageGate>
+          <Main />
+        </LanguageGate>
       </StoreProvider>
     </SafeAreaProvider>
   );

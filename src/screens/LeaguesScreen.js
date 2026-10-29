@@ -12,6 +12,7 @@ import { Pressable } from '../components/Touch';
 import { Card, Chevron, Empty, GlassCircle, Loading, Logo, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { leagueInfo, sportLeagues } from '../api/leaguesIndex';
 import { leagueNames } from '../api/flashscore';
+import { tr } from '../i18n';
 import { NewsList } from './LeagueScreen';
 import { Glass } from '../components/Glass';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -155,7 +156,7 @@ export default function LeaguesScreen() {
                   <TextInput
                     value={q}
                     onChangeText={setQ}
-                    placeholder={`Search ${idx.total.toLocaleString()} competitions or countries`}
+                    placeholder={tr(`Search ${idx.total.toLocaleString()} competitions or countries`)}
                     placeholderTextColor={t.secondary}
                     style={{ flex: 1, height: 44, marginLeft: 8, fontSize: 15.5, color: t.text }}
                     autoCorrect={false}

@@ -1,5 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { Keyboard, ScrollView, TextInput, View } from 'react-native';
+import { tr } from '../i18n';
 import { Text } from '../components/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
@@ -115,7 +116,7 @@ export default function SearchScreen() {
           <TextInput
             value={q}
             onChangeText={setQ}
-            placeholder="Teams, players, competitions"
+            placeholder={tr('Teams, players, competitions')}
             placeholderTextColor={t.secondary}
             style={{ flex: 1, height: 50, marginLeft: 10, fontSize: 19, color: t.text }}
             autoCorrect={false}

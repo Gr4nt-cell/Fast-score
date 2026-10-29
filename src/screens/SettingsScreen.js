@@ -10,6 +10,8 @@ import { serverStatus } from '../api/server';
 import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
 import { askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable } from '../live';
 import { AppState, Linking } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LANGUAGES } from '../i18n';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
 
@@ -52,6 +54,22 @@ export default function SettingsScreen() {
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <PushHeader title="Settings" />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
+        <SectionTitle>Language</SectionTitle>
+        <Card>
+          {LANGUAGES.map((l, i) => {
+            const on = (settings.language || 'system') === l.code;
+            return (
+              <Row key={l.code} last={i === LANGUAGES.length - 1} onPress={() => setSetting('language', l.code)}>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: t.text, fontSize: 15.5, fontWeight: on ? '700' : '500' }}>{l.code === 'system' ? 'System language' : l.native}</Text>
+                  {l.code !== 'system' && l.native !== l.name ? <Text style={{ color: t.secondary, fontSize: 12 }}>{l.name}</Text> : null}
+                </View>
+                {on ? <Ionicons name="checkmark" size={20} color={t.blue} /> : null}
+              </Row>
+            );
+          })}
+        </Card>
+
         <SectionTitle>Appearance</SectionTitle>
         <View style={{ paddingHorizontal: 16, marginBottom: 14 }}>
           <Segmented
