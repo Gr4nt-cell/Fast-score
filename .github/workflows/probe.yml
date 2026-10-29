@@ -1,9 +1,24 @@
 name: probe-crash
 on: { push: { branches: [probe-crash] } }
+permissions: { contents: write }
 jobs:
   run:
     runs-on: ubuntu-latest
+    timeout-minutes: 40
     steps:
+      - uses: actions/checkout@v4
       - run: |
-          sleep 60
-          for i in 1 2 3 4 5; do c=$(curl -s https://fast-score.gstephen116.workers.dev/privacy | grep -ci flashscore || true); echo "::notice::flashscore mentions=$c"; [ "$c" = 0 ] && break; sleep 60; done
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: mkdir -p out; adb install -r apk/t.apk; adb logcat -c; python3 drive.py | tee out/drive.txt; adb logcat -d > out/logcat.txt
+      - if: always()
+        run: |
+          git config user.name probe; git config user.email probe@x
+          git checkout --orphan probe-out; git rm -rqf . ; git add -f out; git commit -qm out; git push -f origin probe-out
