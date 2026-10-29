@@ -153,11 +153,11 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                     <Ionicons name={tab.icon === 'search' ? 'search' : on ? tab.icon : tab.icon + '-outline'} size={tabs.length > 5 ? 22 : 24} color={color} />
                     {badges[tab.key] ? (
                       <View style={[styles.badge, { backgroundColor: t.red }]}>
-                        <Text style={styles.badgeText}>{badges[tab.key] > 99 ? '99+' : badges[tab.key]}</Text>
+                        <Text unscaled style={styles.badgeText}>{badges[tab.key] > 99 ? '99+' : badges[tab.key]}</Text>
                       </View>
                     ) : null}
                   </View>
-                  <Text style={[styles.label, { color, fontSize: tabs.length > 5 ? 9.5 : 10 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} allowFontScaling={false}>
+                  <Text unscaled style={[styles.label, { color, fontSize: tabs.length > 5 ? 9.5 : 10 }]} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7} allowFontScaling={false}>
                     {tab.label}
                   </Text>
                 </View>

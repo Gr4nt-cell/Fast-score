@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, TextInput, View } from 'react-native';
-import { Text } from '../components/Text';
+import { ScrollView, View } from 'react-native';
+import { Text, TextInput } from '../components/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useNav } from '../nav';
