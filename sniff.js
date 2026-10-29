@@ -1,15 +1,20 @@
-const { chromium } = require('playwright');
 const fs = require('fs');
 (async () => {
-  const b = await chromium.launch();
-  const p = await (await b.newContext()).newPage();
-  const urls = ['https://static.msport.com/gh/main/js/live-widgets.bbfb33a5.js', 'https://static.msport.com/gh/main/js/widgets-cpt.f24416f3.js', 'https://static.msport.com/gh/main/js/stat-widgets.6f7ee643.js', 'https://static.msport.com/gh/main/js/match-detail.336002c8.js', 'https://static.msport.com/gh/main/js/index.7a2d9df5.js'];
-  for (const u of urls) { try { const t = await (await p.request.get(u)).text(); fs.writeFileSync('out/' + u.split('/').pop(), t); } catch (e) {} }
   const api = 'https://www.msport.com/api/gh/facts-center/query/frontend';
-  const j = await (await p.request.get(`${api}/live-matches/list?sportId=sr:sport:1`, { headers: { operId: '3' } })).json();
-  const e = j.data.tournaments.flatMap((t) => t.events)[0];
-  fs.writeFileSync('out/id.txt', e.eventId);
-  const tries = ['match/detail', 'match/timeline', 'match/events', 'match/statistics', 'match/stats', 'event/timeline', 'live-event/timeline', 'match/incidents', 'match/live-data'];
-  for (const t of tries) { const r = await p.request.get(`${api}/${t}?eventId=${e.eventId}`, { headers: { operId: '3' } }); fs.appendFileSync('out/tries.txt', `${r.status()} ${t} ${(await r.text()).slice(0, 300)}\n`); }
-  await b.close();
+  const H = { operId: '3', Accept: 'application/json', 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) Chrome/130 Mobile Safari/537.36' };
+  const j = await (await fetch(`${api}/live-matches/list?sportId=sr:sport:1`, { headers: H })).json();
+  const evs = j.data.tournaments.flatMap((t) => t.events);
+  const out = [];
+  for (const e of evs.slice(0, 3)) {
+    const d = (await (await fetch(`${api}/match/detail?eventId=${e.eventId}`, { headers: H })).json()).data;
+    out.push({ id: e.eventId, home: d.homeTeam, away: d.awayTeam, played: d.playedTime, score: d.scoreOfWholeMatch, corners: d.soccerCornerScore, book: d.soccerBookingsScore, red: d.soccerRedCardScore, period: d.eventMatchPeriod, st: d.eventMatchStatus,
+      markets: d.markets.map((m) => `${m.id} | ${m.name} | ${m.description} | ${m.specifiers} | ${m.status} | ` + (m.outcomes || []).map((o) => `${o.description}:${o.odds}:${o.probability}:${o.isActive}`).join(' ')) });
+  }
+  fs.writeFileSync('out/ms_detail.json', JSON.stringify(out, null, 1));
+  // flashscore h2h sample
+  const FH = { 'x-fsign': 'SW9D1eZo', Referer: 'https://www.flashscore.com/' };
+  const day = await (await fetch('https://global.flashscore.ninja/2/x/feed/f_1_0_0_en_1', { headers: FH })).text();
+  const ids = [...day.matchAll(/~AA÷([A-Za-z0-9]+)/g)].map((m) => m[1]).slice(0, 2);
+  fs.writeFileSync('out/day_head.txt', day.slice(0, 3000));
+  for (const id of ids) { const t = await (await fetch(`https://global.flashscore.ninja/2/x/feed/df_hh_1_${id}`, { headers: FH })).text(); fs.writeFileSync(`out/hh_${id}.txt`, t.slice(0, 20000)); }
 })();
