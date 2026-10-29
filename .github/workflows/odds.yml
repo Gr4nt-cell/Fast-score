@@ -1,0 +1,28 @@
+# Every 5 minutes: MSport prices for every upcoming match -> odds.json on the "odds" branch.
+# The app downloads that one file instead of ~25 MSport requests.
+name: Odds
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '*/5 * * * *'
+permissions:
+  contents: write
+concurrency:
+  group: odds
+  cancel-in-progress: false
+jobs:
+  odds:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          sparse-checkout: scripts
+      - run: python3 scripts/build_odds.py odds.json
+      - name: Publish
+        run: |
+          mkdir pub && mv odds.json pub/ && cd pub
+          git init -q && git checkout -q -b odds
+          git config user.name odds && git config user.email odds@users.noreply.github.com
+          git add -A && git commit -qm "odds $(date -u +%FT%TZ)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" odds
