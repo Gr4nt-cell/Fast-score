@@ -24,7 +24,7 @@ jobs:
               ms=list(re.finditer(k,h)); print('  ',k,len(ms))
               for m in ms[:2]: print('     ',h[max(0,m.start()-150):m.start()+250].replace('\n',' '))
           PY
-            read T S < "$L.ids"; get "$L.to.txt" "$F/to_${T}_${S}_1"
+            read T S < "$L.ids" || true; get "$L.to.txt" "$F/to_${T}_${S}_1"
           done
           cat status.txt | cut -c1-500
       - name: Save to the probe branch
