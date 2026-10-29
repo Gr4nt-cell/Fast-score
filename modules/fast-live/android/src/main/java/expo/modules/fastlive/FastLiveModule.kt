@@ -1,0 +1,85 @@
+package expo.modules.fastlive
+
+import android.content.Context
+import android.content.Intent
+import android.net.Uri
+import android.os.Build
+import android.os.PowerManager
+import android.provider.Settings
+import expo.modules.kotlin.modules.Module
+import expo.modules.kotlin.modules.ModuleDefinition
+
+class FastLiveModule : Module() {
+  private val ctx: Context
+    get() = appContext.reactContext ?: throw IllegalStateException("No context")
+
+  override fun definition() = ModuleDefinition {
+    Name("FastLive")
+
+    Events("onTap")
+
+    /** Replace the list of followed matches (JSON array) and start/schedule the tracker. */
+    Function("sync") { json: String ->
+      Live.saveItems(ctx, json)
+      Live.kick(ctx)
+      true
+    }
+
+    Function("setEnabled") { on: Boolean ->
+      Live.setEnabled(ctx, on)
+      Live.kick(ctx)
+      true
+    }
+
+    Function("isRunning") { LiveService.running }
+
+    /** Keys of matches the tracker is handling (the app's own 15-minute check skips these). */
+    Function("trackedKeys") { Live.items(ctx).map { it.key } }
+
+    /** The match of a tapped alert that opened the app, once. */
+    Function("consumeTap") {
+      val act = appContext.currentActivity
+      val intent = act?.intent
+      val tap = intent?.getStringExtra(Live.EXTRA_TAP)
+      if (tap != null) intent.removeExtra(Live.EXTRA_TAP)
+      tap
+    }
+
+    Function("canExactAlarms") {
+      if (Build.VERSION.SDK_INT < 31) true
+      else (ctx.getSystemService(android.app.AlarmManager::class.java)?.canScheduleExactAlarms() ?: false)
+    }
+
+    Function("isIgnoringBattery") {
+      val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
+      pm.isIgnoringBatteryOptimizations(ctx.packageName)
+    }
+
+    /** Ask Android not to put the app to sleep (needed on OPPO / realme / Xiaomi for live alerts). */
+    Function("requestIgnoreBattery") {
+      try {
+        val i = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        ctx.startActivity(i)
+        true
+      } catch (e: Exception) {
+        try {
+          val i = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+          i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          ctx.startActivity(i)
+          true
+        } catch (e2: Exception) {
+          false
+        }
+      }
+    }
+
+    OnNewIntent { intent ->
+      val tap = intent.getStringExtra(Live.EXTRA_TAP)
+      if (tap != null) {
+        intent.removeExtra(Live.EXTRA_TAP)
+        sendEvent("onTap", mapOf("match" to tap))
+      }
+    }
+  }
+}
