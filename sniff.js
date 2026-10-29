@@ -17,11 +17,12 @@ const fs = require('fs');
     if (hit || /sportradar|gismo/.test(u)) fs.writeFileSync(`out/h${n}.txt`, u + '\n\n' + txt.slice(0, 400000));
   });
   p.on('websocket', (ws) => log.push({ ws: ws.url() }));
-  await p.goto('https://www.msport.com/gh/sports/football', { waitUntil: 'networkidle', timeout: 60000 }).catch((e) => log.push({ err: String(e) }));
+  await p.goto('https://www.msport.com/gh/', { waitUntil: 'networkidle', timeout: 60000 }).catch((e) => log.push({ err: String(e) }));
   await p.waitForTimeout(5000);
   const links = await p.evaluate(() => [...new Set([...document.querySelectorAll('a')].map((a) => a.href))]);
   fs.writeFileSync('out/links.txt', links.join('\n'));
   const live = links.filter((h) => /live/i.test(h)).slice(0, 5);
+  await p.screenshot({ path: 'out/home.png' });
   log.push({ live });
   const liveUrl = links.find((h) => /\/live\/?$|live-betting|inplay/i.test(h)) || live[0];
   if (liveUrl) {
