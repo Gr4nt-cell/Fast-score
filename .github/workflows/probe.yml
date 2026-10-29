@@ -12,42 +12,34 @@ jobs:
           UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'
           H=https://global.flashscore.ninja/2/x/feed
           get() { curl -sSL -m 25 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download} %{url_effective}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
-          for o in -1 -2 -3 -4 -5; do get "f$o.txt" "$H/f_1_${o}_0_en_1"; done
-          python3 - <<'PY'
+          E=fXmefEGl
+          DS=https://2.ds.lsapp.eu/pq_graphql
+          get mm1.txt "$DS?_hash=mmts&eventId=$E&projectId=2"
+          get mm2.txt "$DS?_hash=mmte&eventId=$E&projectId=2"
+          get od1.txt "$DS?_hash=ope&eventId=$E&projectId=2&geoIpCode=GH&geoIpSubdivisionCode=GHAA"
+          get od2.txt "https://global.ds.lsapp.eu/odds/pq_graphql?_hash=ope&eventId=$E&projectId=2&geoIpCode=GH&geoIpSubdivisionCode=GHAA"
+          get ts1.txt "$DS?_hash=dsos2&eventId=$E&projectId=2"
+          get ms_home2.html "https://www.msport.com/gh/sports/football"
+          mkdir msjs
+          for u in https://static.msport.com/gh/main/js/chunk-base.65f29a38.js https://static.msport.com/gh/main/js/chunk-utils.9cca4cbb.js https://static.msport.com/gh/main/js/index.7a2d9df5.js; do curl -sS -m 30 "$u" -o "msjs/$(basename $u)"; done
+          python3 - <<'PY' > msapi.txt
           import re,glob
-          for f in sorted(glob.glob('f-*.txt')):
-              t=open(f,encoding='utf8').read(); lg=''
-              for r in t.split('~'):
-                  if r.startswith('ZA'): lg=r
-                  elif r.startswith('AA') and '¬AB÷3¬' in r and 'ENGLAND: Premier League¬' in lg:
-                      open('epl','w').write(re.search('AA÷([^¬]+)',r).group(1)); raise SystemExit
+          for f in glob.glob('msjs/*.js'):
+              t=open(f,encoding='utf8',errors='ignore').read()
+              print('##',f,len(t))
+              for m in re.finditer(r'["\'`](/api/[^"\'`]{2,140}|/[a-z\-]+-center/[^"\'`]{2,140}|facts[^"\'`]{2,100})["\'`]',t):
+                  print(m.group(1))
+              for k in ['baseURL','apiPrefix','/api/','operId','x-operid','OperId','clientid','ClientId']:
+                  for m in list(re.finditer(re.escape(k),t))[:4]:
+                      print('CTX',k,'::',t[max(0,m.start()-150):m.start()+200].replace('\n',' '))
+              # find chunk names for lazy loading
+              print('CHUNKS', sorted(set(re.findall(r'"(chunk-[a-z0-9\-]+)":"([0-9a-f]{8})"',t)))[:80])
           PY
-          E=$(cat epl); echo "epl $E" >> status.txt
-          get dc.txt "$H/dc_1_$E"
-          for f in df_mc df_lc df_mh df_mo df_mm df_gr df_mmt df_tl df_pbp df_st df_sui df_od df_vo df_ps df_mom df_ma; do get "x_$f.txt" "$H/${f}_1_$E"; done
-          get mpage.html "https://www.flashscore.com/match/$E/#/match-summary/match-statistics/0"
-          python3 - <<'PY' > js.txt
-          import re
-          h=open('mpage.html',encoding='utf8',errors='ignore').read()
-          for u in sorted(set(re.findall(r'https://static\.flashscore\.com/res/_fs/build/[A-Za-z0-9_.\-]+\.js',h))): print(u)
-          PY
-          mkdir js; for u in $(cat js.txt); do curl -sS -m 20 "$u" -o "js/$(basename $u)"; done
-          grep -ohiE '.{120}momentum.{160}' js/*.js | sort -u | head -40 > jsmomentum.txt
-          grep -ohE '"?[a-z_]{2,8}_%(SPORT_ID|EVENT_ID|PROJECT)[^"`]{0,80}' js/*.js | sort -u | head -80 > jsfeeds.txt
-          grep -ohE '[A-Z_]{4,40}:"[a-z0-9]{2,10}"' js/*.js | sort -u | grep -i "mom\|comment\|stat\|odds\|graph" | head -60 > jshashes.txt
-          rm -rf js
-          # MSport
-          get ms_home.html "https://www.msport.com/gh"
-          python3 - <<'PY' > msjs.txt
-          import re
-          h=open('ms_home.html',encoding='utf8',errors='ignore').read()
-          for u in sorted(set(re.findall(r'(?:src|href)="([^"]+\.js)"',h))): print(u if u.startswith('http') else 'https://www.msport.com'+u)
-          PY
-          mkdir msjs; for u in $(head -30 msjs.txt); do curl -sS -m 20 "$u" -o "msjs/$(basename "$u" | cut -c1-80)"; done
-          grep -ohE '"/api/[^"]{3,120}"|`/api/[^`]{3,120}`|/facts-center/[A-Za-z0-9/_\-]{3,100}|/factsCenter/[A-Za-z0-9/_\-]{3,100}' msjs/* ms_home.html | sort -u | head -150 > msapi.txt
-          grep -ohE 'https?://[a-z0-9.\-]*msport[a-z0-9.\-]*' msjs/* ms_home.html | sort -u > mshosts.txt
+          for c in $(grep -oE 'chunk-[a-z0-9-]*sport[a-z0-9-]*":"[0-9a-f]{8}' msapi.txt | head -6 | tr -d '"' | tr ':' '.'); do curl -sS -m 30 "https://static.msport.com/gh/main/js/$c.js" -o "msjs/$c.js"; done
+          grep -ohE '.{100}(/api/|facts-center).{160}' msjs/*.js | sort -u | head -60 > msapi2.txt
+          for u in "https://www.msport.com/api/gh/facts-center/query/frontend/get-events?sportId=sr:sport:1" "https://www.msport.com/api/gh/facts-center/query/frontend/match-list?sportId=sr:sport:1" "https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1"; do n=$(echo $u | md5sum | cut -c1-6); get "msp_$n.txt" "$u"; done
           rm -rf msjs
-          cat status.txt; wc -l *.txt
+          cat status.txt
       - name: Save to the probe branch
         run: |
           cd out
