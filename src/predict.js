@@ -9,7 +9,7 @@
 // app can show how they did.
 import { americanToProb, load, save } from './store';
 import { SPORTS, sportByKey } from './sports';
-import { addDays, dayBoard, pool, scoreboard, teamSchedule, ymd } from './api/espn';
+import { addDays, dayBoard, pool, recentGames, scoreboard, ymd } from './api/espn';
 
 export const LAST_N = 10;
 export const PICK_THRESHOLD = 0.9; // calls at or above this are marked 90%+ and listed first
@@ -27,7 +27,7 @@ const recentCache = new Map();
 /** A team's last 10 finished games before `before`, newest first. */
 export async function lastMatches(sport, league, teamId, before = new Date()) {
   const k = `${sport}/${league}/${teamId}`;
-  if (!recentCache.has(k)) recentCache.set(k, teamSchedule(sport, league, teamId).catch(() => []));
+  if (!recentCache.has(k)) recentCache.set(k, recentGames(sport, league, teamId).catch(() => []));
   const games = await recentCache.get(k);
   const cutoff = new Date(before).getTime();
   return games
@@ -249,7 +249,8 @@ function slim(m, p) {
   };
 }
 
-async function upcoming(date, onProgress) {
+// past = true: every finished game of that day (for working out a day nobody opened the app)
+async function upcoming(date, onProgress, past = false) {
   const boards = [];
   for (const ps of PICK_SPORTS) {
     const sp = sportByKey(ps.sport);
@@ -257,16 +258,21 @@ async function upcoming(date, onProgress) {
     onProgress && onProgress(`Scanning ${sp.name.toLowerCase()}…`);
     try {
       const gs = await dayBoard(ps.sport, date, { leagues, ttl: 120000 });
-      gs.forEach((g) => g.items.forEach((m) => m.state === 'pre' && !m.postponed && new Date(m.date) > new Date() && boards.push(m)));
+      gs.forEach((g) =>
+        g.items.forEach((m) => {
+          if (m.postponed) return;
+          if (past ? m.state === 'post' : m.state === 'pre' && new Date(m.date) > new Date()) boards.push(m);
+        })
+      );
     } catch {}
   }
   return boards;
 }
 
-export async function generatePicks(date = new Date(), onProgress) {
-  const boards = await upcoming(date, onProgress);
+export async function generatePicks(date = new Date(), onProgress, { past = false, spill = true } = {}) {
+  const boards = await upcoming(date, onProgress, past);
   // late in the day there may be too few games left: look at tomorrow too
-  if (boards.length < PICKS_PER_DAY * 3) {
+  if (spill && !past && boards.length < PICKS_PER_DAY * 3) {
     const more = await upcoming(addDays(date, 1), onProgress);
     more.forEach((m) => !boards.find((b) => b.key === m.key) && boards.push(m));
   }
@@ -349,6 +355,40 @@ function judge(p, m) {
   }
 }
 
+/** Fill in the results of a day's picks (saves them when anything changed). */
+async function settle(key, day, date) {
+  let changed = false;
+  await pool(day.picks, 4, async (p) => {
+    if (p.result != null) return;
+    if (new Date(p.date) > new Date()) return;
+    const dates = [new Date(p.date), addDays(new Date(p.date), -1), date];
+    for (const dt of dates) {
+      try {
+        const sb = await scoreboard(p.sport, p.league, dt, 10 * 60 * 1000);
+        const m = sb.items.find((x) => x.key === p.key || x.eventId === p.eventId);
+        if (m && m.state === 'post') {
+          const r = judge(p, m);
+          if (r != null) {
+            p.result = r;
+            p.final = `${m.home.score}-${m.away.score}`;
+            changed = true;
+          }
+          break;
+        }
+        if (m && m.postponed) {
+          p.result = 'void';
+          changed = true;
+          break;
+        }
+      } catch {}
+    }
+  });
+  if (changed) save(key, day);
+  return day;
+}
+
+const parseYmd = (d) => new Date(Number(d.slice(0, 4)), Number(d.slice(4, 6)) - 1, Number(d.slice(6, 8)));
+
 /** Fill in the results of past picks; returns [{ date, picks }] newest first */
 export async function pickHistory(days = 14) {
   const idx = await load('picks5:index', []);
@@ -359,36 +399,41 @@ export async function pickHistory(days = 14) {
     const key = 'picks5:' + d;
     const day = await load(key, null);
     if (!day) continue;
-    let changed = false;
-    const date = new Date(Number(d.slice(0, 4)), Number(d.slice(4, 6)) - 1, Number(d.slice(6, 8)));
-    await pool(day.picks, 4, async (p) => {
-      if (p.result != null) return;
-      const dates = [new Date(p.date), addDays(new Date(p.date), -1), date];
-      for (const dt of dates) {
-        try {
-          const sb = await scoreboard(p.sport, p.league, dt, 10 * 60 * 1000);
-          const m = sb.items.find((x) => x.key === p.key || x.eventId === p.eventId);
-          if (m && m.state === 'post') {
-            const r = judge(p, m);
-            if (r != null) {
-              p.result = r;
-              p.final = `${m.home.score}-${m.away.score}`;
-              changed = true;
-            }
-            break;
-          }
-          if (m && m.postponed) {
-            p.result = 'void';
-            changed = true;
-            break;
-          }
-        } catch {}
-      }
-    });
-    if (changed) save(key, day);
-    out.push(day);
+    out.push(await settle(key, day, parseYmd(d)));
   }
   return out;
+}
+
+/**
+ * The five picks for any calendar day:
+ *  - today: the day's locked list (as before);
+ *  - an earlier day: the list the app made that day, with results; if the app wasn't opened that
+ *    day, the list is worked out afterwards from each team's games before kick-off ("worked out
+ *    later"), so it's still an honest test of the model;
+ *  - a later day: a preview from the fixtures known so far (refreshed every few hours).
+ * Returns the day plus `kind`: 'today' | 'saved' | 'backtest' | 'preview'.
+ */
+export async function picksForDate(date, { force = false, onProgress } = {}) {
+  const d = ymd(date);
+  const today = ymd(new Date());
+  if (d === today) return { ...(await getDailyPicks({ force, onProgress })), kind: 'today' };
+  if (d < today) {
+    const saved = await load('picks5:' + d, null);
+    if (saved) return { ...(await settle('picks5:' + d, saved, date)), kind: 'saved' };
+    const btKey = 'picksbt:' + d;
+    let bt = force ? null : await load(btKey, null);
+    if (!bt || !bt.picks.length) {
+      bt = await generatePicks(date, onProgress, { past: true, spill: false });
+      save(btKey, bt);
+    }
+    return { ...(await settle(btKey, bt, date)), kind: 'backtest' };
+  }
+  const fKey = 'picksf:' + d;
+  const cached = force ? null : await load(fKey, null);
+  if (cached && Date.now() - cached.generatedAt < 3 * 3600 * 1000 && cached.picks.length) return { ...cached, kind: 'preview' };
+  const fresh = await generatePicks(date, onProgress, { spill: false });
+  save(fKey, fresh);
+  return { ...fresh, kind: 'preview' };
 }
 
 export { SPORTS };

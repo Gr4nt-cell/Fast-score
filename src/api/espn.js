@@ -6,6 +6,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SPORTS, leagueMeta, sportByKey } from '../sports';
 import * as tsdb from './sportsdb';
 import * as ss from './sofascore';
+import * as fs from './flashscore';
 import { markServerDown, serverJson, serverUrl } from './server';
 
 // 'auto' = ESPN, falling back to TheSportsDB when ESPN can't be reached; 'espn'; 'tsdb'
@@ -17,8 +18,11 @@ export function setSourceMode(m) {
 }
 const isTsdb = (league) => String(league || '').startsWith('tsdb');
 const isSs = (league) => String(league || '').startsWith('ss:');
+const isFs = (league) => String(league || '').startsWith('fs:');
+// the worldwide live feed first in Auto (and when chosen), unless it's failing right now
+const useFs = (sport) => (MODE === 'auto' || MODE === 'flashscore') && fs.supports(sport) && !fs.fsDown();
 // SofaScore first in Auto (and when chosen), unless it's refusing requests right now
-const useSs = (sport) => (MODE === 'auto' || MODE === 'sofascore') && ss.supports(sport) && !ss.ssBlocked();
+const useSs = (sport) => MODE === 'sofascore' && ss.supports(sport) && !ss.ssBlocked();
 const useTsdbFirst = () => MODE === 'tsdb' || (MODE === 'auto' && Date.now() < espnDownUntil);
 
 const HOSTS = ['https://site.web.api.espn.com', 'https://site.api.espn.com'];
@@ -345,6 +349,7 @@ const site = (sport, league) => `/apis/site/v2/sports/${sport}/${league}`;
 export async function scoreboard(sport, league, date, ttl = 30000) {
   if (isTsdb(league)) return tsdb.leagueDay(sport, league, date || new Date());
   if (isSs(league)) return ss.leagueDay(sport, league, date || new Date());
+  if (isFs(league)) return fs.leagueDay(sport, league, date || new Date());
   const q = date ? `?dates=${ymd(date)}&limit=300` : '?limit=300';
   const json = await get(`${site(sport, league)}/scoreboard${q}`, { ttl });
   const lg = json.leagues && json.leagues[0];
@@ -366,6 +371,20 @@ export async function dayBoard(sportKey, date, { ttl = 30000, leagues } = {}) {
     return r;
   };
   if (useTsdbFirst()) return fallback();
+  if (useFs(sp.key)) {
+    try {
+      let r = await fs.dayBoard(sp.key, date, ttl);
+      if (leagues) {
+        // a shortlist (AI Picks): the main competitions only
+        const top = r.filter((g) => g.league.priority >= 74);
+        r = top.length ? top : r.slice(0, 15);
+        r.source = 'flashscore';
+      }
+      return r;
+    } catch {
+      // fall through
+    }
+  }
   if (useSs(sp.key)) {
     try {
       let r = await ss.dayBoard(sp.key, date, ttl);
@@ -471,6 +490,7 @@ async function serverDay(sp, date, leagues, ttl) {
 export async function summary(sport, league, eventId, ttl = 15000) {
   if (isTsdb(league)) return tsdb.summary(sport, eventId);
   if (isSs(league)) return ss.summary(sport, eventId);
+  if (isFs(league)) return fs.summary(sport, eventId);
   return get(`${site(sport, league)}/summary?event=${eventId}`, { ttl });
 }
 
@@ -478,6 +498,7 @@ export async function summary(sport, league, eventId, ttl = 15000) {
 export async function standings(sport, league, ttl = 10 * 60 * 1000) {
   if (isTsdb(league)) return tsdb.standings(league);
   if (isSs(league)) return ss.standings(league);
+  if (isFs(league)) return fs.standings(league);
   const json = await get(`/apis/v2/sports/${sport}/${league}/standings`, { ttl, persist: true });
   return parseStandings(json);
 }
@@ -531,7 +552,7 @@ function row(e) {
 }
 
 export async function teams(sport, league) {
-  if (isTsdb(league) || isSs(league)) return [];
+  if (isTsdb(league) || isSs(league) || isFs(league)) return [];
   const json = await get(`${site(sport, league)}/teams?limit=500`, { ttl: 24 * 3600 * 1000, persist: true });
   const lst = (json.sports && json.sports[0] && json.sports[0].leagues && json.sports[0].leagues[0] && json.sports[0].leagues[0].teams) || [];
   return lst.map((x) => {
@@ -543,13 +564,21 @@ export async function teams(sport, league) {
 export async function team(sport, league, id) {
   if (isTsdb(league)) return tsdb.team(id);
   if (isSs(league)) return ss.team(id);
+  if (isFs(league)) return fs.team(id);
   const json = await get(`${site(sport, league)}/teams/${id}`, { ttl: 10 * 60 * 1000 });
   return json.team || {};
+}
+
+/** Recent games for the prediction model (lighter than a full schedule where possible). */
+export async function recentGames(sport, league, id) {
+  if (isFs(league)) return fs.recentGames(sport, id);
+  return teamSchedule(sport, league, id);
 }
 
 export async function teamSchedule(sport, league, id) {
   if (isTsdb(league)) return tsdb.teamSchedule(sport, id);
   if (isSs(league)) return ss.teamSchedule(sport, id);
+  if (isFs(league)) return fs.teamSchedule(sport, id);
   const urls = [`${site(sport, league)}/teams/${id}/schedule`];
   if (sport === 'soccer') urls.push(`${site(sport, league)}/teams/${id}/schedule?fixture=true`);
   const res = await pool(urls, 2, (u) => get(u, { ttl: 60000 }));
@@ -574,6 +603,7 @@ export async function teamSchedule(sport, league, id) {
 export async function roster(sport, league, id) {
   if (isTsdb(league)) return tsdb.roster(id);
   if (isSs(league)) return ss.roster(id);
+  if (isFs(league)) return fs.roster(id);
   const json = await get(`${site(sport, league)}/teams/${id}/roster`, { ttl: 6 * 3600 * 1000, persist: true });
   const groups = [];
   const ath = json.athletes || [];
@@ -605,7 +635,7 @@ export async function roster(sport, league, id) {
 }
 
 export async function news(sport, league, limit = 25) {
-  if (isTsdb(league) || isSs(league)) return [];
+  if (isTsdb(league) || isSs(league) || isFs(league)) return [];
   const json = await get(`${site(sport, league)}/news?limit=${limit}`, { ttl: 5 * 60 * 1000 });
   return (json.articles || []).map((a) => ({
     id: String(a.id || a.headline),
@@ -622,6 +652,7 @@ export async function news(sport, league, limit = 25) {
 export async function athlete(sport, league, id) {
   if (isTsdb(league)) return tsdb.player(id);
   if (isSs(league)) return ss.player(id);
+  if (isFs(league)) return fs.player(id);
   const paths = [`/apis/common/v3/sports/${sport}/${league}/athletes/${id}`, `/apis/common/v3/sports/${sport}/athletes/${id}`];
   let a = null;
   for (const p of paths) {
@@ -645,9 +676,9 @@ export async function athlete(sport, league, id) {
 /** Search ESPN and TheSportsDB together; either may come back empty. */
 export async function search(q) {
   const [c, a, b] = await Promise.all([
-    MODE === 'auto' || MODE === 'sofascore' ? ss.search(q).catch(() => []) : [],
-    MODE === 'tsdb' || MODE === 'sofascore' ? [] : espnSearch(q),
-    MODE === 'espn' || MODE === 'sofascore' ? [] : tsdb.search(q).catch(() => []),
+    MODE === 'sofascore' ? ss.search(q).catch(() => []) : MODE === 'auto' || MODE === 'flashscore' ? fs.search(q).catch(() => []) : [],
+    MODE === 'tsdb' || MODE === 'sofascore' || MODE === 'flashscore' ? [] : espnSearch(q),
+    MODE === 'espn' || MODE === 'sofascore' || MODE === 'flashscore' ? [] : tsdb.search(q).catch(() => []),
   ]);
   const seen = new Set();
   return [...c, ...a, ...b].filter((x) => (seen.has(x.type + norm(x.name)) ? false : seen.add(x.type + norm(x.name))));

@@ -10,7 +10,6 @@ on:
       - '.github/workflows/deploy-server.yml'
       - '.github/workflows/check-server.yml'
       - 'wrangler.toml'
-      - '.github/workflows/probe-flashscore.yml'
   workflow_dispatch:
 
 permissions:

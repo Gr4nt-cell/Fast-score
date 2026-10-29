@@ -156,7 +156,7 @@ export default function SettingsScreen() {
           />
         </View>
         <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 22, marginBottom: 14, lineHeight: 18 }}>
-          Auto tries SofaScore first (every league worldwide, live minute, lineups, stats, odds), then ESPN (plus news and win probability), then TheSportsDB, switching by itself when one can't be reached. SofaScore isn't an official API and may refuse requests at times; the app then moves on to ESPN.
+          Auto uses a worldwide live feed first (every league in the world, live minute, events, lineups, stats, standings), then ESPN, then TheSportsDB, switching by itself when one can't be reached. Sofa uses SofaScore, which may ask for a quick human check.
         </Text>
         <Card>
           <Row
@@ -217,7 +217,7 @@ export default function SettingsScreen() {
           <Row last>
             <View style={{ flex: 1 }}>
               <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '600' }}>Data source</Text>
-              <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>ESPN's public sports API, with TheSportsDB as backup. Both are free. AI Picks run on your phone.</Text>
+              <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Free public sports feeds, with backups that take over automatically. AI Picks run on your phone.</Text>
             </View>
           </Row>
         </Card>
