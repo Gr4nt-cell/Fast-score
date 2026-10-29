@@ -71,13 +71,14 @@ export default function ArticleScreen({ route }) {
           if (s.url) setUrl(s.url);
         }}
         onError={() => setFailed(true)}
+        onRenderProcessGone={() => {
+          setFailed(true);
+          return true;
+        }}
         // keep ordinary links inside; app links (intent:, market:, mailto:) aren't loaded
         originWhitelist={['http://*', 'https://*']}
         setSupportMultipleWindows={false}
-        allowsBackForwardNavigationGestures
         forceDarkOn={t.dark}
-        pullToRefreshEnabled
-        decelerationRate="normal"
       />
     </View>
   );
