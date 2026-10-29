@@ -20,9 +20,18 @@ jobs:
           tid=re.search(r'tournamentId:\s*"([^"]+)"',h); sid=re.search(r'tournamentStageId:\s*"([^"]+)"',h)
           print('##',L,tid and tid.group(1), sid and sid.group(1))
           open(L+'.ids','w').write(f"{tid.group(1) if tid else ''} {sid.group(1) if sid else ''}")
-          for k in ['tournamentStage','stages','seasonId','archive','/standings/','subTournament','stage']:
+          feeds=re.findall(r'cjs\.initialFeeds\[[\'"]([^\'"]+)[\'"]\]\s*=\s*\{\s*data:\s*`([^`]*)`',h)
+          print('  feeds',[(n,len(d)) for n,d in feeds])
+          seen=set()
+          for n,d in feeds:
+              for r in d.split('~'):
+                  if r.startswith('ZA÷'):
+                      f=dict(x.split('÷',1) for x in r.split('¬') if '÷' in x)
+                      k=(f.get('ZA'),f.get('ZC'),f.get('ZE'))
+                      if k not in seen: seen.add(k); print('   stage',n,k)
+          for k in ['League B','League C','Qualification']:
               ms=list(re.finditer(k,h)); print('  ',k,len(ms))
-              for m in ms[:2]: print('     ',h[max(0,m.start()-150):m.start()+250].replace('\n',' '))
+              for m in ms[:3]: print('     ',h[max(0,m.start()-200):m.start()+120].replace('\n',' '))
           PY
             read T S < "$L.ids" || true; get "$L.to.txt" "$F/to_${T}_${S}_1"
           done
