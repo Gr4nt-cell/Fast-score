@@ -7,8 +7,9 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/download-artifact@v4
-        with: { name: fast-score-apk, run-id: 40863406255, github-token: '${{ github.token }}', path: apk }
+      - uses: actions/checkout@v4
+        with: { ref: builds, path: b, sparse-checkout: fast-score-1.0.0-168.apk, sparse-checkout-cone-mode: false }
+      - run: mkdir apk && mv b/fast-score-1.0.0-168.apk apk/ && rm -rf b
       - run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
@@ -18,6 +19,7 @@ jobs:
           arch: x86_64
           target: google_apis
           disable-animations: true
+          profile: pixel_6
           script: |
             mkdir -p out; ls apk; adb install -r $(ls apk/*.apk | head -1); adb logcat -c; python3 drive.py news | tee out/drive-news.txt; adb logcat -d > out/logcat-news.txt; adb logcat -c; adb shell am force-stop com.gr4nt.fastscore; python3 drive.py privacy | tee out/drive-priv.txt; adb logcat -d > out/logcat-priv.txt
       - if: always()
