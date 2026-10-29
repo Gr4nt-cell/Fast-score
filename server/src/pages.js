@@ -48,7 +48,7 @@ export const PRIVACY = page(
 <div class="card"><h2>Where the app gets sports data</h2>
 <p>To show scores, tables and odds, the app requests public sports data from these services. These requests contain <strong>no personal information</strong>, only what is needed to fetch the data (for example a match or competition id). Like any website, these services receive your device's IP address and basic technical information as part of the internet connection; their own privacy policies apply.</p>
 <table><tr><th>Service</th><th>Used for</th></tr>
-<tr><td>Flashscore (flashscore.com / flashscore.ninja / lsapp.eu)</td><td>Fixtures, live scores, match events, statistics, line-ups, tables, momentum</td></tr>
+<tr><td>Live sports data providers</td><td>Fixtures, live scores, match events, statistics, line-ups, tables, momentum</td></tr>
 <tr><td>MSport Ghana (msport.com)</td><td>Bookmaker odds</td></tr>
 <tr><td>ESPN public APIs, TheSportsDB</td><td>Back-up sports data and news</td></tr>
 <tr><td>SofaScore (only if chosen as a data source)</td><td>Sports data, opened in a hidden in-app browser page, which may store that site's cookies on your device</td></tr>
