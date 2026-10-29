@@ -1,0 +1,61 @@
+# Copies the Gradle plugin-portal files the Android build needs into the "m2" branch, as a plain
+# Maven repository, so the app can also be built on machines that can't reach the plugin portal.
+name: Plugin mirror
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  mirror:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v5
+        with:
+          distribution: zulu
+          java-version: 17
+      - run: npm install --no-audit --no-fund
+      - run: npx expo prebuild --platform android --no-install
+        env:
+          CI: 1
+      - name: Resolve every plugin and dependency
+        working-directory: android
+        run: ./gradlew :app:bundleRelease --dry-run --no-daemon -PreactNativeArchitectures=arm64-v8a
+      - name: Collect what Maven Central / Google don't have
+        run: |
+          python3 - <<'PY'
+          import os, shutil, urllib.request
+          root = os.path.expanduser('~/.gradle/caches/modules-2/files-2.1')
+          out = 'm2'
+          def exists(url):
+              try:
+                  req = urllib.request.Request(url, method='HEAD')
+                  return urllib.request.urlopen(req, timeout=20).status == 200
+              except Exception:
+                  return False
+          n = 0
+          for g in sorted(os.listdir(root)):
+              for a in sorted(os.listdir(os.path.join(root, g))):
+                  for v in sorted(os.listdir(os.path.join(root, g, a))):
+                      path = f"{g.replace('.', '/')}/{a}/{v}/{a}-{v}.pom"
+                      if exists('https://repo1.maven.org/maven2/' + path) or exists('https://dl.google.com/dl/android/maven2/' + path):
+                          continue
+                      dest = os.path.join(out, g.replace('.', '/'), a, v)
+                      os.makedirs(dest, exist_ok=True)
+                      for h in os.listdir(os.path.join(root, g, a, v)):
+                          for f in os.listdir(os.path.join(root, g, a, v, h)):
+                              shutil.copy(os.path.join(root, g, a, v, h, f), os.path.join(dest, f))
+                      n += 1
+                      print('mirrored', g, a, v)
+          print('total', n)
+          PY
+          du -sh m2
+      - name: Push to the m2 branch
+        run: |
+          cd m2
+          git init -q && git checkout -q -b m2
+          git config user.name mirror && git config user.email mirror@users.noreply.github.com
+          git add -A && git commit -qm "Gradle plugin-portal mirror"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" m2
