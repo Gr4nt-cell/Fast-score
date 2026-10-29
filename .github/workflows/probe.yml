@@ -13,19 +13,26 @@ jobs:
           H=https://global.flashscore.ninja/2/x/feed
           get() { curl -sSL -m 25 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download} %{url_effective}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
           E=fXmefEGl
-          DS=https://2.ds.lsapp.eu/pq_graphql
-          for q in "eventId=$E&projectId=2&providerId=7" "eventId=$E&projectId=2&momentumProviderId=7" "matchId=$E&projectId=2" "eventId=$E&projectId=2&sportId=1" "eventId=$E" "eventId=$E&projectId=2&timeFrom=0" "eventId=$E&projectId=2&minute=0"; do n=$(echo "$q" | md5sum | cut -c1-5); get "mm_$n.txt" "$DS?_hash=mmts&$q"; echo "mm_$n $q" >> status.txt; done
-          get mmu.txt "$DS?_hash=mmtsu&eventId=$E&projectId=2"
-          mkdir msjs
-          curl -sS -m 30 -A "$UA" https://www.msport.com/gh -o ms.html
-          for u in $(grep -oE 'https://static\.msport\.com/gh/main/js/[A-Za-z0-9._\-]+\.js' ms.html | sort -u); do curl -sS -m 30 -A "$UA" -H 'Referer: https://www.msport.com/gh' "$u" -o "msjs/$(basename $u)"; done
-          ls -la msjs >> status.txt
-          grep -ohE '.{0,140}(facts-center|operId|operid|OPER_ID).{0,200}' msjs/*.js | sort -u | head -80 > msapi.txt
-          grep -ohE '"/(api/)?[a-z\-]+/[a-z\-/]+"' msjs/*.js | sort -u | grep -i "query\|frontend\|match\|event\|odds\|market" | head -120 > mspaths.txt
-          grep -ohE '[a-z0-9]{0,10}\.[0-9a-f]{8}\.js' msjs/*.js | sort -u | head -150 > mschunks.txt
-          rm -rf msjs
-          for op in 1 2 3 4 5 6 7 8 9 10; do get "op$op.txt" "https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1" ; done
-          for op in 1 2 3 4 5 6 7 8 9 10; do curl -sS -m 20 -A "$UA" -H "operId: $op" -o "opH$op.txt" -w "opH$op %{http_code} %{size_download}\n" "https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1" >> status.txt; done
+          get mpage.html "https://www.flashscore.com/match/$E/#/match-summary/match-statistics/0"
+          mkdir js
+          for u in $(grep -oE 'https://static\.flashscore\.com/res/_fs/build/[A-Za-z0-9_.\-]+\.js' mpage.html | sort -u); do curl -sS -m 20 "$u" -o "js/$(basename $u)"; done
+          M=$(grep -ohE 'flash-momentum\.[A-Za-z0-9_\-]+\.js' js/*.js mpage.html | head -1); echo "momjs $M" >> status.txt
+          curl -sS -m 20 "https://static.flashscore.com/res/_fs/build/$M" -o js/mom.js
+          for f in $(grep -ohE '"\./[A-Za-z0-9_.\-]+\.js"' js/mom.js | tr -d '"' | sed 's#^\./##' | sort -u | head -30); do [ -f "js/$f" ] || curl -sS -m 20 "https://static.flashscore.com/res/_fs/build/$f" -o "js/$f"; done
+          grep -ohE '.{200}(MATCH_MOMENTUM_STATS_QUERY|mmts|MATCH_MOMENTUM_STATS_UPDATE).{300}' js/*.js | sort -u | head -20 > jsmm.txt
+          grep -ohE '.{100}(getParameters|URLSearchParams)\(\{[^}]{0,300}\}.{0,80}' js/*.js | sort -u | head -60 > jsparams.txt
+          rm -rf js
+          MS=https://www.msport.com/api/gh/facts-center/query/frontend
+          msget() { curl -sS -m 25 -A "$UA" -H 'operId: 3' -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> status.txt; }
+          msget ms_today.json "$MS/all-matches/today?sportId=sr:sport:1"
+          msget ms_next7.json "$MS/all-matches/next-7-days?sportId=sr:sport:1"
+          msget ms_top.json "$MS/all-matches/top-league?sportId=sr:sport:1"
+          msget ms_live.json "$MS/live-matches/list?sportId=sr:sport:1"
+          ID=$(python3 -c "import json;d=json.load(open('ms_live.json'))['data'];print((d.get('events') or d.get('comingSoons') or [{}])[0].get('eventId',''))")
+          echo "msid $ID" >> status.txt
+          msget ms_match.json "$MS/match?eventId=$ID"
+          msget ms_detail.json "$MS/match/detail?eventId=$ID"
+          msget ms_sports.json "$MS/sports"
           cat status.txt
       - name: Save to the probe branch
         run: |
