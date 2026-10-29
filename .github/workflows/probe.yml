@@ -14,31 +14,18 @@ jobs:
           get() { curl -sSL -m 25 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download} %{url_effective}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
           E=fXmefEGl
           DS=https://2.ds.lsapp.eu/pq_graphql
-          get mm1.txt "$DS?_hash=mmts&eventId=$E&projectId=2"
-          get mm2.txt "$DS?_hash=mmte&eventId=$E&projectId=2"
-          get od1.txt "$DS?_hash=ope&eventId=$E&projectId=2&geoIpCode=GH&geoIpSubdivisionCode=GHAA"
-          get od2.txt "https://global.ds.lsapp.eu/odds/pq_graphql?_hash=ope&eventId=$E&projectId=2&geoIpCode=GH&geoIpSubdivisionCode=GHAA"
-          get ts1.txt "$DS?_hash=dsos2&eventId=$E&projectId=2"
-          get ms_home2.html "https://www.msport.com/gh/sports/football"
+          for q in "eventId=$E&projectId=2&providerId=7" "eventId=$E&projectId=2&momentumProviderId=7" "matchId=$E&projectId=2" "eventId=$E&projectId=2&sportId=1" "eventId=$E" "eventId=$E&projectId=2&timeFrom=0" "eventId=$E&projectId=2&minute=0"; do n=$(echo "$q" | md5sum | cut -c1-5); get "mm_$n.txt" "$DS?_hash=mmts&$q"; echo "mm_$n $q" >> status.txt; done
+          get mmu.txt "$DS?_hash=mmtsu&eventId=$E&projectId=2"
           mkdir msjs
-          for u in https://static.msport.com/gh/main/js/chunk-base.65f29a38.js https://static.msport.com/gh/main/js/chunk-utils.9cca4cbb.js https://static.msport.com/gh/main/js/index.7a2d9df5.js; do curl -sS -m 30 "$u" -o "msjs/$(basename $u)"; done
-          python3 - <<'PY' > msapi.txt
-          import re,glob
-          for f in glob.glob('msjs/*.js'):
-              t=open(f,encoding='utf8',errors='ignore').read()
-              print('##',f,len(t))
-              for m in re.finditer(r'["\'`](/api/[^"\'`]{2,140}|/[a-z\-]+-center/[^"\'`]{2,140}|facts[^"\'`]{2,100})["\'`]',t):
-                  print(m.group(1))
-              for k in ['baseURL','apiPrefix','/api/','operId','x-operid','OperId','clientid','ClientId']:
-                  for m in list(re.finditer(re.escape(k),t))[:4]:
-                      print('CTX',k,'::',t[max(0,m.start()-150):m.start()+200].replace('\n',' '))
-              # find chunk names for lazy loading
-              print('CHUNKS', sorted(set(re.findall(r'"(chunk-[a-z0-9\-]+)":"([0-9a-f]{8})"',t)))[:80])
-          PY
-          for c in $(grep -oE 'chunk-[a-z0-9-]*sport[a-z0-9-]*":"[0-9a-f]{8}' msapi.txt | head -6 | tr -d '"' | tr ':' '.'); do curl -sS -m 30 "https://static.msport.com/gh/main/js/$c.js" -o "msjs/$c.js"; done
-          grep -ohE '.{100}(/api/|facts-center).{160}' msjs/*.js | sort -u | head -60 > msapi2.txt
-          for u in "https://www.msport.com/api/gh/facts-center/query/frontend/get-events?sportId=sr:sport:1" "https://www.msport.com/api/gh/facts-center/query/frontend/match-list?sportId=sr:sport:1" "https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1"; do n=$(echo $u | md5sum | cut -c1-6); get "msp_$n.txt" "$u"; done
+          curl -sS -m 30 -A "$UA" https://www.msport.com/gh -o ms.html
+          for u in $(grep -oE 'https://static\.msport\.com/gh/main/js/[A-Za-z0-9._\-]+\.js' ms.html | sort -u); do curl -sS -m 30 -A "$UA" -H 'Referer: https://www.msport.com/gh' "$u" -o "msjs/$(basename $u)"; done
+          ls -la msjs >> status.txt
+          grep -ohE '.{0,140}(facts-center|operId|operid|OPER_ID).{0,200}' msjs/*.js | sort -u | head -80 > msapi.txt
+          grep -ohE '"/(api/)?[a-z\-]+/[a-z\-/]+"' msjs/*.js | sort -u | grep -i "query\|frontend\|match\|event\|odds\|market" | head -120 > mspaths.txt
+          grep -ohE '[a-z0-9]{0,10}\.[0-9a-f]{8}\.js' msjs/*.js | sort -u | head -150 > mschunks.txt
           rm -rf msjs
+          for op in 1 2 3 4 5 6 7 8 9 10; do get "op$op.txt" "https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1" ; done
+          for op in 1 2 3 4 5 6 7 8 9 10; do curl -sS -m 20 -A "$UA" -H "operId: $op" -o "opH$op.txt" -w "opH$op %{http_code} %{size_download}\n" "https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1" >> status.txt; done
           cat status.txt
       - name: Save to the probe branch
         run: |
