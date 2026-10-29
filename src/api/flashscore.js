@@ -238,6 +238,7 @@ function normalize(r, lg, sport) {
     country: lg.ZY || titleCountry(za.split(': ')[0]),
     priority: priorityOf(za),
     fsName: za,
+    tpl: lg.ZEE || '',
     eventId: r.AA,
     eventName: `${home.name} vs ${away.name}`,
     key: `${sport}:fs:${r.AA}`,
@@ -279,6 +280,13 @@ function matchesOf(text, sport) {
   return out;
 }
 
+// slug -> { name, logo } of competitions seen in day lists (for pinned lists)
+export const leagueNames = new Map();
+AsyncStorage.getItem('fs:leagueNames')
+  .then((s) => s && Object.entries(JSON.parse(s)).forEach(([k, v]) => !leagueNames.has(k) && leagueNames.set(k, v)))
+  .catch(() => {});
+let namesSave = null;
+
 function group(items) {
   const by = new Map();
   items.forEach((m) => {
@@ -292,7 +300,16 @@ function group(items) {
   // keeps Flashscore's A-Z order inside each priority level
   out.forEach((g, i) => (g.i = i));
   out.sort((a, b) => b.league.priority - a.league.priority || a.i - b.i);
-  out.forEach((g) => delete g.i);
+  out.forEach((g) => {
+    delete g.i;
+    leagueNames.set(g.league.slug, { name: g.league.name, logo: g.league.logo });
+  });
+  clearTimeout(namesSave);
+  namesSave = setTimeout(() => {
+    const o = {};
+    [...leagueNames.entries()].slice(-3000).forEach(([k, v]) => (o[k] = v));
+    AsyncStorage.setItem('fs:leagueNames', JSON.stringify(o)).catch(() => {});
+  }, 4000);
   return out;
 }
 
@@ -314,8 +331,27 @@ export async function dayBoard(sport, date, ttl = 30000) {
   return out;
 }
 
+// "fs:t:<countryId>:<templateId>:<countrySlug>~<leagueSlug>": a competition from the full index
+export const isTpl = (slug) => String(slug || '').startsWith('fs:t:');
+export function tplSlug(sport, country, league) {
+  return `fs:t:${country.id}:${league.tpl}:${country.slug}~${league.slug}`;
+}
+function tplParts(slug) {
+  const [cid, tpl, path] = slug.slice(5).split(':');
+  const [countrySlug, leagueSlug] = String(path || '').split('~');
+  return { cid, tpl, countrySlug, leagueSlug };
+}
+const SPORT_PATH = { soccer: 'football', tennis: 'tennis', basketball: 'basketball', hockey: 'hockey', football: 'american-football', baseball: 'baseball', rugby: 'rugby-union', volleyball: 'volleyball' };
+
 export async function leagueDay(sport, slug, date) {
   const all = await dayBoard(sport, date).catch(() => []);
+  if (isTpl(slug)) {
+    const { tpl } = tplParts(slug);
+    const groups = all.filter((g) => g.items.some((m) => m.tpl === tpl));
+    const items = groups.flatMap((g) => g.items).sort((a, b) => new Date(a.date) - new Date(b.date));
+    const first = groups[0];
+    return { league: first ? { ...first.league, slug } : { slug, sport, name: 'Competition', logo: null }, items };
+  }
   const g = all.find((x) => x.league.slug === slug);
   return { league: g ? g.league : { slug, sport, name: 'Competition', logo: null }, items: g ? g.items : [] };
 }
@@ -332,7 +368,52 @@ function findCached(eventId) {
 
 const NOTE = { q: 'Promotion / qualification', r: 'Relegation', p: 'Play-offs' };
 
-export async function standings(slug) {
+/** The current season of an indexed competition (read once from its standings page, then kept). */
+const seasonCache = new Map();
+async function currentStage(sport, slug) {
+  if (seasonCache.has(slug)) return seasonCache.get(slug);
+  const key = 'fs:season:' + slug;
+  try {
+    const c = JSON.parse((await AsyncStorage.getItem(key)) || 'null');
+    if (c && Date.now() - c.t < 3 * 86400000) {
+      seasonCache.set(slug, c.v);
+      return c.v;
+    }
+  } catch {}
+  const { countrySlug, leagueSlug } = tplParts(slug);
+  const r = await fetchText(`${WEB}/${SPORT_PATH[sport] || 'football'}/${countrySlug}/${leagueSlug}/standings/`, 15000, { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' });
+  const tid = (r.body.match(/tournamentId:\s*"([A-Za-z0-9]+)"/) || [])[1];
+  const sid = (r.body.match(/tournamentStageId:\s*"([A-Za-z0-9]+)"/) || [])[1];
+  const logo = (r.body.match(/<img[^>]+class="heading__logo[^"]*"[^>]+src="([^"]+)"/) || r.body.match(/heading__logo[^>]*src="([^"]+)"/) || [])[1];
+  const v = tid && sid ? { tid, sid, logo: logo || null } : null;
+  seasonCache.set(slug, v);
+  if (v) AsyncStorage.setItem(key, JSON.stringify({ t: Date.now(), v })).catch(() => {});
+  return v;
+}
+
+export async function leagueLogo(sport, slug) {
+  if (!isTpl(slug)) return null;
+  const v = await currentStage(sport, slug).catch(() => null);
+  return v && v.logo;
+}
+
+/** Teams of a competition, from its table. */
+export async function teams(sport, slug) {
+  const groups = await standings(slug, sport).catch(() => []);
+  const seen = new Set();
+  return groups
+    .flatMap((g) => g.rows)
+    .filter((r) => r.teamId && !seen.has(r.teamId) && seen.add(r.teamId))
+    .map((r) => ({ id: r.teamId, name: r.name, logo: r.logo }))
+    .sort((a, b) => a.name.localeCompare(b.name));
+}
+
+export async function standings(slug, sport = 'soccer') {
+  if (isTpl(slug)) {
+    const v = await currentStage(sport, slug);
+    if (!v) return [];
+    slug = `fs:${v.tid}_${v.sid}`;
+  }
   const [tid, sid] = slug.slice(3).split('_');
   if (!tid || !sid) return [];
   const recs = parse(await feed(`to_${tid}_${sid}_1`, 10 * 60000));

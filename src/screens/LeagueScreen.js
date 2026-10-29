@@ -7,6 +7,7 @@ import { useNav } from '../nav';
 import { useStore } from '../store';
 import { leagueMeta } from '../sports';
 import { news as fetchNews, scoreboard, standings as fetchStandings, teams as fetchTeams } from '../api/espn';
+import { leagueLogo } from '../api/flashscore';
 import { Glass } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import DateStrip, { startOfDay } from '../components/DateStrip';
@@ -64,18 +65,22 @@ export default function LeagueScreen({ route }) {
     if (tab === 'teams' && teamList == null) fetchTeams(sport, league).then(setTeams).catch(() => setTeams([]));
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  useEffect(() => {
+    if (!logo && String(league).startsWith('fs:t:')) leagueLogo(sport, league).then((u) => u && setLogo(u)).catch(() => {});
+  }, [league]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const lk = `${sport}/${league}`;
   const pinned = isFav('leagues', lk);
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <PushHeader title={route.title || meta.name} subtitle={meta.country} right={<GlassCircle icon={pinned ? 'pin' : 'pin-outline'} color={pinned ? t.blue : undefined} onPress={() => toggle('leagues', lk)} />} />
+      <PushHeader title={route.title || meta.name} subtitle={route.country || meta.country} right={<GlassCircle icon={pinned ? 'pin' : 'pin-outline'} color={pinned ? t.blue : undefined} onPress={() => toggle('leagues', lk)} />} />
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <View style={{ alignItems: 'center', marginVertical: 10 }}>
           <Glass radius={26} strong style={{ width: 92, height: 92, alignItems: 'center', justifyContent: 'center' }}>
             <Logo uri={logo} name={meta.name} size={62} />
           </Glass>
-          <Text style={{ color: t.text, fontSize: 24, fontWeight: '800', marginTop: 10 }}>{route.title || meta.name}</Text>
+          <Text style={{ color: t.text, fontSize: 24, fontWeight: '800', marginTop: 10, textAlign: 'center', paddingHorizontal: 16 }}>{route.title || meta.name}</Text>
         </View>
         <TabStrip
           tabs={[

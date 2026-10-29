@@ -84,7 +84,8 @@ export default function MatchesScreen({ liveMode = false }) {
   const sp = sportByKey(sport);
   const shown = useMemo(() => {
     let gs = (groups || []).map((g) => ({ ...g, items: live ? g.items.filter((m) => m.state === 'in') : g.items })).filter((g) => g.items.length);
-    const pinned = (g) => favs.leagues.includes(`${g.sport}/${g.league.slug}`);
+    const pinTpl = new Set(favs.leagues.filter((k) => k.includes('/fs:t:')).map((k) => k.split(':')[3]));
+    const pinned = (g) => favs.leagues.includes(`${g.sport}/${g.league.slug}`) || (g.items[0] && pinTpl.has(g.items[0].tpl));
     const meta = (g) => sportByKey(g.sport).leagues.find((l) => l.slug === g.league.slug) || {};
     const sIdx = (g) => SPORTS.findIndex((x) => x.key === g.sport);
     const idx = (g) => sportByKey(g.sport).leagues.findIndex((l) => l.slug === g.league.slug);

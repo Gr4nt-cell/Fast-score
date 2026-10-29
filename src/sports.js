@@ -160,9 +160,18 @@ export const SPORTS = [
 
 export const sportByKey = (key) => SPORTS.find((s) => s.key === key) || SPORTS[0];
 
+const title = (x) => String(x || '').split('-').map((w) => (w ? w.charAt(0).toUpperCase() + w.slice(1) : w)).join(' ');
+
 export function leagueMeta(sport, slug) {
   const s = sportByKey(sport);
-  return s.leagues.find((l) => l.slug === slug) || { slug, name: slug, country: '' };
+  const known = s.leagues.find((l) => l.slug === slug);
+  if (known) return known;
+  // a competition from the full index: "fs:t:<country id>:<template>:<country>~<league>"
+  if (String(slug).startsWith('fs:t:')) {
+    const [country, league] = String(slug).split(':').slice(4).join(':').split('~');
+    return { slug, name: title(league), country: title(country) };
+  }
+  return { slug, name: slug, country: '' };
 }
 
 export const leagueKey = (sport, slug) => `${sport}/${slug}`;

@@ -498,7 +498,7 @@ export async function summary(sport, league, eventId, ttl = 15000) {
 export async function standings(sport, league, ttl = 10 * 60 * 1000) {
   if (isTsdb(league)) return tsdb.standings(league);
   if (isSs(league)) return ss.standings(league);
-  if (isFs(league)) return fs.standings(league);
+  if (isFs(league)) return fs.standings(league, sport);
   const json = await get(`/apis/v2/sports/${sport}/${league}/standings`, { ttl, persist: true });
   return parseStandings(json);
 }
@@ -552,7 +552,8 @@ function row(e) {
 }
 
 export async function teams(sport, league) {
-  if (isTsdb(league) || isSs(league) || isFs(league)) return [];
+  if (isFs(league)) return fs.teams(sport, league);
+  if (isTsdb(league) || isSs(league)) return [];
   const json = await get(`${site(sport, league)}/teams?limit=500`, { ttl: 24 * 3600 * 1000, persist: true });
   const lst = (json.sports && json.sports[0] && json.sports[0].leagues && json.sports[0].leagues[0] && json.sports[0].leagues[0].teams) || [];
   return lst.map((x) => {
