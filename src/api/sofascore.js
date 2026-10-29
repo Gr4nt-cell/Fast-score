@@ -6,7 +6,7 @@
 import { browserFetch } from './browserBridge';
 import { serverUrl } from './server';
 
-const HOSTS = ['https://api.sofascore.com/api/v1', 'https://www.sofascore.com/api/v1'];
+const HOSTS = ['https://api.sofascore.com/api/v1', 'https://api.sofascore.app/api/v1', 'https://www.sofascore.com/api/v1'];
 const IMG = 'https://api.sofascore.app/api/v1';
 const HEADERS = {
   Accept: 'application/json, text/plain, */*',
@@ -168,7 +168,12 @@ export async function diagnose() {
       status: r ? r.status : 0,
       events: n,
       ms: Date.now() - t0,
-      sample: n == null && r ? String(r.body || '').replace(/\s+/g, ' ').slice(0, 140) : '',
+      sample:
+        n == null && r
+          ? r.tried
+            ? r.tried.map((x) => `${x.host} ${x.status || 'no answer'}`).join(' · ')
+            : String(r.body || '').replace(/\s+/g, ' ').slice(0, 140)
+          : '',
     });
   }
   blockedUntil = 0;

@@ -45,10 +45,15 @@ export async function browserFetch(path, timeout = 15000, readyTimeout = 10000) 
       reject(new Error('Browser view timed out'));
     }, timeout);
     pending.set(id, { resolve, reject, t });
+    const urls = JSON.stringify([path, 'https://api.sofascore.com' + path, 'https://api.sofascore.app' + path]);
     send(
-      `(function(){fetch(${JSON.stringify(path)},{credentials:'include',headers:{'Accept':'application/json'}})` +
-        `.then(function(r){return r.text().then(function(b){window.ReactNativeWebView.postMessage(JSON.stringify({id:${id},status:r.status,body:b}))})})` +
-        `.catch(function(e){window.ReactNativeWebView.postMessage(JSON.stringify({id:${id},status:0,body:String(e)}))});})();true;`
+      `(function(){var urls=${urls};var last={status:0,body:'no answer'};` +
+        `function post(r){window.ReactNativeWebView.postMessage(JSON.stringify({id:${id},status:r.status,body:r.body}))}` +
+        `function next(i){if(i>=urls.length){post(last);return;}` +
+        `fetch(urls[i],{credentials:i===0?'include':'omit',headers:{'Accept':'application/json'}})` +
+        `.then(function(r){return r.text().then(function(b){if(r.ok){post({status:r.status,body:b});}else{last={status:r.status,body:b};next(i+1);}})})` +
+        `.catch(function(e){last={status:0,body:String(e)};next(i+1);});}` +
+        `next(0);})();true;`
     );
   });
 }
@@ -69,6 +74,14 @@ export function SofaBridge() {
 
   if (!active) return null;
 
+  function markReady() {
+    if (send) return;
+    send = (js) => ref.current && ref.current.injectJavaScript(js);
+    const w = readyWaiters;
+    readyWaiters = [];
+    w.forEach((f) => f());
+  }
+
   const onMessage = (ev) => {
     let msg;
     try {
@@ -76,7 +89,10 @@ export function SofaBridge() {
     } catch {
       return;
     }
-    if (msg && msg.ready) return;
+    if (msg && msg.ready) {
+      if (String(msg.href || '').startsWith(ORIGIN)) markReady();
+      return;
+    }
     const p = msg && pending.get(msg.id);
     if (!p) return;
     pending.delete(msg.id);
@@ -85,7 +101,7 @@ export function SofaBridge() {
   };
 
   return (
-    <View pointerEvents="none" style={{ position: 'absolute', width: 1, height: 1, left: -10, top: -10, opacity: 0 }}>
+    <View pointerEvents="none" style={{ position: 'absolute', width: 2, height: 2, left: 0, top: 0, opacity: 0.01 }}>
       <WebView
         key={key}
         ref={ref}
@@ -98,13 +114,12 @@ export function SofaBridge() {
         sharedCookiesEnabled
         cacheEnabled
         mediaPlaybackRequiresUserAction
-        style={{ width: 1, height: 1 }}
-        onLoadEnd={() => {
-          send = (js) => ref.current && ref.current.injectJavaScript(js);
-          const w = readyWaiters;
-          readyWaiters = [];
-          w.forEach((f) => f());
+        style={{ width: 2, height: 2, backgroundColor: 'transparent' }}
+        injectedJavaScriptBeforeContentLoaded={`(function(){function hi(){try{window.ReactNativeWebView.postMessage(JSON.stringify({ready:true,href:location.href}))}catch(e){}}hi();document.addEventListener('DOMContentLoaded',hi);})();true;`}
+        onLoadProgress={(e) => {
+          if (e.nativeEvent.progress >= 0.3) markReady();
         }}
+        onLoadEnd={markReady}
         onMessage={onMessage}
         onError={() => {
           send = null;

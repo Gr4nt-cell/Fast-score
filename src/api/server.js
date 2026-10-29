@@ -5,6 +5,8 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 
 const DISCOVERY = 'https://raw.githubusercontent.com/Gr4nt-cell/Fast-score/main/server/url.json';
+// built in, so the app never depends on finding it; server/url.json can still override it
+const DEFAULT_URL = 'https://fast-score.gstephen116.workers.dev';
 let url = null;
 let override = null;
 let checkedAt = 0;
@@ -21,7 +23,7 @@ async function discover() {
   if (fromConfig) return fromConfig;
   try {
     const cached = JSON.parse((await AsyncStorage.getItem('serverUrl')) || 'null');
-    if (cached && Date.now() - cached.t < 6 * 3600 * 1000) return cached.url;
+    if (cached && cached.url && Date.now() - cached.t < 6 * 3600 * 1000) return cached.url;
   } catch {}
   try {
     const ctrl = new AbortController();
@@ -31,11 +33,13 @@ async function discover() {
     if (res.ok) {
       const j = await res.json();
       const u = j && j.url ? String(j.url).replace(/\/+$/, '') : null;
-      AsyncStorage.setItem('serverUrl', JSON.stringify({ url: u, t: Date.now() })).catch(() => {});
-      return u;
+      if (u) {
+        AsyncStorage.setItem('serverUrl', JSON.stringify({ url: u, t: Date.now() })).catch(() => {});
+        return u;
+      }
     }
   } catch {}
-  return null;
+  return DEFAULT_URL;
 }
 
 /** The server's base URL, or null when there isn't one (or it's resting after a failure). */
