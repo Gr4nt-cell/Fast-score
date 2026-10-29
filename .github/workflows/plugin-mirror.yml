@@ -49,12 +49,62 @@ jobs:
                       for h in os.listdir(os.path.join(root, g, a, v)):
                           for f in os.listdir(os.path.join(root, g, a, v, h)):
                               src = os.path.join(root, g, a, v, h, f)
-                              if os.path.getsize(src) > 95 * 1024 * 1024:
-                                  print('TOO BIG', src); continue
                               shutil.copy(src, os.path.join(dest, f))
                       n += 1
                       print('mirrored', g, a, v)
           print('total', n)
+          # Gradle module files can point at another module ("available-at"): fetch those too
+          import json, glob
+          done = set()
+          for mf in glob.glob(out + '/**/*.module', recursive=True):
+              try:
+                  j = json.load(open(mf))
+              except Exception:
+                  continue
+              for v in j.get('variants', []):
+                  at = v.get('available-at')
+                  if not at:
+                      continue
+                  g, a, ver = at['group'], at['module'], at['version']
+                  if (g, a, ver) in done:
+                      continue
+                  done.add((g, a, ver))
+                  base = f"{g.replace('.', '/')}/{a}/{ver}/"
+                  dest = os.path.join(out, base)
+                  os.makedirs(dest, exist_ok=True)
+                  names = [f'{a}-{ver}.module', f'{a}-{ver}.pom']
+                  for name in names:
+                      for repo in ['https://repo1.maven.org/maven2/', 'https://dl.google.com/dl/android/maven2/']:
+                          try:
+                              data = urllib.request.urlopen(repo + base + name, timeout=60).read()
+                              open(os.path.join(dest, name), 'wb').write(data)
+                              if name.endswith('.module'):
+                                  for vv in json.loads(data).get('variants', []):
+                                      for fl in vv.get('files', []):
+                                          if not os.path.exists(os.path.join(dest, fl['url'])):
+                                              try:
+                                                  open(os.path.join(dest, fl['url']), 'wb').write(urllib.request.urlopen(repo + base + fl['url'], timeout=120).read())
+                                              except Exception as e:
+                                                  print('miss', base + fl['url'], e)
+                              break
+                          except Exception:
+                              pass
+                  print('available-at', g, a, ver)
+          # GitHub refuses files over 100 MB: split them; the build machine joins them back
+          for root_, _, files in os.walk(out):
+              for f in files:
+                  path = os.path.join(root_, f)
+                  if os.path.getsize(path) > 90 * 1024 * 1024:
+                      with open(path, 'rb') as fh:
+                          i = 0
+                          while True:
+                              chunk = fh.read(80 * 1024 * 1024)
+                              if not chunk:
+                                  break
+                              open(f'{path}.part{i:02d}', 'wb').write(chunk)
+                              i += 1
+                      os.remove(path)
+                      print('split', path, i)
           PY
           du -sh m2
       - name: Push to the m2 branch

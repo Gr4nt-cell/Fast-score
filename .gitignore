@@ -10,3 +10,4 @@ npm-debug.log*
 server/node_modules/
 server/.wrangler/
 server/deploy.log
+modules/*/android/build/
