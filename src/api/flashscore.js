@@ -372,7 +372,7 @@ const NOTE = { q: 'Promotion / qualification', r: 'Relegation', p: 'Play-offs' }
 const seasonCache = new Map();
 async function currentStage(sport, slug) {
   if (seasonCache.has(slug)) return seasonCache.get(slug);
-  const key = 'fs:season:' + slug;
+  const key = 'fs:season2:' + slug;
   try {
     const c = JSON.parse((await AsyncStorage.getItem(key)) || 'null');
     if (c && Date.now() - c.t < 3 * 86400000) {
@@ -385,7 +385,16 @@ async function currentStage(sport, slug) {
   const tid = (r.body.match(/tournamentId:\s*"([A-Za-z0-9]+)"/) || [])[1];
   const sid = (r.body.match(/tournamentStageId:\s*"([A-Za-z0-9]+)"/) || [])[1];
   const logo = (r.body.match(/<img[^>]+class="heading__logo[^"]*"[^>]+src="([^"]+)"/) || r.body.match(/heading__logo[^>]*src="([^"]+)"/) || [])[1];
-  const v = tid && sid ? { tid, sid, logo: logo || null } : null;
+  // every stage of the competition (e.g. Euro: final tournament, play-offs, qualifying;
+  // Nations League: League A/B/C/D) from the page's "stages_group"
+  let stages = [];
+  const sg = r.body.match(/"stages_group":\{[\s\S]*?"stages":(\[[^\]]*\])/);
+  if (sg) {
+    try {
+      stages = JSON.parse(sg[1]).map((x) => ({ id: x.id, name: x.name, table: x.statsType !== 'draw' }));
+    } catch {}
+  }
+  const v = tid && sid ? { tid, sid, logo: logo || null, stages } : null;
   seasonCache.set(slug, v);
   if (v) AsyncStorage.setItem(key, JSON.stringify({ t: Date.now(), v })).catch(() => {});
   return v;
@@ -408,36 +417,37 @@ export async function teams(sport, slug) {
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
-export async function standings(slug, sport = 'soccer') {
-  if (isTpl(slug)) {
-    const v = await currentStage(sport, slug);
-    if (!v) return [];
-    slug = `fs:${v.tid}_${v.sid}`;
-  }
-  const [tid, sid] = slug.slice(3).split('_');
-  if (!tid || !sid) return [];
+/** One stage's table(s): [{ name, rows }] (several groups for group stages). */
+async function stageTable(tid, sid) {
   const recs = parse(await feed(`to_${tid}_${sid}_1`, 10 * 60000));
   const logos = {};
   recs.forEach((r) => (r['IPI*'] || (r.IPI ? [r.IPI] : [])).forEach((id, i) => (logos[id] = (r['IPU*'] || [r.IPU])[i])));
+  // legend: "q1|Promotion - Euro (Play Offs: 1/8-finals)|004682"
+  const legend = {};
+  recs.forEach((r) => (r['TV*'] || (r.TV ? [r.TV] : [])).forEach((v) => {
+    const [code, text, color] = String(v).split('|');
+    if (code) legend[code] = { text: text || '', color: color || '' };
+  }));
   const groups = [];
   let cur = null;
   recs.forEach((r) => {
-    if (r.TZS != null || r.TA != null) {
-      if (r.TA) cur = null; // a new group (e.g. "Group A")
-      if (r.TA) groups.push((cur = { name: r.TA, rows: [] }));
+    // "TD÷10¬TE÷Group A" starts a group
+    if (r.TE != null && r.TD != null) {
+      groups.push((cur = { name: r.TE, rows: [] }));
       return;
     }
     if (!r.TR) return;
     if (!cur) groups.push((cur = { name: '', rows: [] }));
     rememberSlug(r.TI, (r.TIU || '').split('/')[2]);
     const [gf, ga] = String(r.TG || '').split(':').map((x) => Number(x));
+    const lg = legend[r.TU];
     const kind = String(r.TU || '').charAt(0);
     cur.rows.push({
       teamId: r.TI,
       name: r.TN,
       short: r.TN,
       logo: img(logos[r.TI]),
-      note: r.TUC ? { color: r.TUC, text: NOTE[kind] || '' } : null,
+      note: r.TUC ? { color: r.TUC, text: (lg && lg.text) || NOTE[kind] || '' } : null,
       gp: Number(r.TM),
       w: Number(r.TW),
       d: r.TDR != null ? Number(r.TDR) : null,
@@ -451,6 +461,28 @@ export async function standings(slug, sport = 'soccer') {
     });
   });
   return groups.filter((g) => g.rows.length);
+}
+
+/**
+ * Standings. For a competition from the full index every stage with a table is included and each
+ * group carries `stage` / `stageId` (the competition page shows a stage picker); `current` marks
+ * the stage that's on now. A slug from a match ("fs:<tournament>_<stage>") gives that stage only.
+ */
+export async function standings(slug, sport = 'soccer') {
+  if (isTpl(slug)) {
+    const v = await currentStage(sport, slug);
+    if (!v) return [];
+    const stages = (v.stages && v.stages.length ? v.stages : [{ id: v.sid, name: '', table: true }]).filter((x) => x.table || x.id === v.sid);
+    const tables = await Promise.all(stages.map((st) => stageTable(v.tid, st.id).catch(() => [])));
+    const out = [];
+    stages.forEach((st, i) =>
+      tables[i].forEach((g) => out.push({ ...g, name: g.name || st.name, stage: st.name, stageId: st.id, current: st.id === v.sid }))
+    );
+    return out;
+  }
+  const [tid, sid] = slug.slice(3).split('_');
+  if (!tid || !sid) return [];
+  return stageTable(tid, sid);
 }
 
 const KEY_TYPES = {

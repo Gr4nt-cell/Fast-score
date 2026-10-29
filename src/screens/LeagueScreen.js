@@ -35,6 +35,36 @@ export function NewsList({ items }) {
   ));
 }
 
+/** Tables of a competition with several stages (e.g. Euro: final tournament / qualifying). */
+function StageTables({ table, stage, setStage, sport, league }) {
+  const t = useTheme();
+  const stages = [];
+  table.forEach((g) => g.stageId && !stages.find((s) => s.id === g.stageId) && stages.push({ id: g.stageId, name: g.stage, current: g.current }));
+  const sel = stage || (stages.find((s) => s.current) || stages[0] || {}).id;
+  const groups = stages.length > 1 ? table.filter((g) => g.stageId === sel) : table;
+  return (
+    <View>
+      {stages.length > 1 ? (
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 12 }}>
+          {stages.map((s) => {
+            const on = s.id === sel;
+            return (
+              <Pressable key={s.id} onPress={() => setStage(s.id)}>
+                <View style={{ height: 34, paddingHorizontal: 14, borderRadius: 17, justifyContent: 'center', backgroundColor: on ? t.blue : t.track }}>
+                  <Text style={{ color: on ? '#fff' : t.text, fontWeight: '700', fontSize: 13 }}>{s.name || 'Table'}</Text>
+                </View>
+              </Pressable>
+            );
+          })}
+        </ScrollView>
+      ) : null}
+      <Card>
+        <Standings groups={groups.map((g) => (stages.length > 1 && g.name === g.stage ? { ...g, name: '' } : g))} sport={sport} league={league} />
+      </Card>
+    </View>
+  );
+}
+
 export default function LeagueScreen({ route }) {
   const t = useTheme();
   const nav = useNav();
@@ -48,6 +78,7 @@ export default function LeagueScreen({ route }) {
   const [table, setTable] = useState(null);
   const [newsItems, setNews] = useState(null);
   const [teamList, setTeams] = useState(null);
+  const [stage, setStage] = useState(null);
 
   useEffect(() => {
     setBoard(null);
@@ -113,9 +144,7 @@ export default function LeagueScreen({ route }) {
           table == null ? (
             <Loading />
           ) : table.length ? (
-            <Card>
-              <Standings groups={table} sport={sport} league={league} />
-            </Card>
+            <StageTables table={table} stage={stage} setStage={setStage} sport={sport} league={league} />
           ) : (
             <Empty icon="list-outline" title="No table for this competition" />
           )

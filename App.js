@@ -16,6 +16,7 @@ import { checkFollowed } from './src/watch';
 import { ensurePermission, notifyEvent, onNotificationTap } from './src/notify';
 import { setBackgroundChecks } from './src/background';
 import { onLiveTap, syncLive, trackedKeys } from './src/live';
+import { warmOdds } from './src/api/msport';
 import { pickToMatch } from './src/screens/PicksScreen';
 import TabBar, { TABS } from './src/components/TabBar';
 import { BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext } from './src/components/Glass';
@@ -188,6 +189,8 @@ function Main() {
 
   useEffect(() => {
     load('lastTab', 'matches').then((v) => TABS.find((x) => x.key === v) && setTabState(v));
+    // MSport lists + saved prices, so odds are there the moment a match opens
+    warmOdds('soccer');
   }, []);
 
   const setTab = useCallback((k) => {

@@ -245,8 +245,31 @@ async function closingMap() {
   return closing;
 }
 let closingSave = null;
+closingMap().catch(() => {});
+// every price found this session, so a match page can show odds the moment it opens
+const fresh = new Map();
+
+/** Odds already known for a match (instant, no network): current, else closing. */
+export function cachedOdds(m) {
+  if (!m || !m.key) return null;
+  const f = fresh.get(m.key);
+  if (f && (m.state !== 'post' || f.closing)) return f;
+  const c = closing && closing[m.key];
+  if (c && (m.state === 'post' || !f)) return { ...c, closing: m.state === 'post', live: false };
+  return f || null;
+}
+
+/** Load the lists and saved prices early (app start), so odds are ready when needed. */
+export function warmOdds(sport = 'soccer') {
+  closingMap().catch(() => {});
+  baseEvents(sport).catch(() => {});
+  tournaments(sport).catch(() => {});
+}
+
 async function remember(m, o) {
-  if (!o || o.live) return; // pre-match prices only: that's what "closing odds" means
+  if (!o) return;
+  fresh.set(m.key, o);
+  if (o.live) return; // pre-match prices only: that's what "closing odds" means
   const c = await closingMap();
   c[m.key] = { ...o, t: Date.now() };
   clearTimeout(closingSave);

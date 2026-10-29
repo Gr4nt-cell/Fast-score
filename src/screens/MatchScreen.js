@@ -9,7 +9,7 @@ import { useStore, formatOdds, americanToProb } from '../store';
 import { sportByKey } from '../sports';
 import { normalizeEvent, scoreboard, standings as fetchStandings, summary as fetchSummary } from '../api/espn';
 import { predictMatch } from '../predict';
-import { matchOdds as msportOdds } from '../api/msport';
+import { cachedOdds, matchOdds as msportOdds } from '../api/msport';
 import { Glass } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import Standings from '../components/Standings';
@@ -1042,7 +1042,11 @@ export default function MatchScreen({ route }) {
   const { isFav, toggle } = useStore();
   const sport = route.match.sport;
   const sp = sportByKey(sport);
-  const [m, setM] = useState(route.match);
+  // odds known already (from the list, this session or saved closing prices) show straight away
+  const [m, setM] = useState(() => {
+    const o = route.match.odds && route.match.odds.home != null ? route.match.odds : cachedOdds(route.match);
+    return o ? { ...route.match, odds: o } : route.match;
+  });
   const [sum, setSum] = useState(null);
   const [table, setTable] = useState(null);
   const [pred, setPred] = useState(null);
@@ -1083,7 +1087,7 @@ export default function MatchScreen({ route }) {
   }, [m.state, refresh]);
 
   // MSport prices: on open, then every minute while the match is on
-  const [oddsChecked, setOddsChecked] = useState(false);
+  const [oddsChecked, setOddsChecked] = useState(!!(m.odds && m.odds.home != null));
   useEffect(() => {
     if (!teamGame) return undefined;
     let alive = true;
