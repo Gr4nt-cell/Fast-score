@@ -450,7 +450,7 @@ export default {
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     try {
       if (url.pathname === '/privacy' || url.pathname === '/child-safety') {
- return new Response(url.pathname === '/privacy' ? PRIVACY : CHILD_SAFETY, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
+ return new Response(url.pathname === '/privacy' ? PRIVACY : CHILD_SAFETY, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'no-cache' } });
       }
       await ensureSchema(env);
       if (url.pathname === '/' || url.pathname === '/v1/status') return await statusEndpoint(env);
