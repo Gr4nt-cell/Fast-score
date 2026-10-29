@@ -10,6 +10,7 @@ on:
       - '.github/workflows/deploy-server.yml'
       - '.github/workflows/check-server.yml'
       - 'wrangler.toml'
+      - '.github/workflows/probe.yml'
       - '.github/workflows/plugin-mirror.yml'
   workflow_dispatch:
 
