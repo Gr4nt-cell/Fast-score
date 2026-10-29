@@ -8,7 +8,7 @@ jobs:
       - run: |
           mkdir -p out
           C=2bf1d295f2fa7b2716d4520cf5db47d5
-          ID=$(curl -s -H 'operId: 3' 'https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1' | grep -o 'sr:match:[0-9]*' | head -1 | tr -dc 0-9)
+          ID=$(curl -s --compressed -H 'operId: 3' 'https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1' | grep -o 'sr:match:[0-9]*' | head -1 | tr -dc 0-9)
           echo "id=$ID" | tee out/id.txt
           for u in "https://widgets.sir.sportradar.com/$C/widgetloader" \
                    "https://widgets.fn.sportradar.com/$C/en/Etc:UTC/gismo/match_timeline/$ID" \
