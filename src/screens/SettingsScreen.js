@@ -12,6 +12,7 @@ import { askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarm
 import { AppState, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LANGUAGES } from '../i18n';
+import { LanguageWheel } from '../components/LanguageWheel';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
 
@@ -49,6 +50,8 @@ export default function SettingsScreen() {
   useEffect(() => {
     serverStatus().then(setServer);
   }, []);
+  const [langOpen, setLangOpen] = useState(false);
+  const curLang = LANGUAGES.find((l) => l.code === (settings.language || 'system')) || LANGUAGES[0];
   const version = (Constants.expoConfig && Constants.expoConfig.version) || '1.0.0';
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
@@ -56,19 +59,22 @@ export default function SettingsScreen() {
       <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
         <SectionTitle>Language</SectionTitle>
         <Card>
-          {LANGUAGES.map((l, i) => {
-            const on = (settings.language || 'system') === l.code;
-            return (
-              <Row key={l.code} last={i === LANGUAGES.length - 1} onPress={() => setSetting('language', l.code)}>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: t.text, fontSize: 15.5, fontWeight: on ? '700' : '500' }}>{l.code === 'system' ? 'System language' : l.native}</Text>
-                  {l.code !== 'system' && l.native !== l.name ? <Text style={{ color: t.secondary, fontSize: 12 }}>{l.name}</Text> : null}
-                </View>
-                {on ? <Ionicons name="checkmark" size={20} color={t.blue} /> : null}
-              </Row>
-            );
-          })}
+          <Row last onPress={() => setLangOpen(true)}>
+            <Ionicons name="language-outline" size={20} color={t.blue} style={{ marginRight: 12 }} />
+            <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500', flex: 1 }}>Language</Text>
+            <Text style={{ color: t.secondary, fontSize: 15, marginRight: 6 }}>{curLang.code === 'system' ? 'System language' : curLang.native}</Text>
+            <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
+          </Row>
         </Card>
+        <LanguageWheel
+          visible={langOpen}
+          value={settings.language || 'system'}
+          onClose={() => setLangOpen(false)}
+          onDone={(code) => {
+            setLangOpen(false);
+            if (code !== (settings.language || 'system')) setTimeout(() => setSetting('language', code), 250);
+          }}
+        />
 
         <SectionTitle>Appearance</SectionTitle>
         <View style={{ paddingHorizontal: 16, marginBottom: 14 }}>
