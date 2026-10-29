@@ -1,0 +1,36 @@
+name: Probe
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch samples
+        run: |
+          mkdir out && cd out
+          UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'
+          get() { curl -sSL -m 25 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
+          F=https://global.flashscore.ninja/2/x/feed
+          for L in euro uefa-nations-league champions-league; do
+            get "$L.html" "https://www.flashscore.com/football/europe/$L/standings/"
+            python3 - "$L" <<'PY' >> status.txt
+          import re,sys
+          L=sys.argv[1]; h=open(L+'.html',encoding='utf8',errors='ignore').read()
+          tid=re.search(r'tournamentId:\s*"([^"]+)"',h); sid=re.search(r'tournamentStageId:\s*"([^"]+)"',h)
+          print('##',L,tid and tid.group(1), sid and sid.group(1))
+          open(L+'.ids','w').write(f"{tid.group(1) if tid else ''} {sid.group(1) if sid else ''}")
+          for k in ['tournamentStage','stages','seasonId','archive','/standings/','subTournament','stage']:
+              ms=list(re.finditer(k,h)); print('  ',k,len(ms))
+              for m in ms[:2]: print('     ',h[max(0,m.start()-150):m.start()+250].replace('\n',' '))
+          PY
+            read T S < "$L.ids"; get "$L.to.txt" "$F/to_${T}_${S}_1"
+          done
+          cat status.txt | cut -c1-500
+      - name: Save to the probe branch
+        run: |
+          cd out
+          git init -q && git checkout -q -b probe
+          git config user.name probe && git config user.email probe@users.noreply.github.com
+          git add *.txt && git commit -qm "samples"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" probe
