@@ -10,24 +10,32 @@ jobs:
         run: |
           mkdir out && cd out
           UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'
-          get() { curl -sS -m 20 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
-          for h in "https://d.flashscore.com/x/feed" "https://global.flashscore.ninja/2/x/feed" "https://2.flashscore.ninja/2/x/feed"; do
-            n=$(echo $h | cut -d/ -f3)
-            get "f1_$n.txt" "$h/f_1_0_0_en_1"
-          done
           H=https://global.flashscore.ninja/2/x/feed
-          for s in 2 3 4 5 6 7 8 12; do get "sport$s.txt" "$H/f_${s}_0_0_en_1"; done
-          get "live1.txt" "$H/r_1_1"
-          get "yday1.txt" "$H/f_1_-1_0_en_1"
-          ID=$(grep -o 'AA÷[A-Za-z0-9]*' f1_global.flashscore.ninja.txt | head -1 | cut -d÷ -f2)
-          FID=$(tr '¬' '\n' < yday1.txt | grep '^AA÷' | head -1 | cut -d÷ -f2)
-          echo "ids $ID $FID" >> status.txt
-          for f in df_sui df_st df_li df_hh df_dos dc df_sur df_od; do get "${f}.txt" "$H/${f}_1_$FID"; done
-          get "dc_1.txt" "$H/dc_1_$FID"
-          get "home.html" "https://www.flashscore.com/"
-          grep -o 'feed_sign[^,;]*' home.html | head -3 >> status.txt
-          grep -o '"fsign[^,]*' home.html | head -3 >> status.txt
-          cat status.txt
+          get() { curl -sS -m 20 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
+          E=vcTsZaNE
+          for f in df_sui df_st df_li df_hh df_dos df_sur df_mh df_ml df_lc df_ii df_od dc df_hl df_ps; do get "d_${f}.txt" "$H/${f}_1_$E"; done
+          get d_dc.txt "$H/dc_1_$E"
+          # standings candidates (tournament Gl9hUCqn, stage 4CWHXGM1, ZEE hUIdt7w8?)
+          get s1.txt "$H/to_Gl9hUCqn_4CWHXGM1_1"
+          get s2.txt "$H/to_hUIdt7w8_4CWHXGM1_1"
+          get s3.txt "$H/to_4CWHXGM1_Gl9hUCqn_1"
+          get s4.txt "$H/ss_1_Gl9hUCqn_4CWHXGM1_table_overall"
+          # match page html (has ids/urls), team page html
+          get mpage.html "https://www.flashscore.com/match/$E/"
+          get tpage.html "https://www.flashscore.com/team/carlisle/"
+          get lpage.html "https://www.flashscore.com/football/england/national-league/standings/"
+          get f1.txt "$H/f_1_0_0_en_1"
+          python3 - <<'PY' >> status.txt
+          import re
+          t=open('f1.txt',encoding='utf8').read()
+          live=[r for r in t.split('~') if r.startswith('AA') and '¬AB÷2¬' in r]
+          print('live', len(live)); print(live[0][:900] if live else '')
+          for n in ['lpage.html','mpage.html']:
+              h=open(n,encoding='utf8',errors='ignore').read()
+              for k in ['feed_sign','fsign','tournament_id','tournamentStage','environment','standings','x/feed/']:
+                  for m in re.finditer(k,h):
+                      print(n,k,h[max(0,m.start()-80):m.start()+160].replace('\n',' ')); break
+          PY
       - name: Save to the probe branch
         run: |
           cd out
