@@ -3,7 +3,7 @@
 // is allowed to fail and the app then falls back to ESPN.
 // Everything is converted into the same shapes the ESPN layer produces, so screens don't change.
 
-import { browserFetch } from './browserBridge';
+import { browserFetch, sofaToken } from './browserBridge';
 import { serverUrl } from './server';
 
 const HOSTS = ['https://www.sofascore.com/api/v1', 'https://api.sofascore.com/api/v1', 'https://api.sofascore.app/api/v1'];
@@ -45,7 +45,8 @@ export const ssBlocked = () => Date.now() < blockedUntil;
 // SofaScore refuses data-centre addresses (our server and GitHub both get 403), so the server
 // route is only kept for the Settings test; the phone's own routes do the work.
 const ROUTES = ['direct', 'browser'];
-const TEST_ROUTES = ['direct', 'browser'];
+// the page first: if it gets a token, the phone's own requests are then tried with it too
+const TEST_ROUTES = ['browser', 'direct'];
 let goodRoute = null;
 let goodUntil = 0;
 export const lastRoute = () => goodRoute;
@@ -58,31 +59,41 @@ const HEADER_SETS = [
 
 async function viaDirect(path) {
   const tried = [];
+  let notFound = null;
   const order = [preferred, ...HOSTS.map((_, i) => i).filter((i) => i !== preferred)];
+  const tk = sofaToken();
   for (const i of order) {
-    for (const headers of HEADER_SETS) {
+    for (const base of HEADER_SETS) {
+      const headers = tk ? { ...base, 'X-Captcha': tk } : base;
       const ctrl = new AbortController();
       const timer = setTimeout(() => ctrl.abort(), 9000);
+      const host = HOSTS[i].split('/')[2];
       try {
         const res = await fetch(HOSTS[i] + path, { headers, signal: ctrl.signal });
         const body = await res.text();
         clearTimeout(timer);
-        const host = HOSTS[i].split('/')[2];
         if (res.ok && /^\s*[[{]/.test(body)) {
           preferred = i;
           return { status: res.status, body };
         }
-        if (res.status === 404 && /^\s*\{/.test(body)) return { status: 404, body, tried };
-        tried.push({ host, status: res.status, len: body.length, type: (res.headers.get('content-type') || '').split(';')[0] });
+        let reason = '';
+        try {
+          const j = JSON.parse(body);
+          reason = (j && j.error && (j.error.reason || j.error.message)) || '';
+        } catch {}
+        if (res.status === 404 && /^\s*\{/.test(body)) notFound = { status: 404, body };
+        tried.push({ host, status: res.status, len: body.length, reason });
         if (!res.ok) break; // refused: the other header set won't change that
       } catch (e) {
         clearTimeout(timer);
-        tried.push({ host: HOSTS[i].split('/')[2], status: 0, err: String(e.message || e).slice(0, 40) });
+        tried.push({ host, status: 0, err: String(e.message || e).slice(0, 40) });
         break;
       }
     }
   }
-  const last = tried[tried.length - 1] || {};
+  // every host said 404 or worse: a real "nothing here" only if no host refused
+  if (notFound && tried.every((x) => x.status === 404)) return { ...notFound, tried };
+  const last = tried.find((x) => x.status === 403) || tried[tried.length - 1] || {};
   return { status: last.status || 0, body: '', tried };
 }
 
@@ -184,7 +195,7 @@ export async function diagnose() {
       sample:
         n == null && r
           ? r.tried
-            ? r.tried.map((x) => `${x.host.replace(/^(www|api)\./, '$1.')} ${x.status || x.err || 'no answer'}${x.status ? ` ${x.len}b${x.type ? ' ' + x.type : ''}` : ''}`).join(' · ')
+            ? r.tried.map((x) => `${x.host.replace('.sofascore', '')} ${x.status || x.err || 'no answer'}${x.reason ? ' ' + x.reason : x.status ? ` ${x.len}b` : ''}`).join(' · ')
             : String(r.body || '').replace(/\s+/g, ' ').slice(0, 140)
           : '',
     });

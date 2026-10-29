@@ -8,6 +8,7 @@ import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
 import { diagnose } from '../api/sofascore';
+import { SofaVerify, onSofaState, sofaNeedsTap, sofaToken } from '../api/browserBridge';
 import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
@@ -32,6 +33,10 @@ export default function SettingsScreen() {
   const [server, setServer] = useState(null);
   const [notif, setNotif] = useState(null);
   const [ssTest, setSsTest] = useState(null);
+  const [verify, setVerify] = useState(false);
+  const [sofa, setSofa] = useState({ needsTap: sofaNeedsTap(), hasToken: !!sofaToken() });
+  useEffect(() => onSofaState(setSofa), []);
+  const closeVerify = React.useCallback(() => setVerify(false), []);
   useEffect(() => {
     permissionStatus().then(setNotif);
   }, []);
@@ -168,8 +173,21 @@ export default function SettingsScreen() {
             <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Test SofaScore connection</Text>
             {ssTest === 'running' ? <Text style={{ color: t.secondary }}>Testing… (up to a minute)</Text> : null}
           </Row>
+          <Row last={!Array.isArray(ssTest)} onPress={() => setVerify(true)}>
+            <View style={{ width: 10, height: 10, borderRadius: 5, marginRight: 10, backgroundColor: sofa.hasToken ? t.green : sofa.needsTap ? t.orange : t.tertiary }} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600' }}>Verify SofaScore</Text>
+              <Text style={{ color: t.secondary, fontSize: 12, marginTop: 2 }}>
+                {sofa.hasToken
+                  ? 'Verified · renews by itself while the app is open'
+                  : sofa.needsTap
+                  ? 'SofaScore wants a quick human check. Tap here, then tap the box.'
+                  : 'SofaScore asks for a human check now and then. Usually it passes by itself; if not, do it here.'}
+              </Text>
+            </View>
+          </Row>
           {Array.isArray(ssTest)
-            ? ssTest.map((r, i) => (
+            ? [...ssTest].sort((a, b) => (a.route === 'direct' ? -1 : b.route === 'direct' ? 1 : 0)).map((r, i) => (
                 <Row key={r.route} last={i === ssTest.length - 1}>
                   <View style={{ width: 10, height: 10, borderRadius: 5, marginRight: 10, backgroundColor: r.events ? t.green : t.red }} />
                   <View style={{ flex: 1 }}>
@@ -184,6 +202,7 @@ export default function SettingsScreen() {
               ))
             : null}
         </Card>
+        <SofaVerify visible={verify} onClose={closeVerify} theme={t} />
         <SectionTitle>Data</SectionTitle>
         <Card>
           <Row
