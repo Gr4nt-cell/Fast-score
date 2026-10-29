@@ -14,7 +14,7 @@ const fs = require('fs');
     try { buf = await r.body(); } catch {}
     const txt = buf ? buf.toString() : '';
     log.push({ n: ++n, u, s: r.status(), t: r.request().resourceType(), len: buf ? buf.length : 0 });
-    if (/api\/gh|sportradar|gismo|stat-widgets|match-detail|lmt/i.test(u)) fs.writeFileSync(`out/h${n}.txt`, u + '\n\n' + txt.slice(0, 600000));
+    if (/api\/gh|sportradar|gismo|stat-widgets|match-detail|lmt|tracker|betradar|sir\./i.test(u)) fs.writeFileSync(`out/h${n}.txt`, u + '\n\n' + txt.slice(0, 600000));
   });
   p.on('websocket', (ws) => { log.push({ ws: ws.url() }); let k = 0; ws.on('framereceived', (f) => { if (k++ < 200) fs.appendFileSync('out/ws.txt', '<- ' + String(f.payload).slice(0, 3000) + '\n'); }); ws.on('framesent', (f) => fs.appendFileSync('out/ws.txt', '-> ' + String(f.payload).slice(0, 1000) + '\n')); });
   // pick a live soccer match from the API
@@ -35,7 +35,13 @@ const fs = require('fs');
   fs.writeFileSync('out/match.html', await p.content());
   const frames = p.frames().map((f) => f.url());
   log.push({ frames });
-  await p.mouse.wheel(0, 600); await p.waitForTimeout(3000); await p.screenshot({ path: 'out/match2.png' });
+  fs.writeFileSync('out/log_before.json', JSON.stringify(log.length));
+  const tr = await p.$('text=Tracker');
+  log.push({ tracker: !!tr, mark: 'CLICK TRACKER' });
+  if (tr) { await tr.click().catch((e) => log.push({ err: String(e) })); await p.waitForTimeout(25000); }
+  await p.screenshot({ path: 'out/match2.png' });
+  log.push({ frames2: p.frames().map((f) => f.url()) });
+  fs.writeFileSync('out/match2.html', await p.content());
   fs.writeFileSync('out/log.json', JSON.stringify(log, null, 1));
   await b.close();
 })();
