@@ -6,39 +6,36 @@ const fs = require('fs');
   const p = await ctx.newPage();
   const log = [];
   let n = 0;
+  p.on('request', (q) => { if (/api\/gh|sportradar|gismo|widget/i.test(q.url())) log.push({ req: q.url(), m: q.method(), h: q.headers(), post: q.postData() && q.postData().slice(0, 600) }); });
   p.on('response', async (r) => {
     const u = r.url();
-    if (/google|doubleclick|facebook|\.png|\.svg|\.webp|\.jpg|\.woff/.test(u)) return;
+    if (/google|doubleclick|facebook|\.png|\.svg|\.webp|\.jpg|\.woff|\.css/.test(u)) return;
     let buf = null;
     try { buf = await r.body(); } catch {}
     const txt = buf ? buf.toString() : '';
-    const hit = /sportradar|gismo|lmt|widgetloader|sir\./i.test(u + txt.slice(0, 400000));
-    log.push({ n: ++n, u, s: r.status(), t: r.request().resourceType(), len: buf ? buf.length : 0, hit });
-    if (hit || /sportradar|gismo/.test(u)) fs.writeFileSync(`out/h${n}.txt`, u + '\n\n' + txt.slice(0, 400000));
+    log.push({ n: ++n, u, s: r.status(), t: r.request().resourceType(), len: buf ? buf.length : 0 });
+    if (/api\/gh|sportradar|gismo|stat-widgets|match-detail|lmt/i.test(u)) fs.writeFileSync(`out/h${n}.txt`, u + '\n\n' + txt.slice(0, 600000));
   });
-  p.on('websocket', (ws) => log.push({ ws: ws.url() }));
-  await p.goto('https://www.msport.com/gh/', { waitUntil: 'networkidle', timeout: 60000 }).catch((e) => log.push({ err: String(e) }));
-  await p.waitForTimeout(5000);
-  const links = await p.evaluate(() => [...new Set([...document.querySelectorAll('a')].map((a) => a.href))]);
-  fs.writeFileSync('out/links.txt', links.join('\n'));
-  const live = links.filter((h) => /live/i.test(h)).slice(0, 5);
-  await p.screenshot({ path: 'out/home.png' });
-  log.push({ live });
-  const liveUrl = links.find((h) => /\/live\/?$|live-betting|inplay/i.test(h)) || live[0];
-  if (liveUrl) {
-    await p.goto(liveUrl, { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
-    await p.waitForTimeout(5000);
-    const l2 = await p.evaluate(() => [...new Set([...document.querySelectorAll('a')].map((a) => a.href))]);
-    fs.writeFileSync('out/links_live.txt', l2.join('\n'));
-    const ev = l2.find((h) => /sr(:|%3A)match/i.test(h)) || l2.find((h) => /\/\d{6,}/.test(h));
-    log.push({ liveUrl, ev });
-    if (ev) {
-      await p.goto(ev, { waitUntil: 'networkidle', timeout: 60000 }).catch(() => {});
-      await p.waitForTimeout(20000);
-      await p.screenshot({ path: 'out/match.png' });
-      fs.writeFileSync('out/match.html', await p.content());
-    }
-  }
+  p.on('websocket', (ws) => { log.push({ ws: ws.url() }); let k = 0; ws.on('framereceived', (f) => { if (k++ < 200) fs.appendFileSync('out/ws.txt', '<- ' + String(f.payload).slice(0, 3000) + '\n'); }); ws.on('framesent', (f) => fs.appendFileSync('out/ws.txt', '-> ' + String(f.payload).slice(0, 1000) + '\n')); });
+  // pick a live soccer match from the API
+  const api = 'https://www.msport.com/api/gh/facts-center/query/frontend';
+  let url = null;
+  try {
+    const j = await (await p.request.get(`${api}/live-matches/list?sportId=sr:sport:1`, { headers: { operId: '3' } })).json();
+    const evs = j.data.tournaments.flatMap((t) => t.events.map((e) => ({ ...e, tn: t.name, cat: t.category })));
+    const e = evs.find((x) => x.hasLiveWidget) || evs[0];
+    const slug = (s) => String(s).replace(/[^A-Za-z0-9]+/g, '_').replace(/^_|_$/g, '');
+    url = `https://www.msport.com/gh/sports/Soccer/live/${slug(e.cat + ' ' + (e.tn || e.tournament || ''))}/${slug(e.homeTeam)}_vs_${slug(e.awayTeam)}/${e.eventId}`;
+    log.push({ pick: e.eventId, home: e.homeTeam, away: e.awayTeam, keys: Object.keys(e) });
+  } catch (e) { log.push({ err: String(e) }); }
+  log.push({ url });
+  await p.goto(url, { waitUntil: 'networkidle', timeout: 60000 }).catch((e) => log.push({ err: String(e) }));
+  await p.waitForTimeout(25000);
+  await p.screenshot({ path: 'out/match.png' });
+  fs.writeFileSync('out/match.html', await p.content());
+  const frames = p.frames().map((f) => f.url());
+  log.push({ frames });
+  await p.mouse.wheel(0, 600); await p.waitForTimeout(3000); await p.screenshot({ path: 'out/match2.png' });
   fs.writeFileSync('out/log.json', JSON.stringify(log, null, 1));
   await b.close();
 })();
