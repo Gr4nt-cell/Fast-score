@@ -9,7 +9,7 @@ import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
 import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
 import { askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable } from '../live';
-import { AppState } from 'react-native';
+import { AppState, Linking } from 'react-native';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
 
@@ -173,6 +173,15 @@ export default function SettingsScreen() {
           >
             <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Clear cached data</Text>
             {cleared ? <Text style={{ color: t.secondary }}>Cleared</Text> : null}
+          </Row>
+        </Card>
+        <SectionTitle>About</SectionTitle>
+        <Card>
+          <Row onPress={() => Linking.openURL('https://fast-score.gstephen116.workers.dev/privacy').catch(() => {})}>
+            <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Privacy policy</Text>
+          </Row>
+          <Row last onPress={() => Linking.openURL('https://fast-score.gstephen116.workers.dev/child-safety').catch(() => {})}>
+            <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Child safety standards</Text>
           </Row>
         </Card>
         <Text style={{ color: t.tertiary, textAlign: 'center', fontSize: 12 }}>Fast Score {version}</Text>

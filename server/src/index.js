@@ -1,3 +1,4 @@
+import { CHILD_SAFETY, PRIVACY } from './pages.js';
 // Fast Score API — runs on Cloudflare Workers (free plan) with a D1 database.
 //
 // Every minute a timer copies ESPN's scoreboards into D1: competitions with games in play are
@@ -448,6 +449,9 @@ export default {
     const url = new URL(request.url);
     if (request.method === 'OPTIONS') return new Response(null, { headers: cors });
     try {
+      if (url.pathname === '/privacy' || url.pathname === '/child-safety') {
+ return new Response(url.pathname === '/privacy' ? PRIVACY : CHILD_SAFETY, { headers: { 'Content-Type': 'text/html; charset=utf-8', 'Cache-Control': 'public, max-age=3600' } });
+      }
       await ensureSchema(env);
       if (url.pathname === '/' || url.pathname === '/v1/status') return await statusEndpoint(env);
       if (url.pathname === '/v1/day') {
