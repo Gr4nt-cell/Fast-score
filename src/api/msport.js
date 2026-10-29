@@ -34,6 +34,68 @@ async function getJson(path, ttl) {
   return pr;
 }
 
+// ---------- the prebuilt odds file (every upcoming match, rebuilt every 5 minutes on GitHub) ----------
+
+const FILE = 'https://raw.githubusercontent.com/Gr4nt-cell/Fast-score/odds/odds.json';
+let file = null; // { t, sports: { soccer: [rows] } }, rows already expanded per sport
+let fileFetched = 0;
+let fileLoading = null;
+
+function expand(row) {
+  const [eventId, homeTeam, awayTeam, startTime, category, tournament, live, mks] = row;
+  return {
+    eventId,
+    homeTeam,
+    awayTeam,
+    startTime,
+    category,
+    tournament,
+    status: live ? 1 : 0,
+    markets: (mks || []).map(([id, name, outs]) => ({ id, name, specifiers: '', isShown: 1, outcomes: outs.map(([description, odds]) => ({ description, odds, isActive: 1 })) })),
+  };
+}
+
+function useFile(raw) {
+  const sports = {};
+  Object.entries((raw && raw.sports) || {}).forEach(([k, rows]) => (sports[k] = rows.map(expand)));
+  file = { t: raw.t, sports };
+}
+
+/** Every MSport match of a sport from the odds file: from the phone at once, refreshed in the background. */
+async function fileEvents(sport) {
+  if (!file) {
+    try {
+      const saved = await AsyncStorage.getItem('ms:file');
+      if (saved && !file) useFile(JSON.parse(saved));
+    } catch {}
+  }
+  if (Date.now() - fileFetched > 4 * 60000 && !fileLoading) {
+    fileFetched = Date.now();
+    fileLoading = (async () => {
+      try {
+        const ctrl = new AbortController();
+        const timer = setTimeout(() => ctrl.abort(), 20000);
+        const res = await fetch(`${FILE}?t=${Math.floor(Date.now() / 120000)}`, { signal: ctrl.signal });
+        clearTimeout(timer);
+        if (!res.ok) return;
+        const text = await res.text();
+        const raw = JSON.parse(text);
+        if (!file || raw.t > file.t) {
+          useFile(raw);
+          AsyncStorage.setItem('ms:file', text).catch(() => {});
+        }
+      } catch {
+        fileFetched = Date.now() - 3 * 60000; // try again in a minute
+      } finally {
+        fileLoading = null;
+      }
+    })();
+    if (!file) await fileLoading; // nothing saved yet: wait for the first download
+  }
+  // prices older than 2 hours are too stale to show
+  return file && Date.now() - file.t < 2 * 3600000 ? file.sports[sport] || [] : [];
+}
+
 // any object carrying an eventId (the lists nest events under tournaments in different ways)
 function collect(d, out) {
   if (!d || typeof d !== 'object') return out;
@@ -262,6 +324,7 @@ export function cachedOdds(m) {
 /** Load the lists and saved prices early (app start), so odds are ready when needed. */
 export function warmOdds(sport = 'soccer') {
   closingMap().catch(() => {});
+  fileEvents(sport).catch(() => {});
   baseEvents(sport).catch(() => {});
   tournaments(sport).catch(() => {});
 }
@@ -285,7 +348,10 @@ export async function matchOdds(m) {
   if (!m || !msSupports(m.sport) || m.kind !== 'match') return null;
   try {
     if (m.state !== 'post') {
-      let e = pair(m, await baseEvents(m.sport));
+      // live matches: MSport's live list (prices move every minute); otherwise the odds file first
+      let e = m.state === 'in' ? pair(m, await baseEvents(m.sport)) : null;
+      if (!e) e = pair(m, await fileEvents(m.sport));
+      if (!e && m.state !== 'in') e = pair(m, await baseEvents(m.sport));
       if (!e) e = pair(m, await byTournaments(await candidates(m.sport, [m])));
       const o = e ? oddsOf(e) : null;
       if (o) {
@@ -319,7 +385,8 @@ export async function attachOdds(groups, sport) {
       );
       return left;
     };
-    const left = fill(await baseEvents(sport));
+    let left = fill(await fileEvents(sport));
+    if (left.length) left = fill(await baseEvents(sport));
     // the rest: look in their own competitions (bounded, so a huge day stays quick)
     if (left.length) fill(await byTournaments(await candidates(sport, left.slice(0, 200))));
   } catch {}
