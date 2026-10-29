@@ -123,3 +123,34 @@ export function askExactAlarms() {
     FastLive && FastLive.requestExactAlarms();
   } catch {}
 }
+
+/** Alert kinds, each with its own notification channel and tone. */
+export const ALERT_KINDS = [
+  { key: 'goal', label: 'Goals', icon: 'football-outline' },
+  { key: 'kickoff', label: 'Kick-off', icon: 'play-circle-outline' },
+  { key: 'halftime', label: 'Half-time', icon: 'pause-circle-outline' },
+  { key: 'fulltime', label: 'Full-time', icon: 'flag-outline' },
+  { key: 'redcard', label: 'Red cards', icon: 'square' },
+  { key: 'lineups', label: 'Line-ups', icon: 'people-outline' },
+];
+
+export const alertOn = (settings, kind) => !settings.alerts || settings.alerts[kind] !== false;
+
+/** Tell the live service which kinds the user wants. */
+export function setAlertKinds(alerts) {
+  try {
+    FastLive && FastLive.setAlerts && FastLive.setAlerts(JSON.stringify(alerts || {}));
+  } catch {}
+}
+
+/** Play an alert tone (Settings preview and the in-app banner). */
+export function playTone(kind) {
+  try {
+    return !!(FastLive && FastLive.playTone && FastLive.playTone(kind));
+  } catch {
+    return false;
+  }
+}
+
+/** Which tone an in-app watcher event uses (null = no special tone). */
+export const toneKind = (ev) => (ev.kind === 'score' ? (ev.match.sport === 'soccer' ? 'goal' : null) : ev.kind === 'start' ? 'kickoff' : ev.kind === 'end' ? 'fulltime' : null);

@@ -8,7 +8,7 @@ import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
 import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
-import { askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable } from '../live';
+import { ALERT_KINDS, alertOn, askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable, playTone } from '../live';
 import { AppState, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LANGUAGES } from '../i18n';
@@ -173,6 +173,38 @@ export default function SettingsScreen() {
             </Row>
           ) : null}
         </Card>
+
+        {settings.goalAlerts ? (
+          <>
+            <SectionTitle>Alert tones</SectionTitle>
+            <Card>
+              {ALERT_KINDS.map((k, i) => {
+                const on = alertOn(settings, k.key);
+                return (
+                  <Row key={k.key} last={i === ALERT_KINDS.length - 1}>
+                    {k.key === 'redcard' ? (
+                      <View style={{ width: 14, height: 18, borderRadius: 3, backgroundColor: t.red, marginLeft: 3, marginRight: 15 }} />
+                    ) : (
+                      <Ionicons name={k.icon} size={20} color={t.blue} style={{ marginRight: 12 }} />
+                    )}
+                    <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500', flex: 1 }}>{k.label}</Text>
+                    <Pressable
+                      hitSlop={8}
+                      onPress={() => playTone(k.key)}
+                      style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}
+                    >
+                      <Ionicons name="play" size={15} color={t.blue} style={{ marginLeft: 2 }} />
+                    </Pressable>
+                    <Switch value={on} onValueChange={(v) => setSetting('alerts', { ...(settings.alerts || {}), [k.key]: v })} trackColor={{ true: t.green }} />
+                  </Row>
+                );
+              })}
+            </Card>
+            <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 20, marginTop: -6, marginBottom: 14, lineHeight: 17 }}>
+              Tap ▶ to hear a tone. Line-up alerts come about an hour before kick-off for followed football matches. You can also change each sound in your phone's notification settings.
+            </Text>
+          </>
+        ) : null}
 
         <SectionTitle>Fast Score server</SectionTitle>
         <Card>

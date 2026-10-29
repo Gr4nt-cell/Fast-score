@@ -66,14 +66,43 @@ function rawText(ev) {
   return { title: `${ev.title}: ${score}`, body: m.leagueName || '' };
 }
 
-export async function notifyEvent(ev) {
+// one channel per kind of alert, each with its own tone (same ids as the live service uses)
+const KIND_CHANNELS = {
+  goal: 'Goals',
+  kickoff: 'Kick-off',
+  halftime: 'Half-time',
+  fulltime: 'Full-time',
+  redcard: 'Red cards',
+  lineups: 'Line-ups',
+};
+const kindReady = {};
+function kindChannel(kind) {
+  const id = `ev_${kind}_v1`;
+  if (Platform.OS !== 'android') return Promise.resolve(id);
+  if (!kindReady[kind]) {
+    kindReady[kind] = Notifications.setNotificationChannelAsync(id, {
+      name: KIND_CHANNELS[kind] || kind,
+      description: 'Alerts for matches and teams you follow',
+      importance: kind === 'lineups' ? Notifications.AndroidImportance.DEFAULT : Notifications.AndroidImportance.HIGH,
+      vibrationPattern: [0, 250, 150, 250],
+      lightColor: '#0A84FF',
+      sound: `fs_${kind}.wav`,
+    })
+      .then(() => id)
+      .catch(() => CHANNEL);
+  }
+  return kindReady[kind];
+}
+
+export async function notifyEvent(ev, kind) {
   if (!(await ensurePermission(false))) return;
   await channel();
+  const channelId = kind && KIND_CHANNELS[kind] ? await kindChannel(kind) : CHANNEL;
   const { title, body } = text(ev);
   try {
     await Notifications.scheduleNotificationAsync({
-      content: { title, body, sound: 'default', data: { match: favMatch(ev.match) } },
-      trigger: Platform.OS === 'android' ? { channelId: CHANNEL } : null,
+      content: { title, body, sound: kind ? `fs_${kind}.wav` : 'default', data: { match: favMatch(ev.match) } },
+      trigger: Platform.OS === 'android' ? { channelId } : null,
     });
   } catch {}
 }

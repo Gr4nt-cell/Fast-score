@@ -39,7 +39,15 @@
         {
           "color": "#0A84FF",
           "defaultChannel": "scores",
-          "icon": "./assets/notification-icon.png"
+          "icon": "./assets/notification-icon.png",
+          "sounds": [
+            "./assets/sounds/fs_goal.wav",
+            "./assets/sounds/fs_kickoff.wav",
+            "./assets/sounds/fs_halftime.wav",
+            "./assets/sounds/fs_fulltime.wav",
+            "./assets/sounds/fs_redcard.wav",
+            "./assets/sounds/fs_lineups.wav"
+          ]
         }
       ],
       "expo-background-task",

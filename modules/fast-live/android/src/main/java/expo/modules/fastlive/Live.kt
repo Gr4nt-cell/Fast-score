@@ -1,12 +1,16 @@
 package expo.modules.fastlive
 
 import android.app.ActivityManager
+import android.app.Notification
+import android.media.MediaPlayer
 import android.app.AlarmManager
 import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.app.PendingIntent
 import android.content.Context
 import android.content.Intent
+import android.media.AudioAttributes
+import android.net.Uri
 import android.os.Build
 import org.json.JSONArray
 import org.json.JSONObject
@@ -35,8 +39,17 @@ data class Item(
   }
 }
 
-/** What we last saw of a match. */
-data class Snap(val state: String, val hs: String, val aws: String, val clock: String, val ht: Boolean)
+/** What we last saw of a match. `reds` = "home:away" red cards, `li` = line-ups published. */
+data class Snap(
+  val state: String,
+  val hs: String,
+  val aws: String,
+  val clock: String,
+  val ht: Boolean,
+  val reds: String = "", // "" = unknown
+  val li: Boolean = false,
+  val scorer: String = "", // not stored: who scored the latest goal, when known
+)
 
 object Live {
   private const val PREFS = "fastlive"
@@ -44,6 +57,29 @@ object Live {
   const val CH_LIVE = "live-tracker"
   const val EXTRA_TAP = "fastlive_match"
   const val LEAD_MS = 10 * 60 * 1000L       // wake this long before kick-off
+  const val LINEUPS_MS = 75 * 60 * 1000L    // start looking for line-ups this long before kick-off
+
+  // one notification channel (and tone) per kind of event
+  val KINDS = listOf("goal", "kickoff", "halftime", "fulltime", "redcard", "lineups")
+  private val KIND_NAMES = mapOf(
+    "goal" to "Goals", "kickoff" to "Kick-off", "halftime" to "Half-time", "fulltime" to "Full-time", "redcard" to "Red cards", "lineups" to "Line-ups",
+  )
+  fun channelOf(kind: String) = "ev_${kind}_v1"
+
+  /** Which kinds of alert the user wants (Settings -> Alert tones); all on by default. */
+  fun kindOn(ctx: Context, kind: String): Boolean {
+    return try {
+      JSONObject(prefs(ctx).getString("alerts", "{}") ?: "{}").optBoolean(kind, true)
+    } catch (e: Exception) {
+      true
+    }
+  }
+  fun setAlerts(ctx: Context, json: String) = prefs(ctx).edit().putString("alerts", json).apply()
+
+  fun toneUri(ctx: Context, kind: String): Uri? {
+    val id = ctx.resources.getIdentifier("fs_$kind", "raw", ctx.packageName)
+    return if (id != 0) Uri.parse("android.resource://${ctx.packageName}/$id") else null
+  }
   const val MAX_MATCH_MS = 6 * 3600 * 1000L  // give up on a match this long after kick-off
 
   fun prefs(ctx: Context) = ctx.getSharedPreferences(PREFS, Context.MODE_PRIVATE)
@@ -69,11 +105,20 @@ object Live {
     val s = prefs(ctx).getString("s:$key", null) ?: return null
     val p = s.split("|")
     if (p.size < 5) return null
-    return Snap(p[0], p[1], p[2], p[3], p[4] == "1")
+    return Snap(p[0], p[1], p[2], p[3], p[4] == "1", p.getOrNull(5) ?: "", p.getOrNull(6) == "1")
   }
 
   fun saveSnap(ctx: Context, key: String, s: Snap) {
-    prefs(ctx).edit().putString("s:$key", "${s.state}|${s.hs}|${s.aws}|${s.clock}|${if (s.ht) "1" else "0"}").apply()
+    prefs(ctx).edit().putString("s:$key", "${s.state}|${s.hs}|${s.aws}|${s.clock}|${if (s.ht) "1" else "0"}|${s.reds}|${if (s.li) "1" else "0"}").apply()
+  }
+
+  /** Followed football matches (Flashscore) in the hour before kick-off whose line-ups we haven't announced. */
+  fun lineupsPending(ctx: Context): List<Item> {
+    if (!kindOn(ctx, "lineups")) return emptyList()
+    val now = System.currentTimeMillis()
+    return items(ctx).filter {
+      it.src == "fs" && it.sport == "soccer" && it.date - now in 1..LINEUPS_MS && snap(ctx, it.key)?.li != true
+    }
   }
 
   fun finished(ctx: Context, it: Item): Boolean {
@@ -87,10 +132,18 @@ object Live {
     return items(ctx).filter { it.date - now < 15 * 60 * 1000L && !finished(ctx, it) }
   }
 
-  /** When the next followed match starts (minus the lead), or null. */
+  /** When to wake next: a few minutes from now while waiting for line-ups, else the next kick-off (minus the lead). */
   fun nextWake(ctx: Context): Long? {
     val now = System.currentTimeMillis()
-    return items(ctx).filter { it.date - LEAD_MS > now && !finished(ctx, it) }.minOfOrNull { it.date - LEAD_MS }
+    val lineupsOn = kindOn(ctx, "lineups")
+    return items(ctx).filter { !finished(ctx, it) && it.date - LEAD_MS > now }.minOfOrNull {
+      val liStart = it.date - LINEUPS_MS
+      when {
+        !lineupsOn || it.src != "fs" || it.sport != "soccer" || snap(ctx, it.key)?.li == true -> it.date - LEAD_MS
+        liStart > now -> liStart
+        else -> minOf(now + 5 * 60 * 1000L, it.date - LEAD_MS) // checking for line-ups every 5 minutes
+      }
+    }
   }
 
   fun appInForeground(): Boolean {
@@ -106,6 +159,15 @@ object Live {
       nm.createNotificationChannel(NotificationChannel(CH_SCORES, "Goals and results", NotificationManager.IMPORTANCE_HIGH).apply {
         description = "Goals, kick-offs and full time for matches and teams you follow"
         enableVibration(true)
+      })
+    }
+    val attrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+    for (k in KINDS) {
+      if (nm.getNotificationChannel(channelOf(k)) != null) continue
+      nm.createNotificationChannel(NotificationChannel(channelOf(k), KIND_NAMES[k] ?: k, if (k == "lineups") NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH).apply {
+        description = "Alerts for matches and teams you follow"
+        enableVibration(true)
+        toneUri(ctx, k)?.let { setSound(it, attrs) }
       })
     }
     if (nm.getNotificationChannel(CH_LIVE) == null) {
@@ -127,6 +189,67 @@ object Live {
       if (!tap.isNullOrEmpty()) putExtra(EXTRA_TAP, tap)
     }
     return PendingIntent.getActivity(ctx, code, intent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+  }
+
+  // ---------- alerts ----------
+
+  /** Kinds the app shows itself (banner + tone) while it's open, so the phone doesn't double up. */
+  private val APP_SHOWS = setOf("goal", "kickoff", "fulltime")
+
+  /** Post an alert of one kind on its own channel (and tone), if the user wants that kind. */
+  fun alert(ctx: Context, item: Item, kind: String, title: String, text: String) {
+    if (!kindOn(ctx, kind)) return
+    if (kind in APP_SHOWS && appInForeground()) return
+    channels(ctx)
+    val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(ctx, channelOf(kind)) else Notification.Builder(ctx)
+    @Suppress("DEPRECATION")
+    b.setSmallIcon(smallIcon(ctx))
+      .setContentTitle(title)
+      .setContentText(text)
+      .setAutoCancel(true)
+      .setCategory(Notification.CATEGORY_EVENT)
+      .setPriority(if (kind == "lineups") Notification.PRIORITY_DEFAULT else Notification.PRIORITY_HIGH)
+      .setContentIntent(openApp(ctx, item.tap, item.key.hashCode()))
+    if (Build.VERSION.SDK_INT < 26) {
+      @Suppress("DEPRECATION")
+      b.setDefaults(Notification.DEFAULT_VIBRATE)
+      toneUri(ctx, kind)?.let { @Suppress("DEPRECATION") b.setSound(it) }
+    }
+    try {
+      ctx.getSystemService(NotificationManager::class.java).notify(item.key.hashCode() + (System.currentTimeMillis() / 1000 % 1000).toInt(), b.build())
+    } catch (e: Exception) {}
+  }
+
+  /** Before kick-off: announce line-ups for followed football matches once they're published. */
+  fun checkLineups(ctx: Context) {
+    for (it in lineupsPending(ctx)) {
+      val s = poll(it) ?: continue
+      if (!s.li) continue
+      val before = snap(ctx, it.key)
+      saveSnap(ctx, it.key, (before ?: s).copy(li = true))
+      alert(ctx, it, "lineups", "Line-ups are out: ${it.home} v ${it.away}", it.league)
+    }
+  }
+
+  private var player: MediaPlayer? = null
+
+  /** Play one alert tone (Settings preview, and the in-app banner). */
+  fun playTone(ctx: Context, kind: String): Boolean {
+    val id = ctx.resources.getIdentifier("fs_$kind", "raw", ctx.packageName)
+    if (id == 0) return false
+    return try {
+      player?.release()
+      player = MediaPlayer.create(ctx, id)?.apply {
+        setOnCompletionListener { mp ->
+          mp.release()
+          if (player === mp) player = null
+        }
+        start()
+      }
+      player != null
+    } catch (e: Exception) {
+      false
+    }
   }
 
   // ---------- scheduling ----------
@@ -234,7 +357,29 @@ object Live {
           clock = if (min > cap) "$cap+${min - cap}'" else "${maxOf(1, min)}'"
         }
       }
-      return Snap(state, f["DE"] ?: "", f["DF"] ?: "", clock, stage == 38)
+      val lineups = (f["DX"] ?: "").split(",").contains("LI")
+      var reds = "" // unknown
+      var scorer = ""
+      if (it.sport == "soccer" && state != "pre") {
+        // incidents: red cards per side and the latest goal's scorer
+        val sui = get("$h/df_sui_${it.fsSport}_${it.id}", FS_HEADERS)
+        if (sui != null) {
+          var rh = 0
+          var ra = 0
+          for (rec in sui.split("~")) {
+            val kinds = Regex("IK÷([^¬]*)").findAll(rec).map { m -> m.groupValues[1] }.toList()
+            val side = Regex("IA÷(\\d)").find(rec)?.groupValues?.get(1)
+            if (kinds.any { k -> k == "Red Card" || k.contains("Red card") }) {
+              if (side == "1") rh++ else if (side == "2") ra++
+            }
+            if (kinds.firstOrNull()?.let { k -> k == "Goal" || k == "Penalty" || k == "Own goal" } == true) {
+              scorer = Regex("IF÷([^¬]*)").find(rec)?.groupValues?.get(1) ?: scorer
+            }
+          }
+          reds = "$rh:$ra"
+        }
+      }
+      return Snap(state, f["DE"] ?: "", f["DF"] ?: "", clock, stage == 38, reds, lineups, scorer)
     }
     return null
   }

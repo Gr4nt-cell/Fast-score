@@ -14,7 +14,8 @@ import android.os.PowerManager
 
 /**
  * Runs only while a followed match is about to start or under way. Shows the live score in a
- * quiet pinned notification and posts a real alert for kick-off, goals, half-time and full time.
+ * quiet pinned notification and posts alerts (each kind with its own tone) for line-ups,
+ * kick-off, goals, red cards, half-time and full time.
  * Stops itself when nothing is on and sets an alarm for the next followed kick-off.
  */
 class LiveService : Service() {
@@ -75,23 +76,7 @@ class LiveService : Service() {
       .build()
   }
 
-  private fun alert(item: Item, title: String, text: String) {
-    if (Live.appInForeground()) return // the app shows its own banner
-    val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(this, Live.CH_SCORES) else Notification.Builder(this)
-    @Suppress("DEPRECATION")
-    val n = b.setSmallIcon(Live.smallIcon(this))
-      .setContentTitle(title)
-      .setContentText(text)
-      .setAutoCancel(true)
-      .setCategory(Notification.CATEGORY_EVENT)
-      .setPriority(Notification.PRIORITY_HIGH)
-      .setDefaults(Notification.DEFAULT_ALL)
-      .setContentIntent(Live.openApp(this, item.tap, item.key.hashCode()))
-      .build()
-    try {
-      getSystemService(NotificationManager::class.java).notify(item.key.hashCode() + (System.currentTimeMillis() / 1000 % 1000).toInt(), n)
-    } catch (e: Exception) {}
-  }
+  private fun alert(item: Item, kind: String, title: String, text: String) = Live.alert(this, item, kind, title, text)
 
   private fun finish() {
     val next = Live.nextWake(this)
@@ -118,8 +103,10 @@ class LiveService : Service() {
     var anyLive = false
     try {
       for (it in due) {
-        val now = Live.poll(it) ?: continue
+        val raw = Live.poll(it) ?: continue
         val before = Live.snap(this, it.key)
+        // line-ups once out stay out; red cards keep the last known count if the incidents feed didn't answer
+        val now = raw.copy(li = raw.li || before?.li == true, reds = raw.reds.ifEmpty { before?.reds ?: "" })
         Live.saveSnap(this, it.key, now)
         val score = "${it.home} ${now.hs.ifEmpty { "0" }}–${now.aws.ifEmpty { "0" }} ${it.away}"
         val ball = if (it.sport == "soccer") "⚽ " else ""
@@ -129,21 +116,31 @@ class LiveService : Service() {
         }
         if (before == null) {
           // first look: only announce if it just kicked off
-          if (now.state == "in" && System.currentTimeMillis() - it.date < 5 * 60 * 1000L) alert(it, "Kick-off: ${it.home} v ${it.away}", it.league)
+          if (now.state == "in" && System.currentTimeMillis() - it.date < 5 * 60 * 1000L) alert(it, "kickoff", "Kick-off: ${it.home} v ${it.away}", it.league)
           continue
         }
+        if (now.li && !before.li && now.state == "pre" && it.sport == "soccer") {
+          alert(it, "lineups", "Line-ups are out: ${it.home} v ${it.away}", it.league)
+        }
         if (before.state == "pre" && now.state == "in") {
-          alert(it, if (it.sport == "soccer") "Kick-off: ${it.home} v ${it.away}" else "Started: ${it.home} v ${it.away}", it.league)
+          alert(it, "kickoff", if (it.sport == "soccer") "Kick-off: ${it.home} v ${it.away}" else "Started: ${it.home} v ${it.away}", it.league)
         }
         if (now.state != "pre" && (now.hs != before.hs || now.aws != before.aws) && before.state != "pre") {
           val hUp = (now.hs.toIntOrNull() ?: 0) > (before.hs.toIntOrNull() ?: 0)
           val aUp = (now.aws.toIntOrNull() ?: 0) > (before.aws.toIntOrNull() ?: 0)
           val who = if (hUp && !aUp) " ${it.home}" else if (aUp && !hUp) " ${it.away}" else ""
+          val by = if (it.sport == "soccer" && now.scorer.isNotEmpty() && (hUp || aUp)) " · ${now.scorer}" else ""
           val head = if (it.sport == "soccer") "GOAL!$who" else "Score update"
-          if (it.sport == "soccer" || now.state == "post") alert(it, "$ball$head", "$score${if (now.clock.isNotEmpty()) " · " + now.clock else ""} · ${it.league}")
+          if (it.sport == "soccer" || now.state == "post") alert(it, "goal", "$ball$head", "$score${if (now.clock.isNotEmpty()) " · " + now.clock else ""}$by · ${it.league}")
         }
-        if (now.ht && !before.ht && it.sport == "soccer") alert(it, "Half-time: $score", it.league)
-        if (before.state == "in" && now.state == "post") alert(it, "${if (it.sport == "soccer") "Full time" else "Final"}: $score", it.league)
+        if (it.sport == "soccer" && now.state == "in" && before.reds.isNotEmpty() && now.reds.isNotEmpty()) {
+          val (rh0, ra0) = before.reds.split(":").map { x -> x.toIntOrNull() ?: 0 }.let { x -> (x.getOrNull(0) ?: 0) to (x.getOrNull(1) ?: 0) }
+          val (rh1, ra1) = now.reds.split(":").map { x -> x.toIntOrNull() ?: 0 }.let { x -> (x.getOrNull(0) ?: 0) to (x.getOrNull(1) ?: 0) }
+          if (rh1 > rh0) alert(it, "redcard", "🟥 Red card: ${it.home}", "$score · ${now.clock} · ${it.league}")
+          if (ra1 > ra0) alert(it, "redcard", "🟥 Red card: ${it.away}", "$score · ${now.clock} · ${it.league}")
+        }
+        if (now.ht && !before.ht && it.sport == "soccer") alert(it, "halftime", "Half-time: $score", it.league)
+        if (before.state == "in" && now.state == "post") alert(it, "fulltime", "${if (it.sport == "soccer") "Full time" else "Final"}: $score", it.league)
       }
     } catch (e: Exception) {}
     val waiting = due.filter { Live.snap(this, it.key)?.state != "in" && !Live.finished(this, it) }

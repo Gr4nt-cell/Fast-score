@@ -15,7 +15,7 @@ import { success } from './src/haptics';
 import { checkFollowed } from './src/watch';
 import { ensurePermission, notifyEvent, onNotificationTap } from './src/notify';
 import { setBackgroundChecks } from './src/background';
-import { onLiveTap, syncLive, trackedKeys } from './src/live';
+import { onLiveTap, syncLive, trackedKeys, alertOn, playTone, setAlertKinds, toneKind } from './src/live';
 import { warmOdds } from './src/api/msport';
 import { setLanguage } from './src/i18n';
 import { pickToMatch } from './src/screens/PicksScreen';
@@ -98,12 +98,24 @@ function useScoreWatcher() {
   useEffect(() => {
     if (!settings.goalAlerts || !following) return undefined;
     // in the background the live service alerts for the matches it tracks; don't double up
-    const onEvent = (ev) => (AppState.currentState === 'active' ? showToast(ev) : trackedKeys().has(ev.match.key) ? null : notifyEvent(ev));
+    const onEvent = (ev) => {
+      const kind = toneKind(ev);
+      if (kind && !alertOn(settings, kind)) return;
+      if (AppState.currentState === 'active') {
+        showToast(ev);
+        if (kind) playTone(kind);
+      } else if (!trackedKeys().has(ev.match.key)) notifyEvent(ev, kind);
+    };
     const check = () => checkFollowed(favs, onEvent).catch(() => {});
     check();
     const iv = setInterval(check, 30000);
     return () => clearInterval(iv);
-  }, [favs, settings.goalAlerts, following, showToast]);
+  }, [favs, settings.goalAlerts, settings.alerts, following, showToast]);
+
+  // tell the live service which kinds of alert are on
+  useEffect(() => {
+    if (ready) setAlertKinds(settings.alerts || {});
+  }, [ready, settings.alerts]);
 }
 
 function Toast({ onOpen }) {

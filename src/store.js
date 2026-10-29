@@ -23,7 +23,8 @@ const DEFAULT_SETTINGS = {
   showOdds: true,
   goalAlerts: true,
   source: 'auto', // auto | espn | tsdb
-  language: 'system', // system | en | zh | hi | es | fr | ar | bn | pt | ru | ur
+  language: 'system', // system | en | zh | hi | es | fr | ar | bn | pt | it | ru | ur
+  alerts: {}, // per kind (goal, kickoff, halftime, fulltime, redcard, lineups): false = off
 };
 
 const EMPTY_FAVS = { teams: [], leagues: [], matches: [], players: [] };

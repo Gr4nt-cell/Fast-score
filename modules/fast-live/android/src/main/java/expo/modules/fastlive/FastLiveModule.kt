@@ -33,6 +33,17 @@ class FastLiveModule : Module() {
 
     Function("isRunning") { LiveService.running }
 
+    /** Which kinds of alert are on, as JSON {"goal":true,...}. */
+    Function("setAlerts") { json: String ->
+      Live.setAlerts(ctx, json)
+      Live.channels(ctx) // so each tone shows up in the phone's notification settings
+      Live.kick(ctx)
+      true
+    }
+
+    /** Play an alert tone: goal, kickoff, halftime, fulltime, redcard, lineups. */
+    Function("playTone") { kind: String -> Live.playTone(ctx, kind) }
+
     /** Keys of matches the tracker is handling (the app's own 15-minute check skips these). */
     Function("trackedKeys") { Live.items(ctx).map { it.key } }
 

@@ -8,7 +8,19 @@ import android.content.Intent
 class LiveAlarmReceiver : BroadcastReceiver() {
   override fun onReceive(context: Context, intent: Intent) {
     if (!Live.enabled(context)) return
-    if (Live.due(context).isNotEmpty()) Live.startService(context) else Live.kick(context)
+    if (Live.due(context).isNotEmpty()) return run { Live.startService(context) }
+    if (Live.lineupsPending(context).isEmpty()) return Live.kick(context)
+    // waiting for line-ups: check the network off the main thread, then set the next alarm
+    val done = goAsync()
+    Thread {
+      try {
+        Live.checkLineups(context)
+      } catch (e: Exception) {
+      } finally {
+        Live.kick(context)
+        done.finish()
+      }
+    }.start()
   }
 }
 
