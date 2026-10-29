@@ -1,0 +1,32 @@
+name: Probe Flashscore
+on: workflow_dispatch
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch samples
+        run: |
+          mkdir out && cd out
+          UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'
+          get() { curl -sS -m 20 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
+          for h in "https://d.flashscore.com/x/feed" "https://global.flashscore.ninja/2/x/feed" "https://2.flashscore.ninja/2/x/feed"; do
+            n=$(echo $h | cut -d/ -f3)
+            get "f1_$n.txt" "$h/f_1_0_0_en_1"
+          done
+          H=https://global.flashscore.ninja/2/x/feed
+          for s in 2 3 4 5 6 7 8 12; do get "sport$s.txt" "$H/f_${s}_0_0_en_1"; done
+          get "live1.txt" "$H/r_1_1"
+          get "yday1.txt" "$H/f_1_-1_0_en_1"
+          ID=$(grep -o 'AA÷[A-Za-z0-9]*' f1_global.flashscore.ninja.txt | head -1 | cut -d÷ -f2)
+          FID=$(tr '¬' '\n' < yday1.txt | grep '^AA÷' | head -1 | cut -d÷ -f2)
+          echo "ids $ID $FID" >> status.txt
+          for f in df_sui df_st df_li df_hh df_dos dc df_sur df_od; do get "${f}.txt" "$H/${f}_1_$FID"; done
+          get "dc_1.txt" "$H/dc_1_$FID"
+          get "home.html" "https://www.flashscore.com/"
+          grep -o 'feed_sign[^,;]*' home.html | head -3 >> status.txt
+          grep -o '"fsign[^,]*' home.html | head -3 >> status.txt
+          cat status.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: flashscore
+          path: out
