@@ -8,7 +8,7 @@ import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
 import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
-import { askBatteryUnrestricted, batteryUnrestricted, liveAvailable } from '../live';
+import { askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable } from '../live';
 import { AppState } from 'react-native';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
@@ -33,11 +33,13 @@ export default function SettingsScreen() {
   const [server, setServer] = useState(null);
   const [notif, setNotif] = useState(null);
   const [battery, setBattery] = useState(batteryUnrestricted());
+  const [alarms, setAlarms] = useState(exactAlarmsAllowed());
   useEffect(() => {
     permissionStatus().then(setNotif);
     const sub = AppState.addEventListener('change', (st) => {
       if (st !== 'active') return;
       setBattery(batteryUnrestricted());
+      setAlarms(exactAlarmsAllowed());
       permissionStatus().then(setNotif);
     });
     return () => sub.remove();
@@ -112,7 +114,7 @@ export default function SettingsScreen() {
               setSetting('goalAlerts', v);
               if (v) setNotif((await ensurePermission(true)) ? 'granted' : await permissionStatus());
             }}
-            last={!settings.goalAlerts || (notif === 'granted' && (battery || !liveAvailable()))}
+            last={!settings.goalAlerts || (notif === 'granted' && ((battery && alarms) || !liveAvailable()))}
           />
           {settings.goalAlerts && notif && notif !== 'granted' ? (
             <Row
@@ -128,11 +130,19 @@ export default function SettingsScreen() {
               </View>
             </Row>
           ) : null}
+          {settings.goalAlerts && notif === 'granted' && liveAvailable() && !alarms ? (
+            <Row last={battery} onPress={() => askExactAlarms()}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.orange, fontSize: 15, fontWeight: '600' }}>Allow alarms for kick-off</Text>
+                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Turn on "Alarms & reminders" for Fast Score so live alerts start right at kick-off.</Text>
+              </View>
+            </Row>
+          ) : null}
           {settings.goalAlerts && notif === 'granted' && liveAvailable() && !battery ? (
             <Row last onPress={() => askBatteryUnrestricted()}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: t.orange, fontSize: 15, fontWeight: '600' }}>Let live alerts run in the background</Text>
-                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Tap and choose Allow, so the phone's battery saver doesn't pause alerts during a match. On OPPO / realme also set Fast Score's battery use to "Allow background activity".</Text>
+                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Tap, find Fast Score and choose "Don't optimise" / "Allow", so the battery saver doesn't pause alerts during a match. On OPPO / realme also set its battery use to "Allow background activity".</Text>
               </View>
             </Row>
           ) : null}

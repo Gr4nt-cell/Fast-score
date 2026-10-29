@@ -55,22 +55,35 @@ class FastLiveModule : Module() {
       pm.isIgnoringBatteryOptimizations(ctx.packageName)
     }
 
-    /** Ask Android not to put the app to sleep (needed on OPPO / realme / Xiaomi for live alerts). */
+    /** Open the phone's battery-optimisation list so the user can exempt the app (no special permission needed). */
     Function("requestIgnoreBattery") {
       try {
-        val i = Intent(Settings.ACTION_REQUEST_IGNORE_BATTERY_OPTIMIZATIONS, Uri.parse("package:${ctx.packageName}"))
+        val i = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
         i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
         ctx.startActivity(i)
         true
       } catch (e: Exception) {
         try {
-          val i = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
+          val i = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))
           i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
           ctx.startActivity(i)
           true
         } catch (e2: Exception) {
           false
         }
+      }
+    }
+
+    /** Android 12+: "Alarms & reminders" lets the tracker wake exactly before kick-off. */
+    Function("requestExactAlarms") {
+      if (Build.VERSION.SDK_INT < 31) return@Function true
+      try {
+        val i = Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:${ctx.packageName}"))
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        ctx.startActivity(i)
+        true
+      } catch (e: Exception) {
+        false
       }
     }
 

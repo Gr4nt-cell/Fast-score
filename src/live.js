@@ -109,3 +109,17 @@ export function askBatteryUnrestricted() {
     FastLive && FastLive.requestIgnoreBattery();
   } catch {}
 }
+
+export function exactAlarmsAllowed() {
+  try {
+    return FastLive ? FastLive.canExactAlarms() : true;
+  } catch {
+    return true;
+  }
+}
+
+export function askExactAlarms() {
+  try {
+    FastLive && FastLive.requestExactAlarms();
+  } catch {}
+}

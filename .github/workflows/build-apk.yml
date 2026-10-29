@@ -10,7 +10,6 @@ on:
       - '.github/workflows/deploy-server.yml'
       - '.github/workflows/check-server.yml'
       - 'wrangler.toml'
-      - '.github/workflows/probe.yml'
   workflow_dispatch:
 
 permissions:
@@ -58,6 +57,67 @@ jobs:
           sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
           ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a 2>&1 | tee "$RUNNER_TEMP/gradle.log"
 
+      - name: Build the Play bundle (AAB)
+        working-directory: android
+        env:
+          UPLOAD_KS: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          UPLOAD_PW: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
+        run: |
+          set -o pipefail
+          if [ -n "$UPLOAD_KS" ]; then
+            echo "$UPLOAD_KS" | base64 -d > "$RUNNER_TEMP/upload.jks"
+            cat >> app/build.gradle <<EOF
+
+          // Play upload key (from the repo secrets) for the AAB
+          android {
+            signingConfigs {
+              upload {
+                storeFile file("$RUNNER_TEMP/upload.jks")
+                storePassword System.getenv("UPLOAD_PW")
+                keyAlias "upload"
+                keyPassword System.getenv("UPLOAD_PW")
+              }
+            }
+            buildTypes { release { signingConfig signingConfigs.upload } }
+          }
+          EOF
+            echo "SIGNED=upload" >> "$GITHUB_ENV"
+          else
+            echo "::warning::No upload key in the repo secrets (ANDROID_UPLOAD_KEYSTORE_BASE64 / ANDROID_UPLOAD_PASSWORD): the AAB is signed with the debug key and Play will refuse it."
+            echo "SIGNED=debug" >> "$GITHUB_ENV"
+          fi
+          # all four ABIs: Play serves each phone only its own
+          ./gradlew bundleRelease --no-daemon 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
+
+      - name: Check the bundle against Play's requirements
+        run: |
+          AAB=android/app/build/outputs/bundle/release/app-release.aab
+          python3 - "$AAB" <<'PY'
+          import sys, zipfile, struct
+          z = zipfile.ZipFile(sys.argv[1])
+          names = z.namelist()
+          bad, libs = [], [n for n in names if n.endswith('.so')]
+          for n in libs:
+              d = z.read(n)
+              if d[:4] != b'\x7fELF' or d[4] != 2:  # 64-bit only matters for 16 KB
+                  continue
+              phoff = struct.unpack_from('<Q', d, 0x20)[0]; phentsize, phnum = struct.unpack_from('<HH', d, 0x36)
+              for i in range(phnum):
+                  o = phoff + i * phentsize
+                  if struct.unpack_from('<I', d, o)[0] == 1 and struct.unpack_from('<Q', d, o + 48)[0] < 16384:
+                      bad.append(n); break
+          abis = sorted({n.split('/')[2] for n in libs if n.count('/') >= 3})
+          print(f'native libraries: {len(libs)} · ABIs: {abis}')
+          if 'arm64-v8a' not in abis: print('::error::No 64-bit (arm64-v8a) libraries: Play requires them')
+          if bad: print('::error::Not 16 KB page aligned (Play requirement): ' + ', '.join(sorted(set(b.split('/')[-1] for b in bad)))[:900])
+          else: print('::notice::Bundle check passed: 64-bit libraries present, all native libraries 16 KB aligned')
+          PY
+          python3 - <<'PY'
+          import json
+          a = json.load(open('app.json'))['expo']['android']
+          print('::notice::targetSdk 36 · versionCode set from the commit count · signed with: ' + __import__('os').environ.get('SIGNED', '?'))
+          PY
+
       - name: Publish the failure log
         if: failure()
         env:
@@ -83,4 +143,6 @@ jobs:
           cp android/app/build/outputs/apk/release/app-release.apk fast-score.apk
           gh release view latest >/dev/null 2>&1 || gh release create latest --title "Latest APK" --notes "Built automatically from main."
           gh release upload latest fast-score.apk --clobber
-          gh release edit latest --notes "Built from ${GITHUB_SHA::7} on $(date -u '+%Y-%m-%d %H:%M UTC')."
+          cp android/app/build/outputs/bundle/release/app-release.aab fast-score.aab
+          gh release upload latest fast-score.aab --clobber
+          gh release edit latest --notes "Built from ${GITHUB_SHA::7} on $(date -u '+%Y-%m-%d %H:%M UTC'). AAB signed with: ${SIGNED}."

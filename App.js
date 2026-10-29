@@ -1,6 +1,8 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { AppState } from 'react-native';
-import { Animated, BackHandler, Modal, View } from 'react-native';
+import { Animated, BackHandler, Modal, View, useWindowDimensions } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { Text } from './src/components/Text';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -31,6 +33,22 @@ import LeagueScreen from './src/screens/LeagueScreen';
 import TeamScreen from './src/screens/TeamScreen';
 import PlayerScreen from './src/screens/PlayerScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+
+const PANE_ROUTES = new Set(['match', 'league', 'team', 'player']);
+
+function PanePlaceholder({ tab }) {
+  const t = useTheme();
+  const what = tab === 'leagues' ? 'a competition' : tab === 'search' ? 'a result' : 'a match';
+  return (
+    <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', padding: 40 }}>
+      <View style={{ width: 84, height: 84, borderRadius: 28, backgroundColor: t.track, alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+        <Ionicons name={tab === 'leagues' ? 'trophy-outline' : tab === 'picks' ? 'sparkles-outline' : 'football-outline'} size={38} color={t.tertiary} />
+      </View>
+      <Text style={{ color: t.text, fontSize: 19, fontWeight: '800' }}>Nothing selected</Text>
+      <Text style={{ color: t.secondary, fontSize: 14, marginTop: 6, textAlign: 'center' }}>Choose {what} on the left to see it here.</Text>
+    </View>
+  );
+}
 
 const ROUTES = {
   match: MatchScreen,
@@ -138,7 +156,21 @@ function Main() {
   const blurTarget = useRef(null);
   const [tab, setTabState] = useState('matches');
   const [stack, setStack] = useState([]);
+  const [detail, setDetail] = useState(null); // tablet: the page shown in the right-hand pane
   const counter = useRef(0);
+  const { width: winW, height: winH } = useWindowDimensions();
+  // tablets (and big foldables / landscape): list on the left, the chosen page on the right
+  const wide = winW >= 720;
+  const wideRef = useRef(wide);
+  wideRef.current = wide;
+  const stackLen = useRef(0);
+  stackLen.current = stack.length;
+
+  // phones stay upright; tablets and unfolded foldables turn freely
+  const smallest = Math.min(winW, winH);
+  useEffect(() => {
+    ScreenOrientation.lockAsync(smallest >= 600 ? ScreenOrientation.OrientationLock.DEFAULT : ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+  }, [smallest >= 600]); // eslint-disable-line react-hooks/exhaustive-deps
   useScoreWatcher();
 
   // tapping a goal notification opens that match
@@ -164,9 +196,13 @@ function Main() {
   }, []);
   const push = useCallback((route) => {
     counter.current += 1;
-    setStack((s) => [...s, { ...route, key: String(counter.current) }]);
+    const r = { ...route, key: String(counter.current) };
+    // on a tablet, pages opened from a list go to the right-hand pane instead of covering the screen
+    if (wideRef.current && !stackLen.current && PANE_ROUTES.has(r.name)) return setDetail(r);
+    setStack((s) => [...s, r]);
   }, []);
   const pop = useCallback(() => setStack((s) => s.slice(0, -1)), []);
+  const closeDetail = useCallback(() => setDetail(null), []);
 
   useEffect(() => {
     const sub = BackHandler.addEventListener('hardwareBackPress', () => {
@@ -174,12 +210,31 @@ function Main() {
         pop();
         return true;
       }
+      if (wide && detail) {
+        closeDetail();
+        return true;
+      }
       return false;
     });
     return () => sub.remove();
-  }, [stack.length, pop]);
+  }, [stack.length, pop, wide, detail, closeDetail]);
+
+  // switching tabs clears the pane (a match from Matches doesn't belong next to Leagues)
+  useEffect(() => setDetail(null), [tab]);
+  // rotating / unfolding to a narrow screen: the pane's page becomes a normal full-screen page
+  useEffect(() => {
+    if (!wide && detail) {
+      setStack((s) => [detail, ...s]);
+      setDetail(null);
+    }
+  }, [wide]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const nav = useMemo(() => ({ push, pop, setTab }), [push, pop, setTab]);
+  // inside the pane "back" closes the pane; anything opened from there opens as a sheet
+  const paneNav = useMemo(() => ({ push: (r) => {
+    counter.current += 1;
+    setStack((s) => [...s, { ...r, key: String(counter.current) }]);
+  }, pop: closeDetail, setTab }), [closeDetail, setTab]);
 
   let screen;
   switch (tab) {
@@ -211,16 +266,52 @@ function Main() {
           <GlassTargetContext.Provider value={blurTarget}>
             <StatusBar style={t.dark ? 'light' : 'dark'} />
             <View style={{ flex: 1, backgroundColor: t.bg }}>
-              <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg }}>
-                <Boundary resetKey={tab}>{screen}</Boundary>
+              <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg, flexDirection: wide ? 'row' : 'column' }}>
+                <View style={wide ? { width: Math.round(Math.min(520, Math.max(380, winW * 0.4))) } : { flex: 1 }}>
+                  <Boundary resetKey={tab}>{screen}</Boundary>
+                </View>
+                {wide ? (
+                  <View style={{ flex: 1, borderLeftWidth: 1, borderLeftColor: t.separator }}>
+                    {detail && ROUTES[detail.name] ? (
+                      <NavContext.Provider value={paneNav}>
+                        <Boundary resetKey={detail.key}>
+                          {React.createElement(ROUTES[detail.name], { key: detail.key, route: detail })}
+                        </Boundary>
+                      </NavContext.Provider>
+                    ) : (
+                      <PanePlaceholder tab={tab} />
+                    )}
+                  </View>
+                ) : null}
               </BlurTargetView>
               <SofaBridge />
-              <TabBar tabs={TABS} active={tab} onChange={setTab} />
+              <View pointerEvents="box-none" style={wide ? { position: 'absolute', bottom: 0, left: 0, width: Math.round(Math.min(520, Math.max(380, winW * 0.4))), height: 140 } : { position: 'absolute', bottom: 0, left: 0, right: 0, height: 140 }}>
+                <TabBar tabs={TABS} active={tab} onChange={setTab} />
+              </View>
               {!stack.length ? <Toast onOpen={(m) => push({ name: 'match', match: m })} /> : null}
             </View>
             {stack.map((route) => {
               const Screen = ROUTES[route.name];
               if (!Screen) return null;
+              if (wide) {
+                // tablet: a centred sheet over a dimmed background
+                const w = Math.min(760, winW - 80);
+                const h = Math.min(winH - 60, 1100);
+                return (
+                  <Modal key={route.key} visible transparent animationType="fade" onRequestClose={pop} statusBarTranslucent navigationBarTranslucent>
+                    <SafeAreaProvider>
+                      <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.38)', alignItems: 'center', justifyContent: 'center' }}>
+                        <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onPress={pop} feedback="none" />
+                        <View style={{ width: w, height: h, borderRadius: 28, overflow: 'hidden', backgroundColor: t.bg }}>
+                          <Boundary resetKey={route.key}>
+                            <Screen route={route} />
+                          </Boundary>
+                        </View>
+                      </View>
+                    </SafeAreaProvider>
+                  </Modal>
+                );
+              }
               return (
                 <Modal key={route.key} visible animationType="slide" onRequestClose={pop} statusBarTranslucent navigationBarTranslucent>
                   <SafeAreaProvider>
