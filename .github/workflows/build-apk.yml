@@ -63,6 +63,7 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           grep -nE "error:|FAILED|What went wrong|Could not resolve|Caused by|^e: " "$RUNNER_TEMP/gradle.log" | tail -60 > apk-build-error.txt || true
+          head -c 60000 apk-build-error.txt | sed 's/%/%25/g' | while IFS= read -r line; do echo "::error::${line:0:900}"; done | head -45
           echo "----- last lines -----" >> apk-build-error.txt
           tail -120 "$RUNNER_TEMP/gradle.log" >> apk-build-error.txt || true
           gh release view latest >/dev/null 2>&1 || gh release create latest --title "Latest APK" --notes "Built automatically from main."

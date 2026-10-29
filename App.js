@@ -13,6 +13,7 @@ import { success } from './src/haptics';
 import { checkFollowed } from './src/watch';
 import { ensurePermission, notifyEvent, onNotificationTap } from './src/notify';
 import { setBackgroundChecks } from './src/background';
+import { onLiveTap, syncLive, trackedKeys } from './src/live';
 import { pickToMatch } from './src/screens/PicksScreen';
 import TabBar, { TABS } from './src/components/TabBar';
 import { BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext } from './src/components/Glass';
@@ -58,9 +59,24 @@ function useScoreWatcher() {
     if (ready) setBackgroundChecks(!!settings.goalAlerts && following > 0);
   }, [ready, settings.goalAlerts, following]);
 
+  // the live-alert service: give it the followed matches now, when the app comes back to the
+  // front and every half hour (followed teams' games appear as fixtures get known)
+  useEffect(() => {
+    if (!ready) return undefined;
+    const sync = () => syncLive(favs, !!settings.goalAlerts && following > 0);
+    sync();
+    const iv = setInterval(sync, 30 * 60 * 1000);
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && sync());
+    return () => {
+      clearInterval(iv);
+      sub.remove();
+    };
+  }, [ready, favs, settings.goalAlerts, following]);
+
   useEffect(() => {
     if (!settings.goalAlerts || !following) return undefined;
-    const onEvent = (ev) => (AppState.currentState === 'active' ? showToast(ev) : notifyEvent(ev));
+    // in the background the live service alerts for the matches it tracks; don't double up
+    const onEvent = (ev) => (AppState.currentState === 'active' ? showToast(ev) : trackedKeys().has(ev.match.key) ? null : notifyEvent(ev));
     const check = () => checkFollowed(favs, onEvent).catch(() => {});
     check();
     const iv = setInterval(check, 30000);
@@ -127,6 +143,16 @@ function Main() {
 
   // tapping a goal notification opens that match
   useEffect(() => onNotificationTap((m) => push({ name: 'match', match: pickToMatch(m) })), []); // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => {
+    const open = (m) => push({ name: 'match', match: pickToMatch(m) });
+    const off = onLiveTap(open);
+    // an alert tapped while the app was in the background brings it back with the match attached
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && onLiveTap(open)());
+    return () => {
+      off();
+      sub.remove();
+    };
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     load('lastTab', 'matches').then((v) => TABS.find((x) => x.key === v) && setTabState(v));

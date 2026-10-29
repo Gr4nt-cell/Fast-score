@@ -8,6 +8,8 @@ import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
 import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
+import { askBatteryUnrestricted, batteryUnrestricted, liveAvailable } from '../live';
+import { AppState } from 'react-native';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
 
@@ -30,8 +32,15 @@ export default function SettingsScreen() {
   const [cleared, setCleared] = useState(false);
   const [server, setServer] = useState(null);
   const [notif, setNotif] = useState(null);
+  const [battery, setBattery] = useState(batteryUnrestricted());
   useEffect(() => {
     permissionStatus().then(setNotif);
+    const sub = AppState.addEventListener('change', (st) => {
+      if (st !== 'active') return;
+      setBattery(batteryUnrestricted());
+      permissionStatus().then(setNotif);
+    });
+    return () => sub.remove();
   }, []);
   useEffect(() => {
     serverStatus().then(setServer);
@@ -97,13 +106,13 @@ export default function SettingsScreen() {
         <Card>
           <Toggle
             label="Score notifications"
-            sub="Goals, kick-off and full time for matches and teams you follow. Instant while the app is open; checked about every 15 minutes when it's closed."
+            sub="Kick-off, goals, half-time and full time for matches and teams you follow, within about 30 seconds, even with the app closed. While a followed match is on, its live score sits in your notifications."
             value={settings.goalAlerts}
             onChange={async (v) => {
               setSetting('goalAlerts', v);
               if (v) setNotif((await ensurePermission(true)) ? 'granted' : await permissionStatus());
             }}
-            last={!settings.goalAlerts || notif === 'granted'}
+            last={!settings.goalAlerts || (notif === 'granted' && (battery || !liveAvailable()))}
           />
           {settings.goalAlerts && notif && notif !== 'granted' ? (
             <Row
@@ -116,6 +125,14 @@ export default function SettingsScreen() {
               <View style={{ flex: 1 }}>
                 <Text style={{ color: t.orange, fontSize: 15, fontWeight: '600' }}>Notifications are off for Fast Score</Text>
                 <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>{notif === 'denied' ? 'Tap to open the phone’s settings and allow them.' : 'Tap to allow notifications.'}</Text>
+              </View>
+            </Row>
+          ) : null}
+          {settings.goalAlerts && notif === 'granted' && liveAvailable() && !battery ? (
+            <Row last onPress={() => askBatteryUnrestricted()}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.orange, fontSize: 15, fontWeight: '600' }}>Let live alerts run in the background</Text>
+                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Tap and choose Allow, so the phone's battery saver doesn't pause alerts during a match. On OPPO / realme also set Fast Score's battery use to "Allow background activity".</Text>
               </View>
             </Row>
           ) : null}
