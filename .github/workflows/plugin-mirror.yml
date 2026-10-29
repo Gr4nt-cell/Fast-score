@@ -1,5 +1,6 @@
-# Copies the Gradle plugin-portal files the Android build needs into the "m2" branch, as a plain
-# Maven repository, so the app can also be built on machines that can't reach the plugin portal.
+# Copies every library the Android build downloads (except Google's own, which is reachable
+# everywhere) into the "m2" branch as a plain Maven repository, so the app can be built on
+# machines that can't reach Maven Central or the Gradle plugin portal.
 name: Plugin mirror
 on: workflow_dispatch
 permissions:
@@ -20,9 +21,9 @@ jobs:
       - run: npx expo prebuild --platform android --no-install
         env:
           CI: 1
-      - name: Resolve every plugin and dependency
+      - name: Download every plugin and dependency (a real build)
         working-directory: android
-        run: ./gradlew :app:bundleRelease --dry-run --no-daemon -PreactNativeArchitectures=arm64-v8a
+        run: ./gradlew :app:bundleRelease --no-daemon -PreactNativeArchitectures=armeabi-v7a,arm64-v8a,x86_64
       - name: Collect what Maven Central / Google don't have
         run: |
           python3 - <<'PY'
@@ -39,14 +40,18 @@ jobs:
           for g in sorted(os.listdir(root)):
               for a in sorted(os.listdir(os.path.join(root, g))):
                   for v in sorted(os.listdir(os.path.join(root, g, a))):
+                      # everything except Google's own Android artifacts (dl.google.com is reachable)
                       path = f"{g.replace('.', '/')}/{a}/{v}/{a}-{v}.pom"
-                      if exists('https://repo1.maven.org/maven2/' + path) or exists('https://dl.google.com/dl/android/maven2/' + path):
+                      if exists('https://dl.google.com/dl/android/maven2/' + path):
                           continue
                       dest = os.path.join(out, g.replace('.', '/'), a, v)
                       os.makedirs(dest, exist_ok=True)
                       for h in os.listdir(os.path.join(root, g, a, v)):
                           for f in os.listdir(os.path.join(root, g, a, v, h)):
-                              shutil.copy(os.path.join(root, g, a, v, h, f), os.path.join(dest, f))
+                              src = os.path.join(root, g, a, v, h, f)
+                              if os.path.getsize(src) > 95 * 1024 * 1024:
+                                  print('TOO BIG', src); continue
+                              shutil.copy(src, os.path.join(dest, f))
                       n += 1
                       print('mirrored', g, a, v)
           print('total', n)
