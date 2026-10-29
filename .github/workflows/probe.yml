@@ -8,8 +8,8 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - uses: actions/checkout@v4
-        with: { ref: builds, path: b, sparse-checkout: fast-score-1.0.0-168.apk, sparse-checkout-cone-mode: false }
-      - run: mkdir apk && mv b/fast-score-1.0.0-168.apk apk/ && rm -rf b
+        with: { ref: builds, path: b, sparse-checkout: fast-score-1.0.0-169.apk, sparse-checkout-cone-mode: false }
+      - run: mkdir apk && mv b/fast-score-1.0.0-169.apk apk/ && rm -rf b
       - run: |
           echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
           sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
