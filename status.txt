@@ -1,0 +1,9 @@
+tournaments 250
+b5 200 81016
+b60 200 311545
+bo 500 61
+noq 200 142
+r_b5.json 10000 success dict ['events', 'lastEventId', 'productStatus', 'tournaments'] 15 {"events": [], "lastEventId": "sr:match:75996078", "productStatus": [{"product": 5, "status": 0}, {"product": 1, "status": 0}, {"product": 3, "status": 0}], "tournaments": [{"category": "Albania", "categoryIcon": "https://static.msport.com/public/up/18e5ffba-4548-4ac7-9a91-24bd97e4e29f.png", "catego
+r_b60.json 10000 success dict ['events', 'lastEventId', 'productStatus', 'tournaments'] 50 {"events": [], "lastEventId": "sr:match:67118788", "productStatus": [{"product": 3, "status": 0}, {"product": 5, "status": 0}, {"product": 1, "status": 0}], "tournaments": [{"category": "Albania", "categoryIcon": "https://static.msport.com/public/up/18e5ffba-4548-4ac7-9a91-24bd97e4e29f.png", "catego
+r_bo.json 19999 error dict [] 0 {}
+r_noq.json 19000 Required request parameter 'sportId' for method parameter type String is not present NoneType 0 0 null
