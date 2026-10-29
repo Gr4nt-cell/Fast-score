@@ -9,7 +9,7 @@ import { useStore, formatOdds, americanToProb } from '../store';
 import { sportByKey } from '../sports';
 import { normalizeEvent, scoreboard, standings as fetchStandings, summary as fetchSummary } from '../api/espn';
 import { predictMatch } from '../predict';
-import { cachedOdds, matchOdds as msportOdds } from '../api/msport';
+import { cachedOdds, matchOdds as msportOdds, oddsStatus } from '../api/msport';
 import { Glass } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import Standings from '../components/Standings';
@@ -375,7 +375,15 @@ function OddsBar({ m, checked }) {
           })
         ) : (
           <Text style={{ flex: 1, color: t.secondary, fontSize: 13 }} numberOfLines={1}>
-            {!checked ? 'Checking MSport…' : m.state === 'post' ? 'Match over · no saved prices' : 'MSport has no prices for this match yet'}
+            {!checked
+              ? 'Checking MSport…'
+              : m.state === 'post'
+              ? 'Match over · no saved prices'
+              : (() => {
+                  const st = oddsStatus(m.sport);
+                  if (!st.loaded) return st.error ? `Couldn't load MSport prices (${st.error})` : 'Loading MSport prices…';
+                  return `Not on MSport yet · ${st.count.toLocaleString()} matches checked`;
+                })()}
           </Text>
         )}
       </Glass>
@@ -1098,9 +1106,12 @@ export default function MatchScreen({ route }) {
         if (o) setM((old) => ({ ...old, odds: o }));
       });
     get();
+    // soon again (the price list may still be downloading), then every minute
+    const quick = [setTimeout(get, 4000), setTimeout(get, 12000)];
     const iv = m.state === 'post' ? null : setInterval(get, 60000);
     return () => {
       alive = false;
+      quick.forEach(clearTimeout);
       iv && clearInterval(iv);
     };
   }, [m.state === 'post']); // eslint-disable-line react-hooks/exhaustive-deps

@@ -55,6 +55,13 @@ function expand(row) {
   };
 }
 
+let lastError = '';
+/** For the odds bar: how many MSport matches are loaded and how old the list is. */
+export function oddsStatus(sport = 'soccer') {
+  if (!file) return { loaded: false, error: lastError };
+  return { loaded: true, count: (file.sports[sport] || []).length, ageMin: Math.round((Date.now() - file.t) / 60000), error: lastError };
+}
+
 function useFile(raw) {
   const sports = {};
   Object.entries((raw && raw.sports) || {}).forEach(([k, rows]) => (sports[k] = rows.map(expand)));
@@ -77,21 +84,27 @@ async function fileEvents(sport) {
         const timer = setTimeout(() => ctrl.abort(), 20000);
         const res = await fetch(`${FILE}?t=${Math.floor(Date.now() / 120000)}`, { signal: ctrl.signal });
         clearTimeout(timer);
-        if (!res.ok) return;
+        if (!res.ok) {
+          lastError = `odds file HTTP ${res.status}`;
+          return;
+        }
         const text = await res.text();
         const raw = JSON.parse(text);
         if (!file || raw.t > file.t) {
           useFile(raw);
           AsyncStorage.setItem('ms:file', text).catch(() => {});
         }
-      } catch {
+        lastError = '';
+      } catch (e) {
+        lastError = String((e && e.message) || e).slice(0, 60);
         fileFetched = Date.now() - 3 * 60000; // try again in a minute
       } finally {
         fileLoading = null;
       }
     })();
-    if (!file) await fileLoading; // nothing saved yet: wait for the first download
   }
+  // nothing on the phone yet: wait for the download (also when another call already started it)
+  if (!file && fileLoading) await fileLoading;
   // prices older than 2 hours are too stale to show
   return file && Date.now() - file.t < 2 * 3600000 ? file.sports[sport] || [] : [];
 }
@@ -223,6 +236,7 @@ function pair(m, list) {
   let score = 0;
   for (const e of list) {
     if (Math.abs(e.startTime - t) > 3 * 3600 * 1000) continue;
+    if (/simulated|\bsrl\b/i.test(`${e.category} ${e.tournament} ${e.homeTeam}`)) continue; // MSport's virtual games
     if (isWomen(e.homeTeam) !== isWomen(m.home.name)) continue;
     const h = similar(m.home.name, e.homeTeam);
     const a = similar(m.away.name, e.awayTeam);
@@ -281,7 +295,7 @@ function oddsOf(e) {
     overUnder: ou ? '2.5' : null,
     markets: (e.markets || [])
       .filter((m) => outcomes(m).length && m.isShown !== 0 && !/UP$/.test(m.name || ''))
-      .filter((m) => m.id !== 18 || /total=(1\.5|2\.5|3\.5)/.test(m.specifiers || ''))
+      .filter((m) => m.id !== 18 || /total=(1\.5|2\.5|3\.5)/.test(m.specifiers || '') || /(1\.5|2\.5|3\.5)$/.test(m.name || ''))
       .slice(0, 10)
       .map((m) => ({
         id: `${m.id}|${m.specifiers || ''}`,
