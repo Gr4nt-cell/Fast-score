@@ -166,7 +166,7 @@ export default function SettingsScreen() {
             }}
           >
             <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Test SofaScore connection</Text>
-            {ssTest === 'running' ? <Text style={{ color: t.secondary }}>Testing… (up to 30 s)</Text> : null}
+            {ssTest === 'running' ? <Text style={{ color: t.secondary }}>Testing… (up to a minute)</Text> : null}
           </Row>
           {Array.isArray(ssTest)
             ? ssTest.map((r, i) => (

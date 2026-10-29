@@ -6,14 +6,13 @@
 import { browserFetch } from './browserBridge';
 import { serverUrl } from './server';
 
-const HOSTS = ['https://api.sofascore.com/api/v1', 'https://api.sofascore.app/api/v1', 'https://www.sofascore.com/api/v1'];
+const HOSTS = ['https://www.sofascore.com/api/v1', 'https://api.sofascore.com/api/v1', 'https://api.sofascore.app/api/v1'];
 const IMG = 'https://api.sofascore.app/api/v1';
 const HEADERS = {
   Accept: 'application/json, text/plain, */*',
   'Accept-Language': 'en-GB,en;q=0.9',
   'User-Agent': 'Mozilla/5.0 (Linux; Android 14; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36',
   Referer: 'https://www.sofascore.com/',
-  Origin: 'https://www.sofascore.com',
 };
 
 // our sport keys -> SofaScore's
@@ -46,31 +45,45 @@ export const ssBlocked = () => Date.now() < blockedUntil;
 // SofaScore refuses data-centre addresses (our server and GitHub both get 403), so the server
 // route is only kept for the Settings test; the phone's own routes do the work.
 const ROUTES = ['direct', 'browser'];
-const TEST_ROUTES = ['direct', 'server', 'browser'];
+const TEST_ROUTES = ['direct', 'browser'];
 let goodRoute = null;
 let goodUntil = 0;
 export const lastRoute = () => goodRoute;
 
+const HEADER_SETS = [
+  HEADERS,
+  // an empty 200 has been seen on some phones: ask again uncompressed and without extras
+  { Accept: '*/*', 'Accept-Encoding': 'identity', 'User-Agent': HEADERS['User-Agent'], 'Cache-Control': 'no-cache' },
+];
+
 async function viaDirect(path) {
-  let last;
-  for (const i of [preferred, 1 - preferred]) {
-    const ctrl = new AbortController();
-    const timer = setTimeout(() => ctrl.abort(), 9000);
-    try {
-      const res = await fetch(HOSTS[i] + path, { headers: HEADERS, signal: ctrl.signal });
-      clearTimeout(timer);
-      const body = await res.text();
-      if (res.ok) {
-        preferred = i;
-        return { status: res.status, body };
+  const tried = [];
+  const order = [preferred, ...HOSTS.map((_, i) => i).filter((i) => i !== preferred)];
+  for (const i of order) {
+    for (const headers of HEADER_SETS) {
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 9000);
+      try {
+        const res = await fetch(HOSTS[i] + path, { headers, signal: ctrl.signal });
+        const body = await res.text();
+        clearTimeout(timer);
+        const host = HOSTS[i].split('/')[2];
+        if (res.ok && /^\s*[[{]/.test(body)) {
+          preferred = i;
+          return { status: res.status, body };
+        }
+        if (res.status === 404 && /^\s*\{/.test(body)) return { status: 404, body, tried };
+        tried.push({ host, status: res.status, len: body.length, type: (res.headers.get('content-type') || '').split(';')[0] });
+        if (!res.ok) break; // refused: the other header set won't change that
+      } catch (e) {
+        clearTimeout(timer);
+        tried.push({ host: HOSTS[i].split('/')[2], status: 0, err: String(e.message || e).slice(0, 40) });
+        break;
       }
-      last = { status: res.status, body };
-    } catch (e) {
-      clearTimeout(timer);
-      last = { status: 0, body: String(e.message || e) };
     }
   }
-  return last;
+  const last = tried[tried.length - 1] || {};
+  return { status: last.status || 0, body: '', tried };
 }
 
 async function viaServer(path) {
@@ -90,7 +103,7 @@ async function viaServer(path) {
 
 async function viaBrowser(path, readyTimeout) {
   try {
-    return await browserFetch('/api/v1' + path, 15000, readyTimeout);
+    return await browserFetch('/api/v1' + path, 20000, readyTimeout);
   } catch (e) {
     return { status: 0, body: String(e.message || e) };
   }
@@ -171,7 +184,7 @@ export async function diagnose() {
       sample:
         n == null && r
           ? r.tried
-            ? r.tried.map((x) => `${x.host} ${x.status || 'no answer'}`).join(' · ')
+            ? r.tried.map((x) => `${x.host.replace(/^(www|api)\./, '$1.')} ${x.status || x.err || 'no answer'}${x.status ? ` ${x.len}b${x.type ? ' ' + x.type : ''}` : ''}`).join(' · ')
             : String(r.body || '').replace(/\s+/g, ' ').slice(0, 140)
           : '',
     });
