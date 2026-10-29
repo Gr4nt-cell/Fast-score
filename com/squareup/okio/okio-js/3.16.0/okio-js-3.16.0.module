@@ -1,0 +1,116 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../okio/3.16.0/okio-3.16.0.module",
+    "group": "com.squareup.okio",
+    "module": "okio",
+    "version": "3.16.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "jsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.2.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-js-3.16.0.klib",
+          "url": "okio-js-3.16.0.klib",
+          "size": 365089,
+          "sha512": "4827cc4efee0c41b3aa7a7fd9e6b7eac64b813980a44f17f075e17accc40fe949ed9f69458c360f729e0e9f5caaf6b9aae7335a3028d91d377bf656a6a059a27",
+          "sha256": "8d24559fc33bdde7b8d56e1b9bf51654a90e1c28f2c1e70b1c666522f2fae69f",
+          "sha1": "67fbfacb03deb1c2cd42f6a1828a8883451268fc",
+          "md5": "e44b1d0ee7e28fbe7d15437b35ac4fda"
+        }
+      ]
+    },
+    {
+      "name": "jsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.2.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-js-3.16.0.klib",
+          "url": "okio-js-3.16.0.klib",
+          "size": 365089,
+          "sha512": "4827cc4efee0c41b3aa7a7fd9e6b7eac64b813980a44f17f075e17accc40fe949ed9f69458c360f729e0e9f5caaf6b9aae7335a3028d91d377bf656a6a059a27",
+          "sha256": "8d24559fc33bdde7b8d56e1b9bf51654a90e1c28f2c1e70b1c666522f2fae69f",
+          "sha1": "67fbfacb03deb1c2cd42f6a1828a8883451268fc",
+          "md5": "e44b1d0ee7e28fbe7d15437b35ac4fda"
+        }
+      ]
+    },
+    {
+      "name": "jsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "files": [
+        {
+          "name": "okio-js-3.16.0-sources.jar",
+          "url": "okio-js-3.16.0-sources.jar",
+          "size": 129399,
+          "sha512": "49c0d77dcf307e33e2a44520bb9bac9f3f5170eb2cf54fc0048aac3afebf8fcdd512e4ffb42725564d43a65f093030619c125b5b722f6cd1b7e3a6774e1cf00d",
+          "sha256": "46000d399b52318f76bd28ad9cc1e333274389d480dd4fbfe58e1d9facbb560d",
+          "sha1": "f0a04fc9155c9e3f51a5f2900a3bc3d87fb3f026",
+          "md5": "550a745161d4103f8a2ca964de29d87c"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.9.0/kotlinx-coroutines-core-1.9.0.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "tvosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-tvosarm64-1.9.0.klib",
+          "size": 889006,
+          "sha512": "c9d4a32c1145e4ae9cbeaa787ddd35ad5686d89e95bb521ccf44787c5b805c16a915a0d4c58e47b16087fb7f5b44239c0ec91f47a31efcbd7918f8e23c6149b6",
+          "sha256": "dff9f1b70abb003ec3f5aef4d704df0b8f4b51a7c7e62eef591d13257aded2a8",
+          "sha1": "ffcaccac50b3c7ba76ea052fd5ad8b31f30f42cc",
+          "md5": "a3b3501758c36818737565549f739ebb"
+        }
+      ]
+    },
+    {
+      "name": "tvosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-tvosarm64-1.9.0-sources.jar",
+          "url": "kotlinx-coroutines-core-tvosarm64-1.9.0-sources.jar",
+          "size": 315839,
+          "sha512": "0c7a21fb4746545595e2dac2894acf3b6f2abb3cd04f800ec6244dff94585a6e8289f9ffed512908545c17a26756b5b008adb8adfab0e963d32617fdd9cfa8f6",
+          "sha256": "4bd6a336d7c9887d9be30dabe76e170a208ec3e400873e7261aee1a8f2dae7da",
+          "sha1": "a68d3623081cbe7f30e4f9799b8db0831b83672c",
+          "md5": "fef705a5b8237391dc4dd4c9b4931970"
+        }
+      ]
+    },
+    {
+      "name": "tvosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-tvosarm64-1.9.0-metadata.jar",
+          "url": "kotlinx-coroutines-core-tvosarm64-1.9.0-metadata.jar",
+          "size": 3533,
+          "sha512": "d2fcf8d8838d2ae37e6c25faf7acb8a1bd1ff5ed9e22e6411558886493180e687004342f7508495f1d617c3da1949519a1b770deb3418fd3a1fd7e3ec16e4b06",
+          "sha256": "486c9d23010cbc7277c0ba5166c2b9d3d22719feedecf6bf8b80726cf9225c15",
+          "sha1": "293bc0f3e3f9c2ed8a577af3e77231f4459b8dc7",
+          "md5": "c0c455ead2efc9dd3e506721be267bac"
+        }
+      ]
+    }
+  ]
+}

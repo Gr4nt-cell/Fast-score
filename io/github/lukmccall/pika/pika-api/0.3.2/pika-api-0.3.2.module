@@ -1,0 +1,102 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.github.lukmccall.pika",
+    "module": "pika-api",
+    "version": "0.3.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "pika-api-0.3.2.jar",
+          "url": "pika-api-0.3.2.jar",
+          "size": 31719,
+          "sha512": "92601019bb64c422d46a9f1d6ef82fe2a76c5f1907f701f8e1f13c2a03e1ea80c28c717caef48cf821395eb74c9b34464035a9af51742bf90e9cf80fa9e0d224",
+          "sha256": "60d7fb7d2231daf6ce48c6616c07ec9f0fcd10ae9954ef16ddbb27f99cf9da6e",
+          "sha1": "e80dff6fc36448ac79ef7041175f31af39bac8d5",
+          "md5": "11db1dcddc5de0052f1724e3f2ad6f12"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "pika-api-0.3.2.jar",
+          "url": "pika-api-0.3.2.jar",
+          "size": 31719,
+          "sha512": "92601019bb64c422d46a9f1d6ef82fe2a76c5f1907f701f8e1f13c2a03e1ea80c28c717caef48cf821395eb74c9b34464035a9af51742bf90e9cf80fa9e0d224",
+          "sha256": "60d7fb7d2231daf6ce48c6616c07ec9f0fcd10ae9954ef16ddbb27f99cf9da6e",
+          "sha1": "e80dff6fc36448ac79ef7041175f31af39bac8d5",
+          "md5": "11db1dcddc5de0052f1724e3f2ad6f12"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "pika-api-0.3.2-sources.jar",
+          "url": "pika-api-0.3.2-sources.jar",
+          "size": 9113,
+          "sha512": "41000fd86dc89409a6074990c48db199e4a8ac779511e0d4eb26ecbadb7ae8659172fd2c893f5e2cc34b63047457c443d96ae5b509643fd558f9dbf81725ba15",
+          "sha256": "e697fb53f7ab94c0ffc53c69c8f4a6c2d8962c8e3b521ff629a1884c7d33d5cd",
+          "sha1": "735c11a1ab87722188f485b4a9601a09d9cb34d4",
+          "md5": "d58b275883589ddb67bbcaea0d5c451e"
+        }
+      ]
+    }
+  ]
+}

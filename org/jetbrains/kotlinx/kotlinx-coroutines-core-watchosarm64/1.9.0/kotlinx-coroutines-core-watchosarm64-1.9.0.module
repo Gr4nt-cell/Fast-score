@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.9.0/kotlinx-coroutines-core-1.9.0.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "watchosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "watchos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-watchosarm64-1.9.0.klib",
+          "size": 889035,
+          "sha512": "141e28964742bf6e4ad83c32c35952eec2ad3417e6cb2caf5fb990c8bd89fbb2da290cf533ba1d35854981a4f9a9b1142b9b78b0355dc9001d275104ff8db935",
+          "sha256": "a15a4f532cc60e9063f5cca9cf93c5ef24aed1eb9f843ca48fe806be18a5b61a",
+          "sha1": "710aff101ccac5f4f53b5a84e7a8974ccc4e073b",
+          "md5": "40c747297c79c224971599f6abfb04fc"
+        }
+      ]
+    },
+    {
+      "name": "watchosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "watchos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-watchosarm64-1.9.0-sources.jar",
+          "url": "kotlinx-coroutines-core-watchosarm64-1.9.0-sources.jar",
+          "size": 315839,
+          "sha512": "0c7a21fb4746545595e2dac2894acf3b6f2abb3cd04f800ec6244dff94585a6e8289f9ffed512908545c17a26756b5b008adb8adfab0e963d32617fdd9cfa8f6",
+          "sha256": "4bd6a336d7c9887d9be30dabe76e170a208ec3e400873e7261aee1a8f2dae7da",
+          "sha1": "a68d3623081cbe7f30e4f9799b8db0831b83672c",
+          "md5": "fef705a5b8237391dc4dd4c9b4931970"
+        }
+      ]
+    },
+    {
+      "name": "watchosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "watchos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-watchosarm64-1.9.0-metadata.jar",
+          "url": "kotlinx-coroutines-core-watchosarm64-1.9.0-metadata.jar",
+          "size": 3533,
+          "sha512": "ccc87cbf6a726b13570ccf6fdd4141cd9a608a7666daac8b98a744453cf2ba15670982afa7ea3b34cec2a24ea557cb3893b556f982928b16bbe972b8f02de485",
+          "sha256": "76d142b657c8d7167c60d6432394670a55239730e285efdc153db49a65ea92e5",
+          "sha1": "9a7bbc844cdbf41d3ee1763a5ae004ae5a4fc3c4",
+          "md5": "60fe9189eced4a645af81a62e1a4baf8"
+        }
+      ]
+    }
+  ]
+}

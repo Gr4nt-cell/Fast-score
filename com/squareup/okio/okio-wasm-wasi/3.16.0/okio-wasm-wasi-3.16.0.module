@@ -1,0 +1,102 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../okio/3.16.0/okio-3.16.0.module",
+    "group": "com.squareup.okio",
+    "module": "okio",
+    "version": "3.16.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmWasiApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-wasm-wasi-3.16.0.klib",
+          "url": "okio-wasm-wasi-3.16.0.klib",
+          "size": 364625,
+          "sha512": "bd0017b4d72860abfcc4ea1d62d593c8cf7176b3a420cd445363379e65713a5e0ac9e484686becc8e87f222fc43364bcadd753f6a8098533d98f97ff28f4ab17",
+          "sha256": "cde7f07ac2e0e193d70063f9308becf49c673e5ab3105556edd3b10eaff3616d",
+          "sha1": "4fa089f907bd6c0f1a30f87e0c65d9ec8925703e",
+          "md5": "b642ea00ec0ff12344dea565b6678955"
+        }
+      ]
+    },
+    {
+      "name": "wasmWasiRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-wasm-wasi-3.16.0.klib",
+          "url": "okio-wasm-wasi-3.16.0.klib",
+          "size": 364625,
+          "sha512": "bd0017b4d72860abfcc4ea1d62d593c8cf7176b3a420cd445363379e65713a5e0ac9e484686becc8e87f222fc43364bcadd753f6a8098533d98f97ff28f4ab17",
+          "sha256": "cde7f07ac2e0e193d70063f9308becf49c673e5ab3105556edd3b10eaff3616d",
+          "sha1": "4fa089f907bd6c0f1a30f87e0c65d9ec8925703e",
+          "md5": "b642ea00ec0ff12344dea565b6678955"
+        }
+      ]
+    },
+    {
+      "name": "wasmWasiSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "files": [
+        {
+          "name": "okio-wasm-wasi-3.16.0-sources.jar",
+          "url": "okio-wasm-wasi-3.16.0-sources.jar",
+          "size": 129048,
+          "sha512": "c34cbd38b885e9e7e0b784590d18425b52b82af5c93220caf29300ccbfa2fff5a2e15e383020c3e549bb8edd964c5eeee864c308a0539e827307e8ab5af7a7e3",
+          "sha256": "7c2d6c6ddce020e958ac473efb40e5cdfdfd097140fefa20c3974e0544482e2f",
+          "sha1": "df271c6cacc79bebd5b196e802e9a7d57b1b003d",
+          "md5": "ec55b016fe05db19b738c369692d7945"
+        }
+      ]
+    }
+  ]
+}

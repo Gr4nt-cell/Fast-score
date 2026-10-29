@@ -1,0 +1,129 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-serialization-json/1.6.3/kotlinx-serialization-json-1.6.3.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-serialization-json",
+    "version": "1.6.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "tvosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-core",
+          "version": {
+            "requires": "1.6.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-json.klib",
+          "url": "kotlinx-serialization-json-tvosarm64-1.6.3.klib",
+          "size": 273444,
+          "sha512": "9ec26569de5a6975ba4f85de444c5a512e44b6bb74bcc34ba0a914313585858f813368e565452e55b32b5b030d33f6a7383f3eb2cb7c995766bad7712f6a2a53",
+          "sha256": "c65324a194a2540f0aba7568b3c90afca02def703897238c2662f54b0f2fa24a",
+          "sha1": "cf795d3bdb8eb45ecc70f36d87b3114d2c505521",
+          "md5": "d8324fcbf7570ad8739b6cc85456f957"
+        }
+      ]
+    },
+    {
+      "name": "tvosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-serialization-json-tvosarm64-1.6.3-sources.jar",
+          "url": "kotlinx-serialization-json-tvosarm64-1.6.3-sources.jar",
+          "size": 75636,
+          "sha512": "8c1658b7fcaa9a6f1eef02459c231fafc50dfe2b6acdd6d9fcfd276e84160af44c39d4effea6c62118a91b5b3f9e39d001f428582adb623c053109479ee917d5",
+          "sha256": "b1c4f220c3d6ba4bbb46aa354be3c4fcfa6f4ccfbae30ad567b8d62657d76812",
+          "sha1": "37d53b47920c3b442d24807600c6147e7aeb84be",
+          "md5": "f450d44121516967512c31015f50868d"
+        }
+      ]
+    },
+    {
+      "name": "tvosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-core",
+          "version": {
+            "requires": "1.6.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-json-tvosarm64-1.6.3-metadata.jar",
+          "url": "kotlinx-serialization-json-tvosarm64-1.6.3-metadata.jar",
+          "size": 261,
+          "sha512": "d784c05617b85f56e12593d90a24617b2d3061e157d089ac008336de4fd7ab52672d5c6e48eb07bf67d4bdb53dc7cf8559841c3eecd6d5cdd1b0417a0aafafcc",
+          "sha256": "701066ce52d8c12fe57b6dd7f75f29e0f1de6e7d55456bc985a922519ade3d42",
+          "sha1": "56cfbccf3986b2bbd9bdc55f7028423e18192d77",
+          "md5": "d6e92673e641d7549b27d0bb3dec94b2"
+        }
+      ]
+    }
+  ]
+}

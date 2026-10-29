@@ -1,0 +1,152 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.penfeizhou.android.animation",
+    "module": "glide-plugin",
+    "version": "3.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.11.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "awebp",
+          "version": {
+            "requires": "3.0.5"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "apng",
+          "version": {
+            "requires": "3.0.5"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "gif",
+          "version": {
+            "requires": "3.0.5"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "avif",
+          "version": {
+            "requires": "3.0.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "glide-plugin-3.0.5.aar",
+          "url": "glide-plugin-3.0.5.aar",
+          "size": 13470,
+          "sha512": "5d27579b8451993c6331bddbe33a9666b50f55c24fa17864fa6012950512f83750fd50291b556c4ec3844357c86544115a57c66c6decd52166c5ec60943d6657",
+          "sha256": "81cccbbad121366c7e2ba767b3c46f5150bfccf4b67f33caf094ef34ac4471be",
+          "sha1": "4d82f8b2a269699cf141b92b4b9b3572add79ca9",
+          "md5": "e2e2987edfa8b223b26adab6768e9134"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.appcompat",
+          "module": "appcompat",
+          "version": {
+            "requires": "1.2.0"
+          }
+        },
+        {
+          "group": "com.github.bumptech.glide",
+          "module": "glide",
+          "version": {
+            "requires": "4.12.0"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "awebp",
+          "version": {
+            "requires": "3.0.5"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "apng",
+          "version": {
+            "requires": "3.0.5"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "gif",
+          "version": {
+            "requires": "3.0.5"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "avif",
+          "version": {
+            "requires": "3.0.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "glide-plugin-3.0.5.aar",
+          "url": "glide-plugin-3.0.5.aar",
+          "size": 13470,
+          "sha512": "5d27579b8451993c6331bddbe33a9666b50f55c24fa17864fa6012950512f83750fd50291b556c4ec3844357c86544115a57c66c6decd52166c5ec60943d6657",
+          "sha256": "81cccbbad121366c7e2ba767b3c46f5150bfccf4b67f33caf094ef34ac4471be",
+          "sha1": "4d82f8b2a269699cf141b92b4b9b3572add79ca9",
+          "md5": "e2e2987edfa8b223b26adab6768e9134"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "glide-plugin-3.0.5-sources.jar",
+          "url": "glide-plugin-3.0.5-sources.jar",
+          "size": 6074,
+          "sha512": "8af33de98c53a7a56a8b467de92eec69ade3e3424705d8c74ce13538316a65aa7e6456d76d53bf853bc25e9da22430c5342cf0684cce129391568ea12a4aaedb",
+          "sha256": "545051cfa45f7088b17ad0b057cf1f45f0e68ea47d4f4fb3f2d9c6aa9a36f5c9",
+          "sha1": "ce84d698559f3d3d1495c49c42f3f424d56b0c8c",
+          "md5": "074637f6d1cb6ec26f61ecc6137baf92"
+        }
+      ]
+    }
+  ]
+}

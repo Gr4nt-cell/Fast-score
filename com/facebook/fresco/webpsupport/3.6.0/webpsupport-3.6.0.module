@@ -1,0 +1,135 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.facebook.fresco",
+    "module": "webpsupport",
+    "version": "3.6.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "webpsupport-3.6.0.aar",
+          "url": "webpsupport-3.6.0.aar",
+          "size": 844128,
+          "sha512": "a7f4adc02f327262865346985e159dc2ed88d47c69c35323c9d8732b79e5b4bda844ddd1bd2d7e4f04d1e1f90c5a72f75f61fff7f943301641eeaf49ee1bd529",
+          "sha256": "3407ac484ef55bb3a279ed9bddc85f24a60bb777338007967193c40404fa8fcf",
+          "sha1": "6e489e5e9c6ee2051a2a478ad1ae2517a88823e8",
+          "md5": "3f37d9fd25d600c1ff7b026528ea6850"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.facebook.soloader",
+          "module": "nativeloader",
+          "version": {
+            "requires": "0.11.0"
+          }
+        },
+        {
+          "group": "com.parse.bolts",
+          "module": "bolts-tasks",
+          "version": {
+            "requires": "1.4.0"
+          }
+        },
+        {
+          "group": "com.facebook.fresco",
+          "module": "fbcore",
+          "version": {
+            "requires": "3.6.0"
+          }
+        },
+        {
+          "group": "com.facebook.fresco",
+          "module": "imagepipeline-base",
+          "version": {
+            "requires": "3.6.0"
+          }
+        },
+        {
+          "group": "com.facebook.fresco",
+          "module": "middleware",
+          "version": {
+            "requires": "3.6.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "webpsupport-3.6.0.aar",
+          "url": "webpsupport-3.6.0.aar",
+          "size": 844128,
+          "sha512": "a7f4adc02f327262865346985e159dc2ed88d47c69c35323c9d8732b79e5b4bda844ddd1bd2d7e4f04d1e1f90c5a72f75f61fff7f943301641eeaf49ee1bd529",
+          "sha256": "3407ac484ef55bb3a279ed9bddc85f24a60bb777338007967193c40404fa8fcf",
+          "sha1": "6e489e5e9c6ee2051a2a478ad1ae2517a88823e8",
+          "md5": "3f37d9fd25d600c1ff7b026528ea6850"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "webpsupport-3.6.0-sources.jar",
+          "url": "webpsupport-3.6.0-sources.jar",
+          "size": 5649,
+          "sha512": "5070ade487eb898a62866a9e279d2e9b25df66578892f420fb61ef0c665d3c82177fb6f40431359e64cf15b7d2828b323fa7b9721a1a286062a4eab723ddfcfb",
+          "sha256": "3936f65239f81275b422f636242e894e3533d92ae97ab9ded3cb9c29bc42b354",
+          "sha1": "cfb2c81253dd7c820f5afc3b45d4b64e1b0d77ac",
+          "md5": "fc86f2e0c0d6182baf49e283736d8c97"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "webpsupport-3.6.0-javadoc.jar",
+          "url": "webpsupport-3.6.0-javadoc.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

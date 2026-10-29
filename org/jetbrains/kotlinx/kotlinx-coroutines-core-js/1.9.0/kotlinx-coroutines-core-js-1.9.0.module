@@ -1,0 +1,137 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.9.0/kotlinx-coroutines-core-1.9.0.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "jsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu-js",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.0.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-js-1.9.0.klib",
+          "url": "kotlinx-coroutines-core-js-1.9.0.klib",
+          "size": 852019,
+          "sha512": "a7e61b4713b586792b916ee4b4dbf91abc11c098f00b8542b462d720df89ac90ea729767c69935a38282e26b88fd676b3ffcd8b6b0e8f961b18432030f540b67",
+          "sha256": "af0f3d72a1706c326ad328908e2f2e87ad49b0d2c49fa4bba706019e6c26a26a",
+          "sha1": "155bfdad6f6ebdde0a8049053675623eb3a1e36f",
+          "md5": "a6705622f7edf033517d7d27c4294891"
+        }
+      ]
+    },
+    {
+      "name": "jsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlinx-atomicfu-runtime",
+          "version": {
+            "requires": "2.0.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu-js",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-dom-api-compat",
+          "version": {
+            "requires": "2.0.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-js-1.9.0.klib",
+          "url": "kotlinx-coroutines-core-js-1.9.0.klib",
+          "size": 852019,
+          "sha512": "a7e61b4713b586792b916ee4b4dbf91abc11c098f00b8542b462d720df89ac90ea729767c69935a38282e26b88fd676b3ffcd8b6b0e8f961b18432030f540b67",
+          "sha256": "af0f3d72a1706c326ad328908e2f2e87ad49b0d2c49fa4bba706019e6c26a26a",
+          "sha1": "155bfdad6f6ebdde0a8049053675623eb3a1e36f",
+          "md5": "a6705622f7edf033517d7d27c4294891"
+        }
+      ]
+    },
+    {
+      "name": "jsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.js.compiler": "ir",
+        "org.jetbrains.kotlin.platform.type": "js"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-js-1.9.0-sources.jar",
+          "url": "kotlinx-coroutines-core-js-1.9.0-sources.jar",
+          "size": 306719,
+          "sha512": "78e906536cfce731410f1800adc2f016442b5fe7e229f496bec86f1c8562126304d39a5c968bf58277a607e0f242a4f5397c392516878ed68436d8fa5d861a88",
+          "sha256": "c922d416bb65973961d74673e646ff36667152b41d6f328d822a20cd6c46279e",
+          "sha1": "f2418a2af7e58d334f5ce1a07aa76effee9f8dce",
+          "md5": "eaab9124d8ebc0e97f15789fe74c3d0b"
+        }
+      ]
+    }
+  ]
+}

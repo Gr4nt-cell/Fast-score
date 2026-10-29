@@ -1,0 +1,137 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.bumptech.glide",
+    "module": "okhttp3-integration",
+    "version": "5.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "3.10.0"
+          }
+        },
+        {
+          "group": "androidx.annotation",
+          "module": "annotation",
+          "version": {
+            "requires": "1.7.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okhttp3-integration-5.0.5.aar",
+          "url": "okhttp3-integration-5.0.5.aar",
+          "size": 7016,
+          "sha512": "66adb759f78894ce1433fc709d509e6452ec450df427e782c4e9146ddbbfab6612067898f5e911d3e7c6433c251b03987524c04e646053741798b3b90a82048b",
+          "sha256": "1a98d943e738ce25a2ceec699d0ee3a8d76e33174b25e91538e5a8565a2d499a",
+          "sha1": "df0876c37b259bb71144f6b3d1808ab5687279e6",
+          "md5": "7b8c986f9f1b88089df259b8ff586c74"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.bumptech.glide",
+          "module": "glide",
+          "version": {
+            "requires": "5.0.5"
+          }
+        },
+        {
+          "group": "com.squareup.okhttp3",
+          "module": "okhttp",
+          "version": {
+            "requires": "3.10.0"
+          }
+        },
+        {
+          "group": "androidx.annotation",
+          "module": "annotation",
+          "version": {
+            "requires": "1.7.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okhttp3-integration-5.0.5.aar",
+          "url": "okhttp3-integration-5.0.5.aar",
+          "size": 7016,
+          "sha512": "66adb759f78894ce1433fc709d509e6452ec450df427e782c4e9146ddbbfab6612067898f5e911d3e7c6433c251b03987524c04e646053741798b3b90a82048b",
+          "sha256": "1a98d943e738ce25a2ceec699d0ee3a8d76e33174b25e91538e5a8565a2d499a",
+          "sha1": "df0876c37b259bb71144f6b3d1808ab5687279e6",
+          "md5": "7b8c986f9f1b88089df259b8ff586c74"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "okhttp3-integration-5.0.5-sources.jar",
+          "url": "okhttp3-integration-5.0.5-sources.jar",
+          "size": 4603,
+          "sha512": "7f750a709c6930ea2ebb99e26c5cc0d3397971ab23f477e35bdd786f5ebb85bd0429487600791f704d55686920bbd615cad7cffcdafcfae929f9913344edfe58",
+          "sha256": "9b7af40e2b7f72cfeddd8d1c96bdbfa1d7b0a6b74c2c5a943f0b95a51feeb06f",
+          "sha1": "e55008fd7e6e6209b8215c1417cdd13d394f3715",
+          "md5": "4b5b4e4f4b51bcee9dc62c2e50c05fde"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "okhttp3-integration-5.0.5-javadoc.jar",
+          "url": "okhttp3-integration-5.0.5-javadoc.jar",
+          "size": 287789,
+          "sha512": "7c8a237b868a5b3f2941d5516f1ddf18bdb1b98e439181b50cf155e7f02488e054e63eea4fd8b9104a02d3daac8a191d2b908cab038a16a47937527a1249d23a",
+          "sha256": "7390478c21899e4d17a2c1061fc1cd58b09ab33327ae236047c6e4a65c656478",
+          "sha1": "8020475211a293de5a95c231004dd30086951e7e",
+          "md5": "1e27595708ba825425d33b4316fcfdd5"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.penfeizhou.android.animation",
+    "module": "apng",
+    "version": "3.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.11.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "frameanimation",
+          "version": {
+            "requires": "3.0.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "apng-3.0.5.aar",
+          "url": "apng-3.0.5.aar",
+          "size": 20902,
+          "sha512": "de555b226a537827c0cf322905263f6ccfef3fb0cedeac4bf852c8efd0584f209dd484cd70d24e8d3b08d554b543112c19602e3244058cd006d7f8f45208c7de",
+          "sha256": "3dc9019711f6205f5a11fee7ef990332572ac5f6fdffc1ddefbd28c91097668b",
+          "sha1": "78a58932d059158dfc0fc711095e19d293e6c6f4",
+          "md5": "6d5b19bb795f59b1002b2582dd99e855"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.appcompat",
+          "module": "appcompat",
+          "version": {
+            "requires": "1.6.1"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "frameanimation",
+          "version": {
+            "requires": "3.0.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "apng-3.0.5.aar",
+          "url": "apng-3.0.5.aar",
+          "size": 20902,
+          "sha512": "de555b226a537827c0cf322905263f6ccfef3fb0cedeac4bf852c8efd0584f209dd484cd70d24e8d3b08d554b543112c19602e3244058cd006d7f8f45208c7de",
+          "sha256": "3dc9019711f6205f5a11fee7ef990332572ac5f6fdffc1ddefbd28c91097668b",
+          "sha1": "78a58932d059158dfc0fc711095e19d293e6c6f4",
+          "md5": "6d5b19bb795f59b1002b2582dd99e855"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "apng-3.0.5-sources.jar",
+          "url": "apng-3.0.5-sources.jar",
+          "size": 15889,
+          "sha512": "9c820cfae172bd2437b23a232777c34fa9e0a28819e081345640d54814fdaeae81fa9ed63feb3ad68b73ddc1ece32ab79231ca46ffc2ca5e8bcfcded09b2a469",
+          "sha256": "d79392a32d8b5f220f65305ea3ebca79a06ea9ee4e4464a73161c25a2920938c",
+          "sha1": "df46059b68bf3d393e6eb40ab125e8a28abe131c",
+          "md5": "d31e68901a4875e114e22bff081dade9"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,102 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../okio/3.16.0/okio-3.16.0.module",
+    "group": "com.squareup.okio",
+    "module": "okio",
+    "version": "3.16.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-wasm-js-3.16.0.klib",
+          "url": "okio-wasm-js-3.16.0.klib",
+          "size": 364624,
+          "sha512": "5074370413273da7658a9ed8fbcac2e6816a6ab16a9ecb7fb912369164bce567b9db76caba5e4adaeedfe885df3c4c0821864ca2182001b4cb0b66e7966c73da",
+          "sha256": "44f0ff6310b96354047da81e8800f92e5d782499478300083dd6860c337ff6a1",
+          "sha1": "aed247fa0609cac403df098ccef9b9854b4ad138",
+          "md5": "26ad140047971f685121564a865e0f9f"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-wasm-js-3.16.0.klib",
+          "url": "okio-wasm-js-3.16.0.klib",
+          "size": 364624,
+          "sha512": "5074370413273da7658a9ed8fbcac2e6816a6ab16a9ecb7fb912369164bce567b9db76caba5e4adaeedfe885df3c4c0821864ca2182001b4cb0b66e7966c73da",
+          "sha256": "44f0ff6310b96354047da81e8800f92e5d782499478300083dd6860c337ff6a1",
+          "sha1": "aed247fa0609cac403df098ccef9b9854b4ad138",
+          "md5": "26ad140047971f685121564a865e0f9f"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "files": [
+        {
+          "name": "okio-wasm-js-3.16.0-sources.jar",
+          "url": "okio-wasm-js-3.16.0-sources.jar",
+          "size": 129048,
+          "sha512": "c34cbd38b885e9e7e0b784590d18425b52b82af5c93220caf29300ccbfa2fff5a2e15e383020c3e549bb8edd964c5eeee864c308a0539e827307e8ab5af7a7e3",
+          "sha256": "7c2d6c6ddce020e958ac473efb40e5cdfdfd097140fefa20c3974e0544482e2f",
+          "sha1": "df271c6cacc79bebd5b196e802e9a7d57b1b003d",
+          "md5": "ec55b016fe05db19b738c369692d7945"
+        }
+      ]
+    }
+  ]
+}

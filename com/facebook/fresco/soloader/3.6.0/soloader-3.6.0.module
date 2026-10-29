@@ -1,0 +1,114 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.facebook.fresco",
+    "module": "soloader",
+    "version": "3.6.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "soloader-3.6.0.aar",
+          "url": "soloader-3.6.0.aar",
+          "size": 784,
+          "sha512": "3a17ed8feb99daac6bb920ba006aff3510f758bd44dcedc80a056d32f7c887add2cbe0517c6932424c5c8dc89f2712b1bf83331c584d4629f6a52a1ade665583",
+          "sha256": "fbbe0a37d91b86d4320d0728040c3264599a94b31a1de41f92a25e147f7f35ef",
+          "sha1": "11e16f429bd1efe7c4457c66b3ec85a769068db7",
+          "md5": "8eca75d3b40df331ef84796a3a7f29df"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.facebook.fresco",
+          "module": "fbcore",
+          "version": {
+            "requires": "3.6.0"
+          }
+        },
+        {
+          "group": "com.facebook.soloader",
+          "module": "soloader",
+          "version": {
+            "requires": "0.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "soloader-3.6.0.aar",
+          "url": "soloader-3.6.0.aar",
+          "size": 784,
+          "sha512": "3a17ed8feb99daac6bb920ba006aff3510f758bd44dcedc80a056d32f7c887add2cbe0517c6932424c5c8dc89f2712b1bf83331c584d4629f6a52a1ade665583",
+          "sha256": "fbbe0a37d91b86d4320d0728040c3264599a94b31a1de41f92a25e147f7f35ef",
+          "sha1": "11e16f429bd1efe7c4457c66b3ec85a769068db7",
+          "md5": "8eca75d3b40df331ef84796a3a7f29df"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "soloader-3.6.0-sources.jar",
+          "url": "soloader-3.6.0-sources.jar",
+          "size": 1312,
+          "sha512": "a51e3541c768319e9b2a75627bc6ae8e44e37bb7ba9bb0e50cdc2e0cde993c7f95ceb164112f176f3fa5ce0ef6cc5190e17c457ea2605c5b26d7c4ed63038d35",
+          "sha256": "bf432ddaed4fc2060e096d198d259753636fc3ef6e2e2c4d76cc9d072192de58",
+          "sha1": "0a29fa3d45405f1136ca6550b39693165e8a11b5",
+          "md5": "0dd74f694ca72c45e22b469307706065"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "soloader-3.6.0-javadoc.jar",
+          "url": "soloader-3.6.0-javadoc.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

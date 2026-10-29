@@ -1,0 +1,113 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp/0.4.0/zstd-kmp-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-iosArm64Main-0.4.0.klib",
+          "url": "zstd-kmp-iosarm64-0.4.0.klib",
+          "size": 873638,
+          "sha512": "312282e522bcd759492cacf69f9d99d9243b2027d47a8fa1b3bb0a4152681afe278c3f09eff205037d1a4b8447996f768fd7527f7080d837b2320acdfbc8431f",
+          "sha256": "4852ed653658176be7d0cea3cf33a36a115586a09aa92a75d7a9748fa153e312",
+          "sha1": "c3db3f514230ebf07831906a9640096bdff08b0c",
+          "md5": "a4bd071124d2261f47a59633cb20304a"
+        },
+        {
+          "name": "zstd-kmp-iosArm64Cinterop-zstdMain-0.4.0.klib",
+          "url": "zstd-kmp-iosarm64-0.4.0-cinterop-zstd.klib",
+          "size": 17341,
+          "sha512": "347b929358135951cdf9de2d802947052154a81fb7440c62b6a54179c77faaeeb5691698eeb5de9e3cb14635a72b4f65ffcd1b3109733eb59f9e754a264ceae6",
+          "sha256": "287dc5c90d2743b249ff1ac17a3f85998aa3d28bc621dee9288f5dd864e25d18",
+          "sha1": "a915849196f26cf4f1a48e77c55864be035b4d0a",
+          "md5": "9f85c24d03e725b55a113c08e5156f42"
+        }
+      ]
+    },
+    {
+      "name": "iosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-iosarm64-0.4.0-sources.jar",
+          "url": "zstd-kmp-iosarm64-0.4.0-sources.jar",
+          "size": 6751,
+          "sha512": "9f3df204e91e99db6a96c5dc0ac71f837319c0064e9b3e602051a02dd0fbbcab076fe823aae6570a4893ad1be8443a126fcc5b47afb34ddb6f842a82cc05d98e",
+          "sha256": "2880b588d16b7a6d78a00acfd05c6d2044b3f83be2c70494e83b83fee33662fe",
+          "sha1": "41fbe5bf0b2072bc67842185f108621f045d25b0",
+          "md5": "4bc50bc47516c2035af769c5c394357a"
+        }
+      ]
+    },
+    {
+      "name": "iosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-iosarm64-0.4.0-metadata.jar",
+          "url": "zstd-kmp-iosarm64-0.4.0-metadata.jar",
+          "size": 39710,
+          "sha512": "9eabaa47916eaeebb90f4f84d909f75586c7a42d953a4a15c7269ccfc82cda1cbf0ebb8b8e9ed1d27467d986b353bb3c4eb437474a088c95f93f59a53bb05322",
+          "sha256": "05a96190904f9ca8a4ab7a707e05158beb6940e52623aff376c82880d9343bf7",
+          "sha1": "e512b2172be4a4521966af057591965eb7b99f81",
+          "md5": "b3cec952971462968b31b682a86b4791"
+        }
+      ]
+    }
+  ]
+}

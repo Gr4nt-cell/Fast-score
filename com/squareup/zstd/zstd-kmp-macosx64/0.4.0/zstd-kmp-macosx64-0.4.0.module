@@ -1,0 +1,113 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp/0.4.0/zstd-kmp-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "macosX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-macosX64Main-0.4.0.klib",
+          "url": "zstd-kmp-macosx64-0.4.0.klib",
+          "size": 1072859,
+          "sha512": "c4627ae576b3913043916a8c165e2a35307deddf1a7a23fbe05cdda695322d06ccfebca99535edb631d2503b3262c6b11968ad52136dc72837a7439573417f89",
+          "sha256": "b0db3cca18db18e82da1d8e1514335fac137927a1e42d65bbc5e916780f179a7",
+          "sha1": "e30557c9acf93025e87310a19108588ef87651d8",
+          "md5": "fbce03dada7629e0bff28bfcb84ae6ba"
+        },
+        {
+          "name": "zstd-kmp-macosX64Cinterop-zstdMain-0.4.0.klib",
+          "url": "zstd-kmp-macosx64-0.4.0-cinterop-zstd.klib",
+          "size": 17465,
+          "sha512": "7e290dcab13d869e9ba7f7a9225aa57499911f27316eca03decad790f159f3c1e4e50d50b37b4bfbd2f66c4411415a7f9884fbc6f0cdcfc55f1f4a37bd03a62c",
+          "sha256": "029ecdf98982d2942e96d197e7e1dd014627526d413f9151d33edca1a57f0283",
+          "sha1": "c821d71cb9a55e2fdaf0130827bd0ff1b57125b7",
+          "md5": "c32c03059266a88d0bee2ac2dd6b2c83"
+        }
+      ]
+    },
+    {
+      "name": "macosX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-macosx64-0.4.0-sources.jar",
+          "url": "zstd-kmp-macosx64-0.4.0-sources.jar",
+          "size": 6751,
+          "sha512": "9f3df204e91e99db6a96c5dc0ac71f837319c0064e9b3e602051a02dd0fbbcab076fe823aae6570a4893ad1be8443a126fcc5b47afb34ddb6f842a82cc05d98e",
+          "sha256": "2880b588d16b7a6d78a00acfd05c6d2044b3f83be2c70494e83b83fee33662fe",
+          "sha1": "41fbe5bf0b2072bc67842185f108621f045d25b0",
+          "md5": "4bc50bc47516c2035af769c5c394357a"
+        }
+      ]
+    },
+    {
+      "name": "macosX64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-macosx64-0.4.0-metadata.jar",
+          "url": "zstd-kmp-macosx64-0.4.0-metadata.jar",
+          "size": 39710,
+          "sha512": "9eabaa47916eaeebb90f4f84d909f75586c7a42d953a4a15c7269ccfc82cda1cbf0ebb8b8e9ed1d27467d986b353bb3c4eb437474a088c95f93f59a53bb05322",
+          "sha256": "05a96190904f9ca8a4ab7a707e05158beb6940e52623aff376c82880d9343bf7",
+          "sha1": "e512b2172be4a4521966af057591965eb7b99f81",
+          "md5": "b3cec952971462968b31b682a86b4791"
+        }
+      ]
+    }
+  ]
+}

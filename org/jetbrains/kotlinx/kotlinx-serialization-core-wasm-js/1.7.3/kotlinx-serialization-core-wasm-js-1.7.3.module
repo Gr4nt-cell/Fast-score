@@ -1,0 +1,102 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-serialization-core/1.7.3/kotlinx-serialization-core-1.7.3.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-serialization-core",
+    "version": "1.7.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-js-1.7.3.klib",
+          "url": "kotlinx-serialization-core-wasm-js-1.7.3.klib",
+          "size": 322843,
+          "sha512": "bed12747faa88b306a2d25e1310d38e43e204a694fcf7fd3b7e3c56232f1a50a3d9feef1cf9c2ff24480f0de15cffde001dbb95694525c98e85e64afa86d45e5",
+          "sha256": "4737e08c15e6c8bfd5d283152f3b9e56aaa9f1ef881748d3df0f3e8e5f06a3b5",
+          "sha1": "1badfeaf1bb965ae884394fced75656e42ed98a1",
+          "md5": "89473e828a86e827bc8ff14fdf66cf89"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-js-1.7.3.klib",
+          "url": "kotlinx-serialization-core-wasm-js-1.7.3.klib",
+          "size": 322843,
+          "sha512": "bed12747faa88b306a2d25e1310d38e43e204a694fcf7fd3b7e3c56232f1a50a3d9feef1cf9c2ff24480f0de15cffde001dbb95694525c98e85e64afa86d45e5",
+          "sha256": "4737e08c15e6c8bfd5d283152f3b9e56aaa9f1ef881748d3df0f3e8e5f06a3b5",
+          "sha1": "1badfeaf1bb965ae884394fced75656e42ed98a1",
+          "md5": "89473e828a86e827bc8ff14fdf66cf89"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-js-1.7.3-sources.jar",
+          "url": "kotlinx-serialization-core-wasm-js-1.7.3-sources.jar",
+          "size": 100723,
+          "sha512": "6e49008c04b65fb32bb63130b159dd79d57131fcd47c5bce1aca801180f53574d45314a0160b0a30f800985dd88c64c895b10aeafcf84f0593b68b88a8dc9cdf",
+          "sha256": "1396aafd34422fdb83e8c220f839a6a19a09f96ef38ea2c9bbaa1ae50832b41a",
+          "sha1": "63ddd124a977b52b0beb0613f3a4e7716bac05cc",
+          "md5": "3936ed9025c6ae365f49bcdb39a8d6bc"
+        }
+      ]
+    }
+  ]
+}

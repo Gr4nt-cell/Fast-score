@@ -1,0 +1,115 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.8.1/kotlinx-coroutines-core-1.8.1.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.8.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "watchosArm32ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "watchos_arm32",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-watchosarm32-1.8.1.klib",
+          "size": 834953,
+          "sha512": "7a706531adcc855c7c052e85a762137eaba509fcf0bc0f2cec6cf7bfbd17d922dcd80ae3c3198b19cc179f60155c42f6f3b4839a72ade3ef7b0c56e390a12b9a",
+          "sha256": "3888d0b03ac3d3d8e702378ad29d85a049851fb1870aa0f910f273fc05050b25",
+          "sha1": "c54f4227f80e82c25b57f9e9e66acd59a2b753c3",
+          "md5": "2122170e6d803217af8242e0b9733320"
+        }
+      ]
+    },
+    {
+      "name": "watchosArm32SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "watchos_arm32",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-watchosarm32-1.8.1-sources.jar",
+          "url": "kotlinx-coroutines-core-watchosarm32-1.8.1-sources.jar",
+          "size": 308326,
+          "sha512": "a5a4e0a998b9468e4038f7ca1699098ac88ce6240cc1bc90925e1e6b4c49a185af3e6ecd296e74bb87cf454a5b9ce08e785a99e47e88a77ee22ec855cd8c47db",
+          "sha256": "6b7a334f28b642dac9344b37dbf8c9255995718a417481c3a922f21629ee6c31",
+          "sha1": "9a3651c7c8b8e24c966c46e9d916f941d1486b3a",
+          "md5": "5dc90d485100d548976bc0919991b798"
+        }
+      ]
+    },
+    {
+      "name": "watchosArm32MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "watchos_arm32",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-watchosarm32-1.8.1-metadata.jar",
+          "url": "kotlinx-coroutines-core-watchosarm32-1.8.1-metadata.jar",
+          "size": 4720,
+          "sha512": "612df0117ec3cb6faead48629825b1d18c4d5f507f62c66585da14bbc456b93409e6a357be1b7936355a960b83ca45301ec9427759e201d1b5e0d9dc412a2903",
+          "sha256": "97daa970d3aac8f01c87801e9dfec9b0ec749fbf107fde4fc7edd4f080e93966",
+          "sha1": "06794cd1d7717d9dc333f6d57b55e6b6951ea00b",
+          "md5": "92204d1a1657d807d17b80099572fc1e"
+        }
+      ]
+    }
+  ]
+}

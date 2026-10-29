@@ -1,0 +1,113 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp/0.4.0/zstd-kmp-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "tvosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-tvosArm64Main-0.4.0.klib",
+          "url": "zstd-kmp-tvosarm64-0.4.0.klib",
+          "size": 873640,
+          "sha512": "69d7fceeea26f51c53638ef973b065f588c416f2abd1fb42ec899e939ba4abc7194a48bb54e18b22eb78e03c84b3523679c2be21ba1637f71542bf163d4eceaf",
+          "sha256": "cc18311c71206875ea322aa587e66aed5f31cc351b49952b05dd3b545e96edcf",
+          "sha1": "391f20101bb7cf2dcab93162891829fdc4f75844",
+          "md5": "fcebdd946ad1d9c3dc685ccf0babacdd"
+        },
+        {
+          "name": "zstd-kmp-tvosArm64Cinterop-zstdMain-0.4.0.klib",
+          "url": "zstd-kmp-tvosarm64-0.4.0-cinterop-zstd.klib",
+          "size": 17353,
+          "sha512": "825ddab6fa53287ea282af64cb499c69aa0bf6f7a46cf02bb151a479163995280fce2089d9151c4df0b824189e4f7c7dbe9aa0575758e0f1e15f9bdab3472089",
+          "sha256": "aaa141bbb01354140ee8516c3f5ece3d22c75cb0ce78cb95e5fb5ec7be6efa28",
+          "sha1": "05112d63af313b6198085a5a2635065b6ad7906b",
+          "md5": "90041d95e25b733ff81f2b810e13bdaf"
+        }
+      ]
+    },
+    {
+      "name": "tvosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-tvosarm64-0.4.0-sources.jar",
+          "url": "zstd-kmp-tvosarm64-0.4.0-sources.jar",
+          "size": 6751,
+          "sha512": "9f3df204e91e99db6a96c5dc0ac71f837319c0064e9b3e602051a02dd0fbbcab076fe823aae6570a4893ad1be8443a126fcc5b47afb34ddb6f842a82cc05d98e",
+          "sha256": "2880b588d16b7a6d78a00acfd05c6d2044b3f83be2c70494e83b83fee33662fe",
+          "sha1": "41fbe5bf0b2072bc67842185f108621f045d25b0",
+          "md5": "4bc50bc47516c2035af769c5c394357a"
+        }
+      ]
+    },
+    {
+      "name": "tvosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-tvosarm64-0.4.0-metadata.jar",
+          "url": "zstd-kmp-tvosarm64-0.4.0-metadata.jar",
+          "size": 39710,
+          "sha512": "9eabaa47916eaeebb90f4f84d909f75586c7a42d953a4a15c7269ccfc82cda1cbf0ebb8b8e9ed1d27467d986b353bb3c4eb437474a088c95f93f59a53bb05322",
+          "sha256": "05a96190904f9ca8a4ab7a707e05158beb6940e52623aff376c82880d9343bf7",
+          "sha1": "e512b2172be4a4521966af057591965eb7b99f81",
+          "md5": "b3cec952971462968b31b682a86b4791"
+        }
+      ]
+    }
+  ]
+}

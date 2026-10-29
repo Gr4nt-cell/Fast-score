@@ -1,0 +1,113 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp/0.4.0/zstd-kmp-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-iosSimulatorArm64Main-0.4.0.klib",
+          "url": "zstd-kmp-iossimulatorarm64-0.4.0.klib",
+          "size": 873761,
+          "sha512": "5587b32a22dc754f10373fa641b3a03d75f5cf6932dd48d183b02384faf1c5ad0b797c9344bb07709df44fc22e9c37af2c3ba491da84f309e8a76bcc3c334125",
+          "sha256": "380c6e1c21ad2bcf4b6d6026004762aa8cd7c3f481a1ee2f5a29fd43b720d347",
+          "sha1": "e9273589b45f58ba00270a222daa777420a1035a",
+          "md5": "8190a5ac7abd965df9093bebb3244ade"
+        },
+        {
+          "name": "zstd-kmp-iosSimulatorArm64Cinterop-zstdMain-0.4.0.klib",
+          "url": "zstd-kmp-iossimulatorarm64-0.4.0-cinterop-zstd.klib",
+          "size": 17775,
+          "sha512": "b1c8b3f6db70c6b3dfbe7fcef4ca4e7fca958654b6d4a9c4e32f2318af872a7ded65e7afb0eedc0d46479c219821c91a1b239a1f9ab2a0384250345d6aa10b66",
+          "sha256": "5d8499ebb00928ea284e7358dfe88558f1888ef1141ce646b34dc4cca7944b11",
+          "sha1": "961bc31a2618b57180e24abe41a43a9fa0e2f9d5",
+          "md5": "ca20c9d54580a86a156d97061e6ebbd8"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-iossimulatorarm64-0.4.0-sources.jar",
+          "url": "zstd-kmp-iossimulatorarm64-0.4.0-sources.jar",
+          "size": 6751,
+          "sha512": "9f3df204e91e99db6a96c5dc0ac71f837319c0064e9b3e602051a02dd0fbbcab076fe823aae6570a4893ad1be8443a126fcc5b47afb34ddb6f842a82cc05d98e",
+          "sha256": "2880b588d16b7a6d78a00acfd05c6d2044b3f83be2c70494e83b83fee33662fe",
+          "sha1": "41fbe5bf0b2072bc67842185f108621f045d25b0",
+          "md5": "4bc50bc47516c2035af769c5c394357a"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-iossimulatorarm64-0.4.0-metadata.jar",
+          "url": "zstd-kmp-iossimulatorarm64-0.4.0-metadata.jar",
+          "size": 39710,
+          "sha512": "9eabaa47916eaeebb90f4f84d909f75586c7a42d953a4a15c7269ccfc82cda1cbf0ebb8b8e9ed1d27467d986b353bb3c4eb437474a088c95f93f59a53bb05322",
+          "sha256": "05a96190904f9ca8a4ab7a707e05158beb6940e52623aff376c82880d9343bf7",
+          "sha1": "e512b2172be4a4521966af057591965eb7b99f81",
+          "md5": "b3cec952971462968b31b682a86b4791"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.9.0/kotlinx-coroutines-core-1.9.0.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "macosX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-macosx64-1.9.0.klib",
+          "size": 888998,
+          "sha512": "55d909321abbb0183dbb1ccc0bca62ce560bf71cc23fdb49c4ed5d2f5dfb9fd869640874a54535d6b2db16cc25fd9cbe15e0e4950eeecc1c6b3c5463216c0ed5",
+          "sha256": "2aa8b268624f739af0c27d4bec98457d9c109691303c7c52aa09c839379094d3",
+          "sha1": "1464d3481cad13b9e17b6301d839811eabe158d5",
+          "md5": "bb2f8a47af85578579639612c92df146"
+        }
+      ]
+    },
+    {
+      "name": "macosX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-macosx64-1.9.0-sources.jar",
+          "url": "kotlinx-coroutines-core-macosx64-1.9.0-sources.jar",
+          "size": 315839,
+          "sha512": "0c7a21fb4746545595e2dac2894acf3b6f2abb3cd04f800ec6244dff94585a6e8289f9ffed512908545c17a26756b5b008adb8adfab0e963d32617fdd9cfa8f6",
+          "sha256": "4bd6a336d7c9887d9be30dabe76e170a208ec3e400873e7261aee1a8f2dae7da",
+          "sha1": "a68d3623081cbe7f30e4f9799b8db0831b83672c",
+          "md5": "fef705a5b8237391dc4dd4c9b4931970"
+        }
+      ]
+    },
+    {
+      "name": "macosX64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-macosx64-1.9.0-metadata.jar",
+          "url": "kotlinx-coroutines-core-macosx64-1.9.0-metadata.jar",
+          "size": 3533,
+          "sha512": "9e9587f33001ba17d37453bb48f59150dc12b72d0e9415415f13c617191d12908c7f9b1e3854770d73b897a9ae0d6852bc7a482ef665f9633b3e157c54f78d2b",
+          "sha256": "0c50c512367e7ba722141b2482751a9fa97712028447c1a704b0d751df4b08c3",
+          "sha1": "365a7cb05361bb5d1ee0e7d87f3707459e14059f",
+          "md5": "8a9d44f5a368a7ec0dae6f554c217345"
+        }
+      ]
+    }
+  ]
+}

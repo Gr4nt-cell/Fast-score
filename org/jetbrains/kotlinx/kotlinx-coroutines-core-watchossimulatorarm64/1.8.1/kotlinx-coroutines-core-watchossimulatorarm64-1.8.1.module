@@ -1,0 +1,115 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.8.1/kotlinx-coroutines-core-1.8.1.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.8.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "watchosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "watchos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-watchossimulatorarm64-1.8.1.klib",
+          "size": 835028,
+          "sha512": "5f2dd86985ad9123a9ee02dbb4d88a22314a480f88805d70bda2dcff6d695ca05131447892b20aef7b1c9ec8ce917e07f3301802f2b758e11728701d4401acbb",
+          "sha256": "c164a976e227b893ab37082e3e278a26425ea65ab966e98236e8fefcf87c708d",
+          "sha1": "368de9a7efadde37edbe7413b9038f699a5baec3",
+          "md5": "e124fc60f89eea0a8e33d8b4df6455ae"
+        }
+      ]
+    },
+    {
+      "name": "watchosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "watchos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-watchossimulatorarm64-1.8.1-sources.jar",
+          "url": "kotlinx-coroutines-core-watchossimulatorarm64-1.8.1-sources.jar",
+          "size": 308326,
+          "sha512": "a5a4e0a998b9468e4038f7ca1699098ac88ce6240cc1bc90925e1e6b4c49a185af3e6ecd296e74bb87cf454a5b9ce08e785a99e47e88a77ee22ec855cd8c47db",
+          "sha256": "6b7a334f28b642dac9344b37dbf8c9255995718a417481c3a922f21629ee6c31",
+          "sha1": "9a3651c7c8b8e24c966c46e9d916f941d1486b3a",
+          "md5": "5dc90d485100d548976bc0919991b798"
+        }
+      ]
+    },
+    {
+      "name": "watchosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "watchos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-watchossimulatorarm64-1.8.1-metadata.jar",
+          "url": "kotlinx-coroutines-core-watchossimulatorarm64-1.8.1-metadata.jar",
+          "size": 4720,
+          "sha512": "7b56bf5e206e89c932992ae26d33d4ef8d3314fa1c8068b28fef9fa0fc40a4f6ca6a9c7e5f86aaec646373f3d49aea43bad3609e00a6fd03c1990c03dece608e",
+          "sha256": "c543fa0ff7a8c10ce6a0b7fc82404b80016ee6916e9676a097b29ac31e7e1f70",
+          "sha1": "d40de853149d9f28e21351ea300a7b9dd2be05ee",
+          "md5": "9a4e994d51c87748860aea6d5255a870"
+        }
+      ]
+    }
+  ]
+}

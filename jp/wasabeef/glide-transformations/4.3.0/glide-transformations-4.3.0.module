@@ -1,0 +1,68 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "jp.wasabeef",
+    "module": "glide-transformations",
+    "version": "4.3.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.7.1",
+      "buildId": "44mvmurzdrbovexuukeejygv2e"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "glide-transformations-4.3.0.aar",
+          "url": "glide-transformations-4.3.0.aar",
+          "size": 41310,
+          "sha512": "4205c1271c722e9064fe9f6d7e757f7a769f066d051561101aef9327d1f6a31d16450f0b38bc1d459da75b1bcda0f316cf84934873ed52de3b5e0f8bd8e3086b",
+          "sha256": "ce3a57e80456a2380a07b31c6156644ad491022424df38a47de1e814d746d6e3",
+          "sha1": "563982d316ea9132b81afffe4ae91adf02be1f90",
+          "md5": "6824e0bbfd0a653456bb90c470325824"
+        }
+      ]
+    },
+    {
+      "name": "releaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.bumptech.glide",
+          "module": "glide",
+          "version": {
+            "requires": "4.11.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "glide-transformations-4.3.0.aar",
+          "url": "glide-transformations-4.3.0.aar",
+          "size": 41310,
+          "sha512": "4205c1271c722e9064fe9f6d7e757f7a769f066d051561101aef9327d1f6a31d16450f0b38bc1d459da75b1bcda0f316cf84934873ed52de3b5e0f8bd8e3086b",
+          "sha256": "ce3a57e80456a2380a07b31c6156644ad491022424df38a47de1e814d746d6e3",
+          "sha1": "563982d316ea9132b81afffe4ae91adf02be1f90",
+          "md5": "6824e0bbfd0a653456bb90c470325824"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,86 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlin-stdlib/2.2.0/kotlin-stdlib-2.2.0.module",
+    "group": "org.jetbrains.kotlin",
+    "module": "kotlin-stdlib",
+    "version": "2.2.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmWasiApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.klib.packaging": "packed",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "files": [
+        {
+          "name": "kotlin-stdlib-wasm-wasi-2.2.0.klib",
+          "url": "kotlin-stdlib-wasm-wasi-2.2.0.klib",
+          "size": 3228130,
+          "sha512": "46ee13acbef7670d21565d3537f569789652013d5b7150c1cb278e4c7f3096da7a6e64f242f8dfda67004d5d0ebb44b6d8976df0f3240bc2930ff6f35ec145a6",
+          "sha256": "af4ed3e0c363b7c9defce3ed9d2e371d2364178cfdc4b441ad4df052ebec0570",
+          "sha1": "7f519fd845397ea95adb7f8b4f24467e797141ba",
+          "md5": "d797f5f7aab0084214702c1479b106c2"
+        }
+      ]
+    },
+    {
+      "name": "wasmWasiRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.klib.packaging": "packed",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "files": [
+        {
+          "name": "kotlin-stdlib-wasm-wasi-2.2.0.klib",
+          "url": "kotlin-stdlib-wasm-wasi-2.2.0.klib",
+          "size": 3228130,
+          "sha512": "46ee13acbef7670d21565d3537f569789652013d5b7150c1cb278e4c7f3096da7a6e64f242f8dfda67004d5d0ebb44b6d8976df0f3240bc2930ff6f35ec145a6",
+          "sha256": "af4ed3e0c363b7c9defce3ed9d2e371d2364178cfdc4b441ad4df052ebec0570",
+          "sha1": "7f519fd845397ea95adb7f8b4f24467e797141ba",
+          "md5": "d797f5f7aab0084214702c1479b106c2"
+        }
+      ]
+    },
+    {
+      "name": "wasmWasiSourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "files": [
+        {
+          "name": "kotlin-stdlib-wasm-wasi-2.2.0-sources.jar",
+          "url": "kotlin-stdlib-wasm-wasi-2.2.0-sources.jar",
+          "size": 795604,
+          "sha512": "3f157dcfd2bbdd33e7b6f76f0823c5ddee1d44b67d1c22d59547013d2333c07b3b7dbce5328980332d849a2ac1db83152a5e6fce2bb1da87e57bb7a2cde8274b",
+          "sha256": "c1561cfe0ca2b7498283efe52121a5c0e4e6b96dad276171857f2ad3bca2253d",
+          "sha1": "6e68c9804f8eb460fddef3b1e34a90fac26054db",
+          "md5": "24a37c9e3533647f8df802eef2606a1c"
+        }
+      ]
+    }
+  ]
+}

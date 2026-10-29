@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.10.2/kotlinx-coroutines-core-1.10.2.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.10.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "tvosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.26.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-tvosArm64Main-1.10.2.klib",
+          "url": "kotlinx-coroutines-core-tvosarm64-1.10.2.klib",
+          "size": 888183,
+          "sha512": "1272f25c31efd440962d6b2b752aa761306e42e66f4606d1b5fc60cbc0e320ecc8a4c80da3491533bd0310428aa18708e1c025bddc23351b0a496049da977a66",
+          "sha256": "462765736089a355b824cb4627266ec7126eee1f3fbb920c16f43fa2e2682b16",
+          "sha1": "c103c21c1992d759df799f91343aefb4cf564687",
+          "md5": "042f115b5f8f9464caf88a96564bf546"
+        }
+      ]
+    },
+    {
+      "name": "tvosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-tvosarm64-1.10.2-sources.jar",
+          "url": "kotlinx-coroutines-core-tvosarm64-1.10.2-sources.jar",
+          "size": 328237,
+          "sha512": "e0937d7e05f76981f82ca5cd2f883e71be827740525fa274d38c3736cc2b10e9ec8f3a7f63ef11b963cdf09fc1df5d540b6ab56e18025580600c77196f579bf7",
+          "sha256": "1b48fc37840972e6b7e03e2320f41c4569940c8d668e20fdc87d71af46d0d16b",
+          "sha1": "0c608b522c1da2a618be2ed219c790a28e480ec4",
+          "md5": "42a920b149eb617f88c510222bc981aa"
+        }
+      ]
+    },
+    {
+      "name": "tvosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.26.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-tvosarm64-1.10.2-metadata.jar",
+          "url": "kotlinx-coroutines-core-tvosarm64-1.10.2-metadata.jar",
+          "size": 3533,
+          "sha512": "b4b31fc0ed20b5a63c3fdb51a3f680aaae0107debcc3b8a1ceed9583338b097226129f3de78470ed58e9f7a93d9d53b47c8b77fe11933b0cc10ef0cfc77092ef",
+          "sha256": "94d35b26cd629de68c49e9f087bcde9d6bea147aa7d4bd2110c0f2c9181eb61f",
+          "sha1": "7dd38d1e7945a80cc2a0896cf6ac4982a376a337",
+          "md5": "f4c91f7f61eb1113d0905f7dc7585dc7"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,107 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.bumptech.glide",
+    "module": "gifdecoder",
+    "version": "5.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "gifdecoder-5.0.5.aar",
+          "url": "gifdecoder-5.0.5.aar",
+          "size": 18000,
+          "sha512": "9b0763e4d89c86135d00429f0234ee15b486427845f54df0a7a37788460c64d2e67b7944908c5aacbded03fafbbb991f6d5f2f254a9aac5945d0992ae8f9e911",
+          "sha256": "df9e4620e87b68b719ef8af3d100324a144bfc88f43518af9a013674109fe078",
+          "sha1": "63dd400063e96947ee246d231afdca76caa8f074",
+          "md5": "f6ab7375cc05ba472fb33aeb950a08d1"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.annotation",
+          "module": "annotation",
+          "version": {
+            "requires": "1.7.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "gifdecoder-5.0.5.aar",
+          "url": "gifdecoder-5.0.5.aar",
+          "size": 18000,
+          "sha512": "9b0763e4d89c86135d00429f0234ee15b486427845f54df0a7a37788460c64d2e67b7944908c5aacbded03fafbbb991f6d5f2f254a9aac5945d0992ae8f9e911",
+          "sha256": "df9e4620e87b68b719ef8af3d100324a144bfc88f43518af9a013674109fe078",
+          "sha1": "63dd400063e96947ee246d231afdca76caa8f074",
+          "md5": "f6ab7375cc05ba472fb33aeb950a08d1"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gifdecoder-5.0.5-sources.jar",
+          "url": "gifdecoder-5.0.5-sources.jar",
+          "size": 17713,
+          "sha512": "0c218f02650a69b8b224bf5d72861a98a5547974f72d6cd326fbf45dc1fe8c8ed871b73a8043031b27f1c9ec75cd618ba9adca20b7fae1d43c6ce65cfb9f82b0",
+          "sha256": "36d97daf1ae9b15fc75d7eaa65522e6c56bd39dcef91c58cc27fdfa145bd4ea4",
+          "sha1": "983ace5607f4920378ed606b6feed7dd8ce427e6",
+          "md5": "5dd84fdb6ee7c75064d69f541e490d1a"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gifdecoder-5.0.5-javadoc.jar",
+          "url": "gifdecoder-5.0.5-javadoc.jar",
+          "size": 300979,
+          "sha512": "4dd70fbfcb0a84d70fe47e38aa846941bdd19768c9a8b3714fd445f816b3804fa93a3fc13b28d44aebd8f988a84b45db8763b4ecd1ba7a1cddbbc64771ede2cf",
+          "sha256": "e59d77e1e3026a73a511c0a133aba6ccf4b05d73b1e44e3c3e95e5926d243d05",
+          "sha1": "365fbfaf027d06114238ad6a328d312ad07311af",
+          "md5": "5a083f877be9364f921a99dad0570183"
+        }
+      ]
+    }
+  ]
+}

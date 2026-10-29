@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.9.0/kotlinx-coroutines-core-1.9.0.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-iossimulatorarm64-1.9.0.klib",
+          "size": 889083,
+          "sha512": "00f39c05cfcacd698a624865da42ab1d71ce7e1ab031ae069b3678a3dd054fd0bdd1af6f4b468152608103fcf0835f2d2f9bf575135f626b6bd7689b740b2dc4",
+          "sha256": "079e3ddc6d672b1fd30a90ba9bda495bc462edce6fc308c9aba9e4389ad7b728",
+          "sha1": "f06bbe88db1bec858ea3df8365022340953146f0",
+          "md5": "d95476569ec647092fe05c7ed3676008"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-iossimulatorarm64-1.9.0-sources.jar",
+          "url": "kotlinx-coroutines-core-iossimulatorarm64-1.9.0-sources.jar",
+          "size": 315839,
+          "sha512": "0c7a21fb4746545595e2dac2894acf3b6f2abb3cd04f800ec6244dff94585a6e8289f9ffed512908545c17a26756b5b008adb8adfab0e963d32617fdd9cfa8f6",
+          "sha256": "4bd6a336d7c9887d9be30dabe76e170a208ec3e400873e7261aee1a8f2dae7da",
+          "sha1": "a68d3623081cbe7f30e4f9799b8db0831b83672c",
+          "md5": "fef705a5b8237391dc4dd4c9b4931970"
+        }
+      ]
+    },
+    {
+      "name": "iosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.25.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-iossimulatorarm64-1.9.0-metadata.jar",
+          "url": "kotlinx-coroutines-core-iossimulatorarm64-1.9.0-metadata.jar",
+          "size": 3533,
+          "sha512": "fef5ceea32f8664ba82fe30ce4abdcf9978d48a7c8ff10885db5e9906f262ca2540db03f5b3e4401ef662138436a5d98ebd447c0417ba8e1bdbaf71dc9c9b3b4",
+          "sha256": "dd143f0cdc3ad3bd481b9da28fc74e769697a4ae872c94ba9df1ec186a306797",
+          "sha1": "8e6e2e85ebad04eb0fa19870aef1ff6b2a6e39ff",
+          "md5": "ca2a96add6af86911b791b53e5646cb8"
+        }
+      ]
+    }
+  ]
+}

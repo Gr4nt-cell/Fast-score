@@ -1,0 +1,78 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.8.1/kotlinx-coroutines-core-1.8.1.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.8.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidNativeArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "android_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-androidnativearm64-1.8.1.klib",
+          "size": 830010,
+          "sha512": "a2e75c840b84b9146404eaaadbf87843ec5c43b9cfe7fcaf6d98075311b2e8bd28e3d343413fdb646deee71aa812cd47e2fee2b57cebe2f24baff896083f14ee",
+          "sha256": "358a74f2445237d3edca487893ddcee8e44aebe832160668d2c89bc9b0149434",
+          "sha1": "06facf562b69f9df1c0827c11d597930ea3ab006",
+          "md5": "c8f78a238aae589774aff95bc2ab7d76"
+        }
+      ]
+    },
+    {
+      "name": "androidNativeArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "android_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-androidnativearm64-1.8.1-sources.jar",
+          "url": "kotlinx-coroutines-core-androidnativearm64-1.8.1-sources.jar",
+          "size": 307749,
+          "sha512": "84127b7dcc1926e08d55822a673491efe2c572b9fb863d911363cfcf6bc25d3cc9c3cd026b05eba4fae3af3a0f12f75a79e052a5995577cd40f7328e8f2eb7b9",
+          "sha256": "fa279c9d4bdcb2f2fcc63caa07eab303c5aee1c4bd0dfb55212372ee624de01b",
+          "sha1": "c82385327f71d68856fe5e54bff03f8e15484258",
+          "md5": "5c16393ed48ba0d888e62aefe7228738"
+        }
+      ]
+    }
+  ]
+}

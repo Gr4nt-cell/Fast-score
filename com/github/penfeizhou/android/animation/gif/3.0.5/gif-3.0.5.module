@@ -1,0 +1,103 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.penfeizhou.android.animation",
+    "module": "gif",
+    "version": "3.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.11.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "frameanimation",
+          "version": {
+            "requires": "3.0.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "gif-3.0.5.aar",
+          "url": "gif-3.0.5.aar",
+          "size": 359819,
+          "sha512": "fc2324ba493f04c3f6bf36470edd2ed0b491378043e1cfe0c800444fc855c4ed693c07205eb225d5eec071ab63eaa8cf539e96d9bea9557edc426d6f9818f132",
+          "sha256": "78c478c0fcc98a382f0a9e00bf671ce2a1d3ffb34ef817d7caeaf890ba493369",
+          "sha1": "7ad04b5419c99589e5289dd534f19a97dde1d84c",
+          "md5": "8da210e04017f89722c1ea0923c1ffa6"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.appcompat",
+          "module": "appcompat",
+          "version": {
+            "requires": "1.2.0"
+          }
+        },
+        {
+          "group": "com.github.penfeizhou.android.animation",
+          "module": "frameanimation",
+          "version": {
+            "requires": "3.0.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "gif-3.0.5.aar",
+          "url": "gif-3.0.5.aar",
+          "size": 359819,
+          "sha512": "fc2324ba493f04c3f6bf36470edd2ed0b491378043e1cfe0c800444fc855c4ed693c07205eb225d5eec071ab63eaa8cf539e96d9bea9557edc426d6f9818f132",
+          "sha256": "78c478c0fcc98a382f0a9e00bf671ce2a1d3ffb34ef817d7caeaf890ba493369",
+          "sha1": "7ad04b5419c99589e5289dd534f19a97dde1d84c",
+          "md5": "8da210e04017f89722c1ea0923c1ffa6"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "gif-3.0.5-sources.jar",
+          "url": "gif-3.0.5-sources.jar",
+          "size": 18600,
+          "sha512": "723ef2944e6a357ce1dada43e0655ccf5fe07b2c725ad151bc7881828c0fecbf96d45652ba8ceefd8043a693f376209a5a5fed36bc116b192fb5784ba1a0a895",
+          "sha256": "ff3b6f5f23e62dc9662e31b737b87a3fadf40d364c435a7ac221e31087b4fb91",
+          "sha1": "8a47b4d41924f314e5968f75097de190e1db275d",
+          "md5": "f0024b923fa497534e3825467c2bfb0f"
+        }
+      ]
+    }
+  ]
+}

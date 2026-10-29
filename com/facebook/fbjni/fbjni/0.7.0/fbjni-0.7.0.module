@@ -1,0 +1,107 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.facebook.fbjni",
+    "module": "fbjni",
+    "version": "0.7.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.4"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "fbjni-0.7.0.aar",
+          "url": "fbjni-0.7.0.aar",
+          "size": 4349156,
+          "sha512": "9d650755729577a262e435337462a8b387ba18218fa83ef86cdf4dabfabf4f6b147d104a446863d0e04ef165f4970b67e3eb9f068326a5233fe1c54b94677dd9",
+          "sha256": "7e319ae110ac5e5ef18904170aea5c3e753e915d196699d7fd39d36c8e1dfe36",
+          "sha1": "582cf77f05905c93da7cdc2bce0f8f208611473e",
+          "md5": "7aa2e456b61a48a42882e30e8900a961"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.facebook.soloader",
+          "module": "nativeloader",
+          "version": {
+            "requires": "0.10.5"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "fbjni-0.7.0.aar",
+          "url": "fbjni-0.7.0.aar",
+          "size": 4349156,
+          "sha512": "9d650755729577a262e435337462a8b387ba18218fa83ef86cdf4dabfabf4f6b147d104a446863d0e04ef165f4970b67e3eb9f068326a5233fe1c54b94677dd9",
+          "sha256": "7e319ae110ac5e5ef18904170aea5c3e753e915d196699d7fd39d36c8e1dfe36",
+          "sha1": "582cf77f05905c93da7cdc2bce0f8f208611473e",
+          "md5": "7aa2e456b61a48a42882e30e8900a961"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "fbjni-0.7.0-sources.jar",
+          "url": "fbjni-0.7.0-sources.jar",
+          "size": 12824,
+          "sha512": "ff62c123a607d92a48c2730ea2a7a795d1df2c9884c5ba3f236b1fd5e6e3a0195bd9e3d3691cd49c58c625aac8746adff162b9f37876b6f7259111aff06b8bfa",
+          "sha256": "7d81b4a8477f9b49c03a954edf6c3cabe485ccacbd91af676a9e4bcaf8ad92c7",
+          "sha1": "53f631b0514542c878772d89a8fb1afbbf6d1e6c",
+          "md5": "26bc4a8662902a41fc36c823e1fabec0"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "fbjni-0.7.0-javadoc.jar",
+          "url": "fbjni-0.7.0-javadoc.jar",
+          "size": 327014,
+          "sha512": "23e8a3d97029e79eb229fc9b52ea9375410ff22c5da4d509923b9b73791fb09647f878615482a93346c4cedd309b36d1b30b0490a71b12a511428b43a718cd85",
+          "sha256": "851a350268f637389bdd203cf846e525131a079a0da4128e2854e6c5c5683253",
+          "sha1": "cdacf9ec3adb86703ba218431ae2ef0f3a2a4d31",
+          "md5": "295560f337c874cc21f47cb6f71e9bf8"
+        }
+      ]
+    }
+  ]
+}

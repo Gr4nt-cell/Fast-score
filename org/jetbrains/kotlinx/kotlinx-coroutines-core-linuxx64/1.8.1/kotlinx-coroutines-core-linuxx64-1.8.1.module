@@ -1,0 +1,78 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.8.1/kotlinx-coroutines-core-1.8.1.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.8.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "linuxX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "linux_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-linuxx64-1.8.1.klib",
+          "size": 829979,
+          "sha512": "8e1dbae69fa9d45d1c02ac49dc5de72b961acf347a919e5eaf565dcd55ab1d40589e11e3e1759287c2047b39352e554d9e4bf2c1e3c4085675056f4d71afb1b7",
+          "sha256": "9b3fdd8294889caecce2ec8c8c7deb6a5d2c8d6207077a0be2189fd02301c0a2",
+          "sha1": "6cd5eda771c30c4e76ee7bc56f43051836e51b4d",
+          "md5": "366ddc2b930e2b927888aa0085e5ffaf"
+        }
+      ]
+    },
+    {
+      "name": "linuxX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "linux_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-linuxx64-1.8.1-sources.jar",
+          "url": "kotlinx-coroutines-core-linuxx64-1.8.1-sources.jar",
+          "size": 307749,
+          "sha512": "84127b7dcc1926e08d55822a673491efe2c572b9fb863d911363cfcf6bc25d3cc9c3cd026b05eba4fae3af3a0f12f75a79e052a5995577cd40f7328e8f2eb7b9",
+          "sha256": "fa279c9d4bdcb2f2fcc63caa07eab303c5aee1c4bd0dfb55212372ee624de01b",
+          "sha1": "c82385327f71d68856fe5e54bff03f8e15484258",
+          "md5": "5c16393ed48ba0d888e62aefe7228738"
+        }
+      ]
+    }
+  ]
+}

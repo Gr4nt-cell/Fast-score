@@ -1,0 +1,102 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp/0.4.0/zstd-kmp-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "jvmApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-jvm-0.4.0.jar",
+          "url": "zstd-kmp-jvm-0.4.0.jar",
+          "size": 1445764,
+          "sha512": "d97e2ff2e1ad829a4080cf9e12c2d4a4c76229013a4d46d7314b18e2f2d271ab01454831ba59f59768aa89ebf444ed0400565d4bb3aab2c3f40c24f4378aa759",
+          "sha256": "70c169b6fb10c4106cfbdb0ce117838fc4bf29974316860a66185a1392056821",
+          "sha1": "ab2a71690a1f6b6755c822b1e614552c0f4e069e",
+          "md5": "2b50cba685599a31e53447a502dc7e1e"
+        }
+      ]
+    },
+    {
+      "name": "jvmRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-jvm-0.4.0.jar",
+          "url": "zstd-kmp-jvm-0.4.0.jar",
+          "size": 1445764,
+          "sha512": "d97e2ff2e1ad829a4080cf9e12c2d4a4c76229013a4d46d7314b18e2f2d271ab01454831ba59f59768aa89ebf444ed0400565d4bb3aab2c3f40c24f4378aa759",
+          "sha256": "70c169b6fb10c4106cfbdb0ce117838fc4bf29974316860a66185a1392056821",
+          "sha1": "ab2a71690a1f6b6755c822b1e614552c0f4e069e",
+          "md5": "2b50cba685599a31e53447a502dc7e1e"
+        }
+      ]
+    },
+    {
+      "name": "jvmSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-jvm-0.4.0-sources.jar",
+          "url": "zstd-kmp-jvm-0.4.0-sources.jar",
+          "size": 8208,
+          "sha512": "db5d0f28f58003a76acd301f6d9f884dbb4ec1e4a697fa67d3373d13c2e8fdf073a2883cf4cab324bcf36ce15ac39590b2442fbf27a64b53e12481c249e89672",
+          "sha256": "53b879bb8abcfc408c4790b5d5a180ee309b7cf3633fd5cb813591c18b8b8c03",
+          "sha1": "52d3ea98cb4be5f18dd82b84f6ec075b1cc07f4a",
+          "md5": "a1cca80f86431c1d6f518093780f8740"
+        }
+      ]
+    }
+  ]
+}

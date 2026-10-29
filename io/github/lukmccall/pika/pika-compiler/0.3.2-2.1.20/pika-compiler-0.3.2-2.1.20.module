@@ -1,0 +1,266 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "io.github.lukmccall.pika",
+    "module": "pika-compiler",
+    "version": "0.3.2-2.1.20",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14"
+    }
+  },
+  "variants": [
+    {
+      "name": "apiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "pika-compiler-0.3.2-2.1.20.jar",
+          "url": "pika-compiler-0.3.2-2.1.20.jar",
+          "size": 121561,
+          "sha512": "1670e87b059bbae226010487f6a0dc7df5084cf3aa5837c2fbde932f2dc3642e5717b47bce42f69f9de69b6a476ccaf52cb99b6da11a48169fc0ccb3e5a86f66",
+          "sha256": "935b65ad0d2ed6ab301c861bba17145c96f84c52ffe3ff04ab13f4c111c905d4",
+          "sha1": "a5839baa0b31debd17649885c9957fc43da5e53b",
+          "md5": "cd5e4e445422a3271a248db7d0577821"
+        }
+      ]
+    },
+    {
+      "name": "runtimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "pika-compiler-0.3.2-2.1.20.jar",
+          "url": "pika-compiler-0.3.2-2.1.20.jar",
+          "size": 121561,
+          "sha512": "1670e87b059bbae226010487f6a0dc7df5084cf3aa5837c2fbde932f2dc3642e5717b47bce42f69f9de69b6a476ccaf52cb99b6da11a48169fc0ccb3e5a86f66",
+          "sha256": "935b65ad0d2ed6ab301c861bba17145c96f84c52ffe3ff04ab13f4c111c905d4",
+          "sha1": "a5839baa0b31debd17649885c9957fc43da5e53b",
+          "md5": "cd5e4e445422a3271a248db7d0577821"
+        }
+      ]
+    },
+    {
+      "name": "testFixturesApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.lukmccall.pika",
+          "module": "pika-compiler",
+          "version": {
+            "requires": "0.3.2-2.1.20"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-test-junit5",
+          "version": {
+            "requires": "2.1.20"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-compiler-internal-test-framework",
+          "version": {
+            "requires": "2.1.20"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-compiler",
+          "version": {
+            "requires": "2.1.20"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "pika-compiler-0.3.2-2.1.20-test-fixtures.jar",
+          "url": "pika-compiler-0.3.2-2.1.20-test-fixtures.jar",
+          "size": 18461,
+          "sha512": "be07fecb551aec91ff0c77c0c8a12db0f05c795228590117b22711da027f166c4abc15bff466ab8094bbaa06397d6f2906e2df41d9a1b52cd663c34e972a1fd0",
+          "sha256": "4c3217c7ba140fd999b871a1fca57e649329327b869e0f223f7207680531c50e",
+          "sha1": "a9f781a21643e0c00e1b0461d4e27915d014561e",
+          "md5": "5438c44c985a000d47809154e3bad780"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "io.github.lukmccall.pika",
+          "name": "pika-compiler-test-fixtures",
+          "version": "0.3.2-2.1.20"
+        }
+      ]
+    },
+    {
+      "name": "testFixturesRuntimeElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.jvm.version": 11,
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "io.github.lukmccall.pika",
+          "module": "pika-compiler",
+          "version": {
+            "requires": "0.3.2-2.1.20"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-test-junit5",
+          "version": {
+            "requires": "2.1.20"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-compiler-internal-test-framework",
+          "version": {
+            "requires": "2.1.20"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-compiler",
+          "version": {
+            "requires": "2.1.20"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.20"
+          }
+        },
+        {
+          "group": "junit",
+          "module": "junit",
+          "version": {
+            "requires": "4.13.2"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "pika-compiler-0.3.2-2.1.20-test-fixtures.jar",
+          "url": "pika-compiler-0.3.2-2.1.20-test-fixtures.jar",
+          "size": 18461,
+          "sha512": "be07fecb551aec91ff0c77c0c8a12db0f05c795228590117b22711da027f166c4abc15bff466ab8094bbaa06397d6f2906e2df41d9a1b52cd663c34e972a1fd0",
+          "sha256": "4c3217c7ba140fd999b871a1fca57e649329327b869e0f223f7207680531c50e",
+          "sha1": "a9f781a21643e0c00e1b0461d4e27915d014561e",
+          "md5": "5438c44c985a000d47809154e3bad780"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "io.github.lukmccall.pika",
+          "name": "pika-compiler-test-fixtures",
+          "version": "0.3.2-2.1.20"
+        }
+      ]
+    },
+    {
+      "name": "sourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "pika-compiler-0.3.2-2.1.20-sources.jar",
+          "url": "pika-compiler-0.3.2-2.1.20-sources.jar",
+          "size": 28933,
+          "sha512": "a6ff7eef122ceaf7467051ca4c907bc6c649ef1dfca1abf25240d2ffab6384434019e615754b3c0d33db3089284f4ae6a6694872f2bc2449d96ff09eb2fbbf07",
+          "sha256": "c86807485d3ac9be7f7a3cab722967ba3b6530fc09ab4e7ae9c34dbb7c596153",
+          "sha1": "791501c6d48a83e44cdce4a02c93f53205f080b6",
+          "md5": "34736b277ae0096a9069013e996c3940"
+        }
+      ]
+    },
+    {
+      "name": "testFixturesSourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "pika-compiler-0.3.2-2.1.20-test-fixtures-sources.jar",
+          "url": "pika-compiler-0.3.2-2.1.20-test-fixtures-sources.jar",
+          "size": 3594,
+          "sha512": "29d76225cfbf68bc77b52110cd1ffa5993cc521b85da823ded41ce4a4038868a63d173a09b0451a2a683984dbb3b1ed56ce9c911451ad666b09ac5d263151b7d",
+          "sha256": "43dc089dd78ad99bb1c4b4b4b9981f663c6a211606e3b43ff7f86000de682931",
+          "sha1": "2a4ba9361897f714d6c8a9f44c3ba3298fb0563b",
+          "md5": "981388f46b9850a87b8e371d49a8e5e9"
+        }
+      ],
+      "capabilities": [
+        {
+          "group": "io.github.lukmccall.pika",
+          "name": "pika-compiler-test-fixtures",
+          "version": "0.3.2-2.1.20"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,78 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.8.1/kotlinx-coroutines-core-1.8.1.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.8.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "mingwX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "mingw_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core.klib",
+          "url": "kotlinx-coroutines-core-mingwx64-1.8.1.klib",
+          "size": 829976,
+          "sha512": "c9c6729887dd2d17bac1ec144395f3900c36783e4589d2fcf621ca9c03042f9c43630ec147244f7e7829279d82f2763705ae3c5fd6af8ec24333b99a4bf1a733",
+          "sha256": "32b608ab832f0f48abdd1e7fb7f3d0ea534c8608211680830770d3e310004bdd",
+          "sha1": "ec86c3ffefad32edb143681cc572c4c054eec186",
+          "md5": "0970e916c7830201bdf2fa4ca207a140"
+        }
+      ]
+    },
+    {
+      "name": "mingwX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "mingw_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-mingwx64-1.8.1-sources.jar",
+          "url": "kotlinx-coroutines-core-mingwx64-1.8.1-sources.jar",
+          "size": 307749,
+          "sha512": "84127b7dcc1926e08d55822a673491efe2c572b9fb863d911363cfcf6bc25d3cc9c3cd026b05eba4fae3af3a0f12f75a79e052a5995577cd40f7328e8f2eb7b9",
+          "sha256": "fa279c9d4bdcb2f2fcc63caa07eab303c5aee1c4bd0dfb55212372ee624de01b",
+          "sha1": "c82385327f71d68856fe5e54bff03f8e15484258",
+          "md5": "5c16393ed48ba0d888e62aefe7228738"
+        }
+      ]
+    }
+  ]
+}

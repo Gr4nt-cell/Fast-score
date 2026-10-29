@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.10.2/kotlinx-coroutines-core-1.10.2.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.10.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "tvosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.26.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-tvosSimulatorArm64Main-1.10.2.klib",
+          "url": "kotlinx-coroutines-core-tvossimulatorarm64-1.10.2.klib",
+          "size": 888269,
+          "sha512": "0beac839a2998ca2db055da4d6c545564ed0db6c2349b3f82475f2da083616bc680a37c8fc04ffe69913805c609ddfa867f782fbf99b716240b0376ca25ee1fc",
+          "sha256": "14597bb88005eb64a5f1126990b55629923d8867ec1e8ed17bf11ec96663941c",
+          "sha1": "5d2b6c4e377593278155fdef441614df074268cb",
+          "md5": "dae565a7d9a1aa12e429bca24e941c31"
+        }
+      ]
+    },
+    {
+      "name": "tvosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-tvossimulatorarm64-1.10.2-sources.jar",
+          "url": "kotlinx-coroutines-core-tvossimulatorarm64-1.10.2-sources.jar",
+          "size": 328237,
+          "sha512": "e0937d7e05f76981f82ca5cd2f883e71be827740525fa274d38c3736cc2b10e9ec8f3a7f63ef11b963cdf09fc1df5d540b6ab56e18025580600c77196f579bf7",
+          "sha256": "1b48fc37840972e6b7e03e2320f41c4569940c8d668e20fdc87d71af46d0d16b",
+          "sha1": "0c608b522c1da2a618be2ed219c790a28e480ec4",
+          "md5": "42a920b149eb617f88c510222bc981aa"
+        }
+      ]
+    },
+    {
+      "name": "tvosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.26.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-tvossimulatorarm64-1.10.2-metadata.jar",
+          "url": "kotlinx-coroutines-core-tvossimulatorarm64-1.10.2-metadata.jar",
+          "size": 3533,
+          "sha512": "428b2b2897094229bf155387ba147a45ed85900730c94988b1d10c603b7f5af4ec9a74e51679d30b3a0eadd61c2436b8d06bccee1ef2bc2ae7448d7a53bc7fa5",
+          "sha256": "67921774cc8ae8db8c3010772ccf8833387f3bf8aa1908a8378e92efb181ce70",
+          "sha1": "0c830afc1026e7fab35f6f6ccbfa00a6292401c9",
+          "md5": "58213f02755b40016a28e7f8ec38655f"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,127 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-serialization-core/1.6.3/kotlinx-serialization-core-1.6.3.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-serialization-core",
+    "version": "1.6.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-wasm-js",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-js-1.6.3.klib",
+          "url": "kotlinx-serialization-core-wasm-js-1.6.3.klib",
+          "size": 322503,
+          "sha512": "f79b11c09c6e2a07e03c7f4dac9040b7ca5d8ec62feb52872f7ff5844d845e003a6a60e1309934b0bc0a74d5fe177a98c94d85d2167630bf38db416bcd350d6a",
+          "sha256": "a1e058b2fd36f58d97a8beeb92ba6928d87a4c35009065388c0f4777ae08c103",
+          "sha1": "3adaf6fc8910715fe3a9fe5f5ecddcf69c50868d",
+          "md5": "88c348ca5379bdcd755d1357d1f404bd"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-wasm-js",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-js-1.6.3.klib",
+          "url": "kotlinx-serialization-core-wasm-js-1.6.3.klib",
+          "size": 322503,
+          "sha512": "f79b11c09c6e2a07e03c7f4dac9040b7ca5d8ec62feb52872f7ff5844d845e003a6a60e1309934b0bc0a74d5fe177a98c94d85d2167630bf38db416bcd350d6a",
+          "sha256": "a1e058b2fd36f58d97a8beeb92ba6928d87a4c35009065388c0f4777ae08c103",
+          "sha1": "3adaf6fc8910715fe3a9fe5f5ecddcf69c50868d",
+          "md5": "88c348ca5379bdcd755d1357d1f404bd"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-js-1.6.3-sources.jar",
+          "url": "kotlinx-serialization-core-wasm-js-1.6.3-sources.jar",
+          "size": 99069,
+          "sha512": "22f9e77b7bdbdcc5a511633b1da4c84aefc429e530fdf26d1e031a16ef41f4b67da1c2442f19f9738ef9744d440aad343905a96f9f13a8add70b20d143902800",
+          "sha256": "4d7f39d972e18cd45dda9e9d905b1f42a59fda8a444909963d8d9792c613da13",
+          "sha1": "d207d23cb0bd20bdeda5fff44845af6f4f3a490e",
+          "md5": "62f05d5adbf8fc969366d41a860b1b39"
+        }
+      ]
+    }
+  ]
+}

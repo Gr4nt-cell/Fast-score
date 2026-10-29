@@ -1,0 +1,87 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.penfeizhou.android.animation",
+    "module": "frameanimation",
+    "version": "3.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.11.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "frameanimation-3.0.5.aar",
+          "url": "frameanimation-3.0.5.aar",
+          "size": 32226,
+          "sha512": "6d9750a6262190560454fd74d8cbc05fb3ae4691e269daff5d7998f006c3986a04df88589c5cd062586ea11c6f2a663cd783858e6385e90703ab09c9a86fd5da",
+          "sha256": "17e735a6a379972340515a91d96eac5228c1fb6b47f4652aa67f99d735231b08",
+          "sha1": "ca7825189214dda7a20c0baf240ea94ec63f5ee6",
+          "md5": "6d45a94386271fea8c3134d1b7b2b557"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "androidx.appcompat",
+          "module": "appcompat",
+          "version": {
+            "requires": "1.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "frameanimation-3.0.5.aar",
+          "url": "frameanimation-3.0.5.aar",
+          "size": 32226,
+          "sha512": "6d9750a6262190560454fd74d8cbc05fb3ae4691e269daff5d7998f006c3986a04df88589c5cd062586ea11c6f2a663cd783858e6385e90703ab09c9a86fd5da",
+          "sha256": "17e735a6a379972340515a91d96eac5228c1fb6b47f4652aa67f99d735231b08",
+          "sha1": "ca7825189214dda7a20c0baf240ea94ec63f5ee6",
+          "md5": "6d45a94386271fea8c3134d1b7b2b557"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "frameanimation-3.0.5-sources.jar",
+          "url": "frameanimation-3.0.5-sources.jar",
+          "size": 16473,
+          "sha512": "58da650281c7cee38a06b903ada522928fa59d735a0eb55c3556b63fe89513cd0e4cf7c23115fba5f19c1ca8e040947ad1f15f691f3d5d0051031c3f28c7f550",
+          "sha256": "c2942637617c813f383bfe21976f56e04b63a9ebfbd517e62ffa80b3fe916d67",
+          "sha1": "7ad2a76a96b6d5422407dd15c286ffeb1740a57b",
+          "md5": "8d1dffd8b33443c77b153fdc38be8fe2"
+        }
+      ]
+    }
+  ]
+}

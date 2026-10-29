@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd" xmlns="http://maven.apache.org/POM/4.0.0"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+  <modelVersion>4.0.0</modelVersion>
+  <groupId>com.github.Dimezis</groupId>
+  <artifactId>BlurView</artifactId>
+  <version>version-3.1.0</version>
+  <packaging>aar</packaging>
+  <name>BlurView</name>
+  <description>Dynamic iOS-like blur on Android</description>
+  <url>https://github.com/Dimezis/BlurView</url>
+  <inceptionYear>2016</inceptionYear>
+  <licenses>
+    <license>
+      <name>Apache License, Version 2.0</name>
+      <url>https://opensource.org/license/apache-2-0</url>
+    </license>
+  </licenses>
+  <developers>
+    <developer>
+      <id>dimezis</id>
+      <name>Dmytro Saviuk</name>
+    </developer>
+  </developers>
+  <scm>
+    <connection>scm:git://github.com/Dimezis/BlurView.git</connection>
+    <developerConnection>scm:git://github.com/Dimezis/BlurView.git</developerConnection>
+    <url>git://github.com/Dimezis/BlurView.git</url>
+  </scm>
+</project>

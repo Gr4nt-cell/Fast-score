@@ -1,0 +1,73 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../okio/3.16.0/okio-3.16.0.module",
+    "group": "com.squareup.okio",
+    "module": "okio",
+    "version": "3.16.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "mingwX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "mingw_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-mingwX64Main-3.16.0.klib",
+          "url": "okio-mingwx64-3.16.0.klib",
+          "size": 478294,
+          "sha512": "e799ddbbfc3bfa1a4a7517ee90dfc3ebf4d92ce873fcc2b955102582cd1fa995e5f536b21b7cc6502cc6a887cb8fb11b38dd57d61eacb3842a85c519a4062e40",
+          "sha256": "d4f102abf89e76836a8304a54b7b1e3086d9653e218a7f1aaa7b3d7b7a0af6a3",
+          "sha1": "d16d033154d814572fb4098ac1ff9d5949b1c84c",
+          "md5": "03c938f9032ac73f76b46ff0c1b3b6a1"
+        }
+      ]
+    },
+    {
+      "name": "mingwX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "mingw_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "okio-mingwx64-3.16.0-sources.jar",
+          "url": "okio-mingwx64-3.16.0-sources.jar",
+          "size": 172291,
+          "sha512": "efe70063805e559cfe2e2cfed9ad5fc31b8cf8d67aa7d9cd697a2b534fc14a1772dc7a1a4c071c7b9a155d932a63143e8fa05c75c9444f36b37bfbd38c9e9a7a",
+          "sha256": "44ca8cc584afc150321cc529f8066507b1c86958098162de3591ae5e99fa3dbe",
+          "sha1": "01afe16061b3d452d0633b3dddde950206f1c3d8",
+          "md5": "edd7fbab267e59c78337b93ff59e3f08"
+        }
+      ]
+    }
+  ]
+}

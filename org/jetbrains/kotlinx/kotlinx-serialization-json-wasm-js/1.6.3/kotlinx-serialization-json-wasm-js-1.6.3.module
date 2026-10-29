@@ -1,0 +1,141 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-serialization-json/1.6.3/kotlinx-serialization-json-1.6.3.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-serialization-json",
+    "version": "1.6.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-wasm-js",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-core",
+          "version": {
+            "requires": "1.6.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-json-wasm-js-1.6.3.klib",
+          "url": "kotlinx-serialization-json-wasm-js-1.6.3.klib",
+          "size": 285778,
+          "sha512": "96708d0ec91166fbd830fadae5801785b18dc416675a11f738bc270a9cbadf13bd7fbfabe15986435a9931a1c3a0c7ff0106e1fbc6e44c8c70b4f047592f30a3",
+          "sha256": "f32454a43db355dbe6f5223176bd8afb385b8e673f6a657aeaa43b7e14ba892f",
+          "sha1": "e59617b814028a67ed273c9bf753979da08f2fd5",
+          "md5": "9c63128587dbf29938ee556efb32cd0f"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-wasm-js",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "kotlinx-serialization-core",
+          "version": {
+            "requires": "1.6.3"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-json-wasm-js-1.6.3.klib",
+          "url": "kotlinx-serialization-json-wasm-js-1.6.3.klib",
+          "size": 285778,
+          "sha512": "96708d0ec91166fbd830fadae5801785b18dc416675a11f738bc270a9cbadf13bd7fbfabe15986435a9931a1c3a0c7ff0106e1fbc6e44c8c70b4f047592f30a3",
+          "sha256": "f32454a43db355dbe6f5223176bd8afb385b8e673f6a657aeaa43b7e14ba892f",
+          "sha1": "e59617b814028a67ed273c9bf753979da08f2fd5",
+          "md5": "9c63128587dbf29938ee556efb32cd0f"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "files": [
+        {
+          "name": "kotlinx-serialization-json-wasm-js-1.6.3-sources.jar",
+          "url": "kotlinx-serialization-json-wasm-js-1.6.3-sources.jar",
+          "size": 74803,
+          "sha512": "c796a4996aa05e3deff930be6970cc3a5fee8a85a06c9b20fd1657fc8f1ee128e9af29795a3053f11ecb02ede83fad37b29c1f6beef1c94caaa7bc8e41dbbb1c",
+          "sha256": "e6745f76b44ff887d35e6b2b4c9710fbcdf516e7cd5240f0f5300655ad27b012",
+          "sha1": "eda7ae62fe95ad471489b818cf893e9c080c7a7d",
+          "md5": "bd7033a33b443dd592b308efedc49ac5"
+        }
+      ]
+    }
+  ]
+}

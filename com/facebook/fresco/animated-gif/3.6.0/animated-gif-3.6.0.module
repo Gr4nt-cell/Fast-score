@@ -1,0 +1,128 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.facebook.fresco",
+    "module": "animated-gif",
+    "version": "3.6.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "animated-gif-3.6.0.aar",
+          "url": "animated-gif-3.6.0.aar",
+          "size": 407314,
+          "sha512": "5f2ba8493ee35e2d24ff9382b0c7bd9cd30c3b969be9bbab8ceda99e4a89ff0a4ea4df65f135344e21aa7e281ee459560464cdb87a74b67506148b086f5c92aa",
+          "sha256": "c709bd7f0fce7802986d61026f66cbb13a2044efa0cee99ab0500f30f18a20d7",
+          "sha1": "f5f5e99b549bed37505dd6ffb087dce6a38e63fe",
+          "md5": "b2e9cc95a6ae4affc14ee84e9debe584"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.parse.bolts",
+          "module": "bolts-tasks",
+          "version": {
+            "requires": "1.4.0"
+          }
+        },
+        {
+          "group": "com.facebook.soloader",
+          "module": "nativeloader",
+          "version": {
+            "requires": "0.11.0"
+          }
+        },
+        {
+          "group": "com.facebook.fresco",
+          "module": "fbcore",
+          "version": {
+            "requires": "3.6.0"
+          }
+        },
+        {
+          "group": "com.facebook.fresco",
+          "module": "animated-base",
+          "version": {
+            "requires": "3.6.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "animated-gif-3.6.0.aar",
+          "url": "animated-gif-3.6.0.aar",
+          "size": 407314,
+          "sha512": "5f2ba8493ee35e2d24ff9382b0c7bd9cd30c3b969be9bbab8ceda99e4a89ff0a4ea4df65f135344e21aa7e281ee459560464cdb87a74b67506148b086f5c92aa",
+          "sha256": "c709bd7f0fce7802986d61026f66cbb13a2044efa0cee99ab0500f30f18a20d7",
+          "sha1": "f5f5e99b549bed37505dd6ffb087dce6a38e63fe",
+          "md5": "b2e9cc95a6ae4affc14ee84e9debe584"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "animated-gif-3.6.0-sources.jar",
+          "url": "animated-gif-3.6.0-sources.jar",
+          "size": 3898,
+          "sha512": "0c291d3473eea3de5687e13c979d82b8230663c751e8cda5b21ca1e9e7cd4e5ba959f47b93845a93427b774125f73652cc2a2ccbdb89a11347ea14b24d66f40d",
+          "sha256": "0c02b147bdbd2fff490fdcb2629dfc231051375b9a91d012134ae36bdd9e2c79",
+          "sha1": "62d5bfb68cd8949adee1725815a57163dd9293c2",
+          "md5": "a4972342b99866cf505cb68ec7a067ea"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "animated-gif-3.6.0-javadoc.jar",
+          "url": "animated-gif-3.6.0-javadoc.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

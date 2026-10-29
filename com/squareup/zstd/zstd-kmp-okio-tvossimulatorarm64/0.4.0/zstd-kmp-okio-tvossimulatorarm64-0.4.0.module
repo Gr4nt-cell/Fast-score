@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp-okio/0.4.0/zstd-kmp-okio-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp-okio",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "tvosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okio",
+          "module": "okio",
+          "version": {
+            "requires": "3.16.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        },
+        {
+          "group": "com.squareup.zstd",
+          "module": "zstd-kmp",
+          "version": {
+            "requires": "0.4.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-okio-tvosSimulatorArm64Main-0.4.0.klib",
+          "url": "zstd-kmp-okio-tvossimulatorarm64-0.4.0.klib",
+          "size": 17582,
+          "sha512": "2b8cf11617c34de4d43ce08ec1cdb611c07537c83ec340498242826e76174cfb48196685b29c64590a047bba95bd900b271e93490ef14cb9e80597073dc7c0ff",
+          "sha256": "40fdeecc49b2960698b713bc9fd955bffacfbb3a62050b5a7531baead4ee0e31",
+          "sha1": "a03b4ab167f85c349d61578c45f512f97bbddfb9",
+          "md5": "fb32084816946fe1535996ef9270b8cc"
+        }
+      ]
+    },
+    {
+      "name": "tvosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-okio-tvossimulatorarm64-0.4.0-sources.jar",
+          "url": "zstd-kmp-okio-tvossimulatorarm64-0.4.0-sources.jar",
+          "size": 5061,
+          "sha512": "6ee67178194889bd76cc46d9002ea3401a4568665c74f842d71f033634e52ec204d905533b4e2f5089909fc6f99b857c8800b3d9fe00bf38bea3277771fda984",
+          "sha256": "baa1515c12603670a7fcf1d855bb9af36e445411251d64ac6497bd4cba599606",
+          "sha1": "85af166f70a6700b5e6411cb63a3cce93a0ff50f",
+          "md5": "0072fe327b2f29f8e5f4a5ed2d5beba0"
+        }
+      ]
+    },
+    {
+      "name": "tvosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okio",
+          "module": "okio",
+          "version": {
+            "requires": "3.16.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        },
+        {
+          "group": "com.squareup.zstd",
+          "module": "zstd-kmp",
+          "version": {
+            "requires": "0.4.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-okio-tvossimulatorarm64-0.4.0-metadata.jar",
+          "url": "zstd-kmp-okio-tvossimulatorarm64-0.4.0-metadata.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

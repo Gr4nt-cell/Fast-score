@@ -1,0 +1,82 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp/0.4.0/zstd-kmp-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "linuxX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "linux_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-linuxX64Main-0.4.0.klib",
+          "url": "zstd-kmp-linuxx64-0.4.0.klib",
+          "size": 1077605,
+          "sha512": "30d0bd950a98bc70baaca0bc5be40e050e462e09a015b5b851c725c754c4f144b96993c9b744c1914c4a4b82ad173b47f294e0af03cecc2f4a39ced181affe4a",
+          "sha256": "48e9a0f5bd65b2df600daaa8a2e4998d35391169627cde65dabb961d8fc83f2b",
+          "sha1": "7cee6c79cacdc7858b7eb97279d330168dfce64c",
+          "md5": "bffc73dae5cc0fac61bebe34d54b21e5"
+        },
+        {
+          "name": "zstd-kmp-linuxX64Cinterop-zstdMain-0.4.0.klib",
+          "url": "zstd-kmp-linuxx64-0.4.0-cinterop-zstd.klib",
+          "size": 16274,
+          "sha512": "cf7dc7421ab1b9daefa9c62fafd7f2653f39dd49da6d2bb3346dc527f14d10d5f07cb233ea91b56c7c1790f0f5e35d17e2c64e6ccf8023fd8ff5c0c6a7b4c2a3",
+          "sha256": "ccdf1e212cc836968835c89bbfe25c1035a8a53f33e83035e831f6942ee1d951",
+          "sha1": "f50e9713abf987094b1ec8397320b63d9862f2e8",
+          "md5": "6c496e8bf517f9219b8fe29c809569b2"
+        }
+      ]
+    },
+    {
+      "name": "linuxX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "linux_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-linuxx64-0.4.0-sources.jar",
+          "url": "zstd-kmp-linuxx64-0.4.0-sources.jar",
+          "size": 6751,
+          "sha512": "9f3df204e91e99db6a96c5dc0ac71f837319c0064e9b3e602051a02dd0fbbcab076fe823aae6570a4893ad1be8443a126fcc5b47afb34ddb6f842a82cc05d98e",
+          "sha256": "2880b588d16b7a6d78a00acfd05c6d2044b3f83be2c70494e83b83fee33662fe",
+          "sha1": "41fbe5bf0b2072bc67842185f108621f045d25b0",
+          "md5": "4bc50bc47516c2035af769c5c394357a"
+        }
+      ]
+    }
+  ]
+}

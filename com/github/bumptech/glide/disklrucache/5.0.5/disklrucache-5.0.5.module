@@ -1,0 +1,98 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.bumptech.glide",
+    "module": "disklrucache",
+    "version": "5.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "disklrucache-5.0.5.aar",
+          "url": "disklrucache-5.0.5.aar",
+          "size": 18981,
+          "sha512": "d3cd37cfd70db44c73fbe8cb44d4dd5cd54c60cef5362e865198cce270f3966c0627157564fd98e49d6c51fe31d6c4d2564ca4ea3b20fb2d59e10e878a7ade04",
+          "sha256": "509f94cbe85e3aa393c019b026ac904e2eece355a52795e355d82e3e774b2419",
+          "sha1": "4823b7d91a35e13de243128b0a31c28998e0e305",
+          "md5": "104cc1bee7d4d35d59ce5d3adfefe0e8"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "disklrucache-5.0.5.aar",
+          "url": "disklrucache-5.0.5.aar",
+          "size": 18981,
+          "sha512": "d3cd37cfd70db44c73fbe8cb44d4dd5cd54c60cef5362e865198cce270f3966c0627157564fd98e49d6c51fe31d6c4d2564ca4ea3b20fb2d59e10e878a7ade04",
+          "sha256": "509f94cbe85e3aa393c019b026ac904e2eece355a52795e355d82e3e774b2419",
+          "sha1": "4823b7d91a35e13de243128b0a31c28998e0e305",
+          "md5": "104cc1bee7d4d35d59ce5d3adfefe0e8"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "disklrucache-5.0.5-sources.jar",
+          "url": "disklrucache-5.0.5-sources.jar",
+          "size": 12950,
+          "sha512": "97967fef9106fdb46d5c3918310529113fc81ceed094df2df4fc6d9932d084259c77133324bcc0daba36b92276693b63c4b52df2450a8c85df2c91870c465cf5",
+          "sha256": "4398e4009eea544ddfbd7ae82607b134d03270a5bd3cdfc24c62bda7fd459fdc",
+          "sha1": "10b695b648e87ebe25e07ce42190b312b53f699e",
+          "md5": "fa7c658c2c7b3d8f7400193fca59e82c"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "disklrucache-5.0.5-javadoc.jar",
+          "url": "disklrucache-5.0.5-javadoc.jar",
+          "size": 284524,
+          "sha512": "d640f71e95acacad89219399e29d4c2d2c3aa9bbb08da973873799b74a0ceb005521249f86bbe665e203a9658e3d53c2b7443ba08d6bce9fed88254efaacfe59",
+          "sha256": "c0b83e634fd502db40a90c13e2da887e69dd5b2ea067e2b017527aa71b6df54f",
+          "sha1": "9b051693751304dbf583a869af1c0c7edd0d9953",
+          "md5": "150ad74f47e9c4388698b7ee3a3f35ef"
+        }
+      ]
+    }
+  ]
+}

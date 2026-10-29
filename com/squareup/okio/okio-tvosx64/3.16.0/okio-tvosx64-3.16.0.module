@@ -1,0 +1,104 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../okio/3.16.0/okio-3.16.0.module",
+    "group": "com.squareup.okio",
+    "module": "okio",
+    "version": "3.16.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "tvosX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-tvosX64Main-3.16.0.klib",
+          "url": "okio-tvosx64-3.16.0.klib",
+          "size": 478691,
+          "sha512": "9a485b29b72a9369d8c684a64250b41453e530b0003cae48366f89dd91aff7425cb4c698c2aaf41059f469f9a3730d5eda278a467d1e3cad2cb1f3ab6387abbb",
+          "sha256": "4c5cb802f41361dc4231e6108d03f388d7f35c19151d1a16ddb6cc14cdfe2969",
+          "sha1": "282465fd817785b50483d43606df12ec6b9e6d4c",
+          "md5": "4a3f3c7236470a3e26b88286b6f32a60"
+        }
+      ]
+    },
+    {
+      "name": "tvosX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "okio-tvosx64-3.16.0-sources.jar",
+          "url": "okio-tvosx64-3.16.0-sources.jar",
+          "size": 171916,
+          "sha512": "23bdf99470775c1be3eec0ab2e731583dd86c5485ac7f8b6ec03d48d0be82ebd93d61b02ddad4b29807dad1522583d25db61f1d5cb3d2af6c19932270504480b",
+          "sha256": "ba97bbc56f797cedfc2e89b2ad9f79f2a01ec59fa599c918b54359a6bbf2e591",
+          "sha1": "e0b8f0f6ef84a3b1ee54b7a677442c90f9c03ca4",
+          "md5": "b6f69b8fe540ca7c1c2947f4e328f53d"
+        }
+      ]
+    },
+    {
+      "name": "tvosX64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-tvosx64-3.16.0-metadata.jar",
+          "url": "okio-tvosx64-3.16.0-metadata.jar",
+          "size": 4441,
+          "sha512": "678a8fb18de90b6fe5266956ff2c7cb9b43a2a2feb99ef84d39ddb1caf7733635e2551c7add3cd3d434b0989f5ba8e2353a8219ec648c76301b00d84676dae08",
+          "sha256": "a355b1b600b7bb91251732025b9f94ea4453efb1b61804833a50ee7692a6ceac",
+          "sha1": "a27320a4d5593147aecdc26878fde012ff54989b",
+          "md5": "63d38982238a8868db1572f41c15f5c0"
+        }
+      ]
+    }
+  ]
+}

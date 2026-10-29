@@ -1,0 +1,82 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp/0.4.0/zstd-kmp-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "mingwX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "mingw_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-mingwX64Main-0.4.0.klib",
+          "url": "zstd-kmp-mingwx64-0.4.0.klib",
+          "size": 1115502,
+          "sha512": "20a430374a5f5225a6ca694b35dd6859909a8a912d3425c21236d106273721644fbc6a65116f651fbdcf1dadbf84990bd762a9cf14d49498ab367d3c129d7702",
+          "sha256": "75564d9d8e82ecd2787b6d500fdcd97a11b1ef716694e50e17cf66a0398ce746",
+          "sha1": "548c1e2a474b5e97a11c86e5afcc83db326971df",
+          "md5": "aeba7e5e85b4f97b92614d93a797167e"
+        },
+        {
+          "name": "zstd-kmp-mingwX64Cinterop-zstdMain-0.4.0.klib",
+          "url": "zstd-kmp-mingwx64-0.4.0-cinterop-zstd.klib",
+          "size": 16384,
+          "sha512": "4d699da2299386df32f205513e08060abc6e421b352ea9fa4b461c86b34ef1a0f8aeb55144aad8d2c98aa5ccc7937318fca770a730afed2b584f601ad8eee59f",
+          "sha256": "e5a8643441a8b1d83a34c35ec5d86b01c038c0459e156862c0674322971e6560",
+          "sha1": "a740a6574c2a1260ed47501a775719b472621fb9",
+          "md5": "38eae028aeebdb1693d942096ca5af2a"
+        }
+      ]
+    },
+    {
+      "name": "mingwX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "mingw_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-mingwx64-0.4.0-sources.jar",
+          "url": "zstd-kmp-mingwx64-0.4.0-sources.jar",
+          "size": 6751,
+          "sha512": "9f3df204e91e99db6a96c5dc0ac71f837319c0064e9b3e602051a02dd0fbbcab076fe823aae6570a4893ad1be8443a126fcc5b47afb34ddb6f842a82cc05d98e",
+          "sha256": "2880b588d16b7a6d78a00acfd05c6d2044b3f83be2c70494e83b83fee33662fe",
+          "sha1": "41fbe5bf0b2072bc67842185f108621f045d25b0",
+          "md5": "4bc50bc47516c2035af769c5c394357a"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,115 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-serialization-core/1.6.3/kotlinx-serialization-core-1.6.3.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-serialization-core",
+    "version": "1.6.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "watchosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "watchos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core.klib",
+          "url": "kotlinx-serialization-core-watchosarm64-1.6.3.klib",
+          "size": 306417,
+          "sha512": "51ba7fb526cee3b032a893b0f3cb6f2c3e07b8dba1ef4ec794bcd4370a13b8a827664d92500e89e586b7a802aa7d306a916c024b54e7a77fe1f2b685cad65305",
+          "sha256": "11664ec283536b71d13efbc89f5e27fdc0af11871c4f9c49870a442f6e44c06f",
+          "sha1": "174d458a0e9eaef860d015574e2c2a49e3a61459",
+          "md5": "ca163d177ed58f51f42255a47d6e0227"
+        }
+      ]
+    },
+    {
+      "name": "watchosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "watchos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-watchosarm64-1.6.3-sources.jar",
+          "url": "kotlinx-serialization-core-watchosarm64-1.6.3-sources.jar",
+          "size": 99210,
+          "sha512": "eadb013211f45662452996156b656fdfca6607635cf0cf182a19eb090b1166fdbbc9e34416e8effb8c74612eeecedb2b676d2ac45f7216942f278ace7d60d0df",
+          "sha256": "573bd258dd08b885090201016578766b2bae49a96fcc071ae851f6086386dafe",
+          "sha1": "6c06f29b76ef89fcc897cc4b6ef150ca3dd6fa83",
+          "md5": "dc19c069a335ef1a08415cb292359643"
+        }
+      ]
+    },
+    {
+      "name": "watchosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "watchos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-watchosarm64-1.6.3-metadata.jar",
+          "url": "kotlinx-serialization-core-watchosarm64-1.6.3-metadata.jar",
+          "size": 261,
+          "sha512": "4c97baf0364ebef8c67806b3eb32fc68d312333158dc9abacf05808cb5c8e1f25262ee4c076e50e1f2c548958aee1d4d32f648f30899a0300a6804085457794a",
+          "sha256": "b987b494d3785d40ba71f3c484568e82902b20e84f0b1cf9c756dece6b8a8654",
+          "sha1": "e4e6ebddb774373163bd2477d490d2620b76f8f1",
+          "md5": "5c49ee5a8d2137f5a29b74c9350ecfc1"
+        }
+      ]
+    }
+  ]
+}

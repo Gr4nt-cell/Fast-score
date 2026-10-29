@@ -1,0 +1,137 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.facebook.fresco",
+    "module": "vito-options",
+    "version": "3.6.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "vito-options-3.6.0.aar",
+          "url": "vito-options-3.6.0.aar",
+          "size": 35184,
+          "sha512": "6de16b637fe6ba65888a92d9954c590eea39aaef6fff9e4e3285fa87a506ac1ad1791ec971be165be4e9bc459a664359610ef4979cbfd7a55eb96a970c8efcae",
+          "sha256": "56503d59c9442e841a5e96edfe7ef5093e676eb127b777dc3adb84f95b214374",
+          "sha1": "c0868b7fc6dae1f673a22bebedff784c4e833de9",
+          "md5": "72e424849cbabfd18bfe103c977a8486"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.facebook.fresco",
+          "module": "drawee",
+          "version": {
+            "requires": "3.6.0"
+          }
+        },
+        {
+          "group": "com.facebook.fresco",
+          "module": "fbcore",
+          "version": {
+            "requires": "3.6.0"
+          }
+        },
+        {
+          "group": "com.facebook.fresco",
+          "module": "imagepipeline",
+          "version": {
+            "requires": "3.6.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "vito-options-3.6.0.aar",
+          "url": "vito-options-3.6.0.aar",
+          "size": 35184,
+          "sha512": "6de16b637fe6ba65888a92d9954c590eea39aaef6fff9e4e3285fa87a506ac1ad1791ec971be165be4e9bc459a664359610ef4979cbfd7a55eb96a970c8efcae",
+          "sha256": "56503d59c9442e841a5e96edfe7ef5093e676eb127b777dc3adb84f95b214374",
+          "sha1": "c0868b7fc6dae1f673a22bebedff784c4e833de9",
+          "md5": "72e424849cbabfd18bfe103c977a8486"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "vito-options-3.6.0-sources.jar",
+          "url": "vito-options-3.6.0-sources.jar",
+          "size": 9860,
+          "sha512": "01d1b3924f5e4288ce95f9f8b5d8734208e3c345ec27f012eeb04f191d0325a1be8c49582b393cdf173400245619e64d3108583c3082c239ea3bf6ca22c85d58",
+          "sha256": "2019d11bc088a4aedffafab09344546320dd64ca5d647601097f129cb38bd7b5",
+          "sha1": "b252b6de2b4c9ba9b328646d43714aa1bbd372ea",
+          "md5": "8e33161b36269c1bcef9205911c942b0"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "vito-options-3.6.0-javadoc.jar",
+          "url": "vito-options-3.6.0-javadoc.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

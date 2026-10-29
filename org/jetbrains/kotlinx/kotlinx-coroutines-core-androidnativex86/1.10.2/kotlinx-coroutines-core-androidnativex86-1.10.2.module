@@ -1,0 +1,87 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.10.2/kotlinx-coroutines-core-1.10.2.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.10.2",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.13"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidNativeX86ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "android_x86",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.26.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.1.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-androidNativeX86Main-1.10.2.klib",
+          "url": "kotlinx-coroutines-core-androidnativex86-1.10.2.klib",
+          "size": 883572,
+          "sha512": "b1b24cd88589141461f570d9333a6b3f9f4fe93e3cc2c78dd12a0e4b0ba543999628ed4047a3a27e7d6fab4c56cfc5a8de42fa61c528b324a4769f80a236a939",
+          "sha256": "97ab9c3b3369e5734041ea0970ff598d3f7f3812d45d31ed593d7d6d53b8a975",
+          "sha1": "c29237f35faa4bf1d21616543547b4e89a418a2d",
+          "md5": "5f6f687d50525aa140e231d01232b66b"
+        }
+      ]
+    },
+    {
+      "name": "androidNativeX86SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "android_x86",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-androidnativex86-1.10.2-sources.jar",
+          "url": "kotlinx-coroutines-core-androidnativex86-1.10.2-sources.jar",
+          "size": 327660,
+          "sha512": "36d6e8a2f5e24e7d698805c7016c16b049c6086bef84c21b9775027ba9a5fed20412ba336ef95427cdab00003ad945f7811f268a41271c0fb2a7751c94bea5e8",
+          "sha256": "f89dd00f832d0ab0f89c855224324336035e463fa518909cdf6c9a8da43823e6",
+          "sha1": "2a1bbcf78194dcc76463bdfa19994485c49e382c",
+          "md5": "3cf2a0bb838854e8ca683f9ddf5a7352"
+        }
+      ]
+    }
+  ]
+}

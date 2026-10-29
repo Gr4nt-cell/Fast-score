@@ -1,0 +1,123 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.facebook.fresco",
+    "module": "vito-source",
+    "version": "3.6.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "vito-source-3.6.0.aar",
+          "url": "vito-source-3.6.0.aar",
+          "size": 15368,
+          "sha512": "95f3d7b2e6096bd47c0d41467ae0a4f1ef105920ae9371d0cd5b34d49c452dc5b0743379bb1524dd59a548a23d033897592407893166514913f573e1bea15d3a",
+          "sha256": "b5c3c5c087dab199ac8afe8397fa89ccf386df7b29a8db77b36125576af2e491",
+          "sha1": "d22d34dc12a16c2897406b81454c99200d7e99f5",
+          "md5": "16283d2aa3c5d5bc8b9527c7f6a262d1"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.facebook.fresco",
+          "module": "middleware",
+          "version": {
+            "requires": "3.6.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "vito-source-3.6.0.aar",
+          "url": "vito-source-3.6.0.aar",
+          "size": 15368,
+          "sha512": "95f3d7b2e6096bd47c0d41467ae0a4f1ef105920ae9371d0cd5b34d49c452dc5b0743379bb1524dd59a548a23d033897592407893166514913f573e1bea15d3a",
+          "sha256": "b5c3c5c087dab199ac8afe8397fa89ccf386df7b29a8db77b36125576af2e491",
+          "sha1": "d22d34dc12a16c2897406b81454c99200d7e99f5",
+          "md5": "16283d2aa3c5d5bc8b9527c7f6a262d1"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "vito-source-3.6.0-sources.jar",
+          "url": "vito-source-3.6.0-sources.jar",
+          "size": 7314,
+          "sha512": "fb103a60827f1b64fdba58334735c5a7d03904d9804bf07bd4f7d27663b4265910ed3089b598a60559a7fb643d2fb6ad9e2f7ee65c2016c274c6c4de699c1551",
+          "sha256": "e6e8119569743a9ed81ee043f4742783ea5a34d7083c28d5fac19920651231e9",
+          "sha1": "8f6e35b04f39f437d4cf99957b237346d5de219c",
+          "md5": "2619952d2ec9b60dd2d35bfdd6fe5528"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "vito-source-3.6.0-javadoc.jar",
+          "url": "vito-source-3.6.0-javadoc.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

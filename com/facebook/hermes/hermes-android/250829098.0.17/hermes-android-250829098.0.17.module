@@ -1,0 +1,276 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.facebook.hermes",
+    "module": "hermes-android",
+    "version": "250829098.0.17",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "debugVariantDefaultApiPublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "debug",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-debug.aar",
+          "url": "hermes-android-250829098.0.17-debug.aar",
+          "size": 112345699,
+          "sha512": "0c2d6ee009ff7aa43eba91793e8ee031462d76d765492b20d9c87405165a26208bcb089f0c092ed94bb1bf85168c07c9c89a9957f42d04909801ff0868876a8f",
+          "sha256": "2a2f6431807d46cb6c5cd16e1f96c4a033dd76756b641e1901462bded6b1ed61",
+          "sha1": "c1c401a5b1cee7e8c00a469deb0bc5b0b6e74cb2",
+          "md5": "928d4fd207f2ac7aeaad056429e01499"
+        }
+      ]
+    },
+    {
+      "name": "debugVariantDefaultRuntimePublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "debug",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.facebook.fbjni",
+          "module": "fbjni",
+          "version": {
+            "requires": "0.7.0"
+          }
+        },
+        {
+          "group": "com.facebook.yoga",
+          "module": "proguard-annotations",
+          "version": {
+            "requires": "1.19.0"
+          }
+        },
+        {
+          "group": "androidx.annotation",
+          "module": "annotation",
+          "version": {
+            "requires": "1.6.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-debug.aar",
+          "url": "hermes-android-250829098.0.17-debug.aar",
+          "size": 112345699,
+          "sha512": "0c2d6ee009ff7aa43eba91793e8ee031462d76d765492b20d9c87405165a26208bcb089f0c092ed94bb1bf85168c07c9c89a9957f42d04909801ff0868876a8f",
+          "sha256": "2a2f6431807d46cb6c5cd16e1f96c4a033dd76756b641e1901462bded6b1ed61",
+          "sha1": "c1c401a5b1cee7e8c00a469deb0bc5b0b6e74cb2",
+          "md5": "928d4fd207f2ac7aeaad056429e01499"
+        }
+      ]
+    },
+    {
+      "name": "debugVariantDefaultSourcePublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "debug",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-debug-sources.jar",
+          "url": "hermes-android-250829098.0.17-debug-sources.jar",
+          "size": 65536,
+          "sha512": "1738c0385d7a7482c1d721ba97e2ab12b29447a6a2fc20039cf27feb9e2a5ed61407c25c909ec9b1c89744ea59cbd0ff02f22dd8421ce9d6ae6388afd2b1e679",
+          "sha256": "6c77ab8fc1f597ece4ece48000dddfdba9ca9f5d3e2483d5b3875c58902b7613",
+          "sha1": "a06ec7d98255317e29d7607060ec8e2c0af6471f",
+          "md5": "98716d7d40bcc6a7c90c47e59fca1727"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantDefaultApiPublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "release",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-release.aar",
+          "url": "hermes-android-250829098.0.17-release.aar",
+          "size": 81347431,
+          "sha512": "bd1cade71025ef96f0824586414c2df6fa8307772feb672abce08ec98503219038b05fc0c59cc1036717b5fd6b1c934821027a750edfc45a9d1de659efc40897",
+          "sha256": "6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8",
+          "sha1": "ad09705ca2d1880f888689258056837875115a00",
+          "md5": "4936c73ff9ea81656fc0dfae94314fa3"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantDefaultRuntimePublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "release",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.facebook.fbjni",
+          "module": "fbjni",
+          "version": {
+            "requires": "0.7.0"
+          }
+        },
+        {
+          "group": "com.facebook.yoga",
+          "module": "proguard-annotations",
+          "version": {
+            "requires": "1.19.0"
+          }
+        },
+        {
+          "group": "androidx.annotation",
+          "module": "annotation",
+          "version": {
+            "requires": "1.6.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-release.aar",
+          "url": "hermes-android-250829098.0.17-release.aar",
+          "size": 81347431,
+          "sha512": "bd1cade71025ef96f0824586414c2df6fa8307772feb672abce08ec98503219038b05fc0c59cc1036717b5fd6b1c934821027a750edfc45a9d1de659efc40897",
+          "sha256": "6fb440b29aadb5925bed1109338da61623c54c3508020bb2cecebcaaa80e53b8",
+          "sha1": "ad09705ca2d1880f888689258056837875115a00",
+          "md5": "4936c73ff9ea81656fc0dfae94314fa3"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantDefaultSourcePublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "release",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-release-sources.jar",
+          "url": "hermes-android-250829098.0.17-release-sources.jar",
+          "size": 65536,
+          "sha512": "1738c0385d7a7482c1d721ba97e2ab12b29447a6a2fc20039cf27feb9e2a5ed61407c25c909ec9b1c89744ea59cbd0ff02f22dd8421ce9d6ae6388afd2b1e679",
+          "sha256": "6c77ab8fc1f597ece4ece48000dddfdba9ca9f5d3e2483d5b3875c58902b7613",
+          "sha1": "a06ec7d98255317e29d7607060ec8e2c0af6471f",
+          "md5": "98716d7d40bcc6a7c90c47e59fca1727"
+        }
+      ]
+    },
+    {
+      "name": "debugOptimizedVariantDefaultApiPublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "debugOptimized",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-debugOptimized.aar",
+          "url": "hermes-android-250829098.0.17-debugOptimized.aar",
+          "size": 112342498,
+          "sha512": "649696686356ee2d9b143f6079db547cca0aea26615aed069dbeb2a2ef0e25980ea3560e49cc470012e9cd454a31a534d0450f34c9932c4753bd36c4c49fd340",
+          "sha256": "ccf532e1ee94e3b14de4010963eba625fbdcdc42f796e39511d5213b3ded3beb",
+          "sha1": "3084dd562933bf1a7988660e5889605b8ebc650a",
+          "md5": "bb506e574893aa423efba29ebf17b896"
+        }
+      ]
+    },
+    {
+      "name": "debugOptimizedVariantDefaultRuntimePublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "debugOptimized",
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.facebook.fbjni",
+          "module": "fbjni",
+          "version": {
+            "requires": "0.7.0"
+          }
+        },
+        {
+          "group": "com.facebook.yoga",
+          "module": "proguard-annotations",
+          "version": {
+            "requires": "1.19.0"
+          }
+        },
+        {
+          "group": "androidx.annotation",
+          "module": "annotation",
+          "version": {
+            "requires": "1.6.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-debugOptimized.aar",
+          "url": "hermes-android-250829098.0.17-debugOptimized.aar",
+          "size": 112342498,
+          "sha512": "649696686356ee2d9b143f6079db547cca0aea26615aed069dbeb2a2ef0e25980ea3560e49cc470012e9cd454a31a534d0450f34c9932c4753bd36c4c49fd340",
+          "sha256": "ccf532e1ee94e3b14de4010963eba625fbdcdc42f796e39511d5213b3ded3beb",
+          "sha1": "3084dd562933bf1a7988660e5889605b8ebc650a",
+          "md5": "bb506e574893aa423efba29ebf17b896"
+        }
+      ]
+    },
+    {
+      "name": "debugOptimizedVariantDefaultSourcePublication",
+      "attributes": {
+        "com.android.build.api.attributes.BuildTypeAttr": "debugOptimized",
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "hermes-android-250829098.0.17-debugOptimized-sources.jar",
+          "url": "hermes-android-250829098.0.17-debugOptimized-sources.jar",
+          "size": 65536,
+          "sha512": "1738c0385d7a7482c1d721ba97e2ab12b29447a6a2fc20039cf27feb9e2a5ed61407c25c909ec9b1c89744ea59cbd0ff02f22dd8421ce9d6ae6388afd2b1e679",
+          "sha256": "6c77ab8fc1f597ece4ece48000dddfdba9ca9f5d3e2483d5b3875c58902b7613",
+          "sha1": "a06ec7d98255317e29d7607060ec8e2c0af6471f",
+          "md5": "98716d7d40bcc6a7c90c47e59fca1727"
+        }
+      ]
+    }
+  ]
+}

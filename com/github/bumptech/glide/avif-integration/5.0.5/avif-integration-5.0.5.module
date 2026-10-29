@@ -1,0 +1,121 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.github.bumptech.glide",
+    "module": "avif-integration",
+    "version": "5.0.5",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "releaseVariantReleaseApiPublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-api"
+      },
+      "files": [
+        {
+          "name": "avif-integration-5.0.5.aar",
+          "url": "avif-integration-5.0.5.aar",
+          "size": 5676,
+          "sha512": "46303d90243017d54df80909f728c6f5d313dce6eab962f59f32be1b887e13422d0d114684a2eb9c56c1601f228e510e972d2fb90bb8a19843437b201de879b0",
+          "sha256": "a994ea472be803f7c9fde37a98d7d149f5cd8fd53310adc8d7a7a5e97da2fea7",
+          "sha1": "5b5e16ae1b4e67dddfa6bbccf37e31126c4efb40",
+          "md5": "f94aa8cc767e6cbc7840ae2c3d93dd96"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseRuntimePublication",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.libraryelements": "aar",
+        "org.gradle.usage": "java-runtime"
+      },
+      "dependencies": [
+        {
+          "group": "com.github.bumptech.glide",
+          "module": "glide",
+          "version": {
+            "requires": "5.0.5"
+          }
+        },
+        {
+          "group": "org.aomedia.avif.android",
+          "module": "avif",
+          "version": {
+            "requires": "1.1.1.14d8e3c4"
+          }
+        },
+        {
+          "group": "com.google.guava",
+          "module": "guava",
+          "version": {
+            "requires": "28.1-android"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "avif-integration-5.0.5.aar",
+          "url": "avif-integration-5.0.5.aar",
+          "size": 5676,
+          "sha512": "46303d90243017d54df80909f728c6f5d313dce6eab962f59f32be1b887e13422d0d114684a2eb9c56c1601f228e510e972d2fb90bb8a19843437b201de879b0",
+          "sha256": "a994ea472be803f7c9fde37a98d7d149f5cd8fd53310adc8d7a7a5e97da2fea7",
+          "sha1": "5b5e16ae1b4e67dddfa6bbccf37e31126c4efb40",
+          "md5": "f94aa8cc767e6cbc7840ae2c3d93dd96"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseSourcePublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "avif-integration-5.0.5-sources.jar",
+          "url": "avif-integration-5.0.5-sources.jar",
+          "size": 3605,
+          "sha512": "675ad81fa6eefda84353ce7c1c8bd4f879a29e97d9fc86cc831e880a77a5333792b4c09fd8ce44924fb332a88b1dcddd687945dd8c8e0d2c6f0af69714a64e30",
+          "sha256": "0357db2dba01399254a3f817e21f8eb9050c932333cb0640fd5a9c2b7ea531da",
+          "sha1": "0fa63e1a54244f929f8afd845f8338ae5d8cad75",
+          "md5": "41e7f19e90335e83e686ff4d1a10ad35"
+        }
+      ]
+    },
+    {
+      "name": "releaseVariantReleaseJavaDocPublication",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "javadoc",
+        "org.gradle.usage": "java-runtime"
+      },
+      "files": [
+        {
+          "name": "avif-integration-5.0.5-javadoc.jar",
+          "url": "avif-integration-5.0.5-javadoc.jar",
+          "size": 272587,
+          "sha512": "a27059de5b519a7216a8ad99f3c7ffd51f9688a80c4994097ac287e847f8d964436952a4a8150de7eb43d13c97f175b517e3a81bf5580de2478f0948b46f798f",
+          "sha256": "fddcc6ee91469f465886cd69d931b8fedb00bea19949c4be8e15e2a787ea3558",
+          "sha1": "5d845fa7c7044c3be9b52994d6f8760eac3fe1cb",
+          "md5": "bf21a6b6039f385a1d6819d6ec40e30a"
+        }
+      ]
+    }
+  ]
+}

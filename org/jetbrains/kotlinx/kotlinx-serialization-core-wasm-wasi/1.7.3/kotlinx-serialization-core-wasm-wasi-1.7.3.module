@@ -1,0 +1,102 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-serialization-core/1.7.3/kotlinx-serialization-core-1.7.3.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-serialization-core",
+    "version": "1.7.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmWasiApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-wasi-1.7.3.klib",
+          "url": "kotlinx-serialization-core-wasm-wasi-1.7.3.klib",
+          "size": 322852,
+          "sha512": "7b5a8cb3eddc188f500380b8f831c3d6d6a2d83670311ba0eba14c1ef4f5bdcd5098becf0f0c7098dc8af2c8bd6431db92dab21ce699723b860d2c89822a623a",
+          "sha256": "a87173ca52a2c8fdb172b86f88de14bb688fac6f85c675e389a30c9ffddfdfcc",
+          "sha1": "5fa05ae69fc1c055324ef0a9675e239e11e1c3eb",
+          "md5": "2a03291fa16c9a2691af8f47f9054315"
+        }
+      ]
+    },
+    {
+      "name": "wasmWasiRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-wasi-1.7.3.klib",
+          "url": "kotlinx-serialization-core-wasm-wasi-1.7.3.klib",
+          "size": 322852,
+          "sha512": "7b5a8cb3eddc188f500380b8f831c3d6d6a2d83670311ba0eba14c1ef4f5bdcd5098becf0f0c7098dc8af2c8bd6431db92dab21ce699723b860d2c89822a623a",
+          "sha256": "a87173ca52a2c8fdb172b86f88de14bb688fac6f85c675e389a30c9ffddfdfcc",
+          "sha1": "5fa05ae69fc1c055324ef0a9675e239e11e1c3eb",
+          "md5": "2a03291fa16c9a2691af8f47f9054315"
+        }
+      ]
+    },
+    {
+      "name": "wasmWasiSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-wasi-1.7.3-sources.jar",
+          "url": "kotlinx-serialization-core-wasm-wasi-1.7.3-sources.jar",
+          "size": 100723,
+          "sha512": "6e49008c04b65fb32bb63130b159dd79d57131fcd47c5bce1aca801180f53574d45314a0160b0a30f800985dd88c64c895b10aeafcf84f0593b68b88a8dc9cdf",
+          "sha256": "1396aafd34422fdb83e8c220f839a6a19a09f96ef38ea2c9bbaa1ae50832b41a",
+          "sha1": "63ddd124a977b52b0beb0613f3a4e7716bac05cc",
+          "md5": "3936ed9025c6ae365f49bcdb39a8d6bc"
+        }
+      ]
+    }
+  ]
+}

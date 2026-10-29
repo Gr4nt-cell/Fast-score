@@ -1,0 +1,632 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp-okio",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "metadataApiElements",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okio",
+          "module": "okio",
+          "version": {
+            "requires": "3.16.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        },
+        {
+          "group": "com.squareup.zstd",
+          "module": "zstd-kmp",
+          "version": {
+            "requires": "0.4.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-okio-metadata-0.4.0.jar",
+          "url": "zstd-kmp-okio-0.4.0.jar",
+          "size": 3854,
+          "sha512": "b4d6ff865e83e62e6eed197cbbc5e8873d94080bfa0f2df3f4c50b30724a008c4e55de3a877355f28c9ff2c2f347d6f82be137ea0bd5a28bc4f54dd6afcf1c7b",
+          "sha256": "972706bfe2e2fa3270da04a499d31056d49baca497982584e4e9d765a1e66a55",
+          "sha1": "3316082291a52502584d68af84111db213a65d71",
+          "md5": "70937cb995fc82b8d6f8ec402c24057c"
+        }
+      ]
+    },
+    {
+      "name": "metadataSourcesElements",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-okio-kotlin-0.4.0-sources.jar",
+          "url": "zstd-kmp-okio-0.4.0-sources.jar",
+          "size": 5061,
+          "sha512": "6ee67178194889bd76cc46d9002ea3401a4568665c74f842d71f033634e52ec204d905533b4e2f5089909fc6f99b857c8800b3d9fe00bf38bea3277771fda984",
+          "sha256": "baa1515c12603670a7fcf1d855bb9af36e445411251d64ac6497bd4cba599606",
+          "sha1": "85af166f70a6700b5e6411cb63a3cce93a0ff50f",
+          "md5": "0072fe327b2f29f8e5f4a5ed2d5beba0"
+        }
+      ]
+    },
+    {
+      "name": "releaseApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-android/0.4.0/zstd-kmp-okio-android-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-android",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "releaseRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-android/0.4.0/zstd-kmp-okio-android-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-android",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "releaseSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "android",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "androidJvm"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-android/0.4.0/zstd-kmp-okio-android-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-android",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iosarm64/0.4.0/zstd-kmp-okio-iosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iosarm64/0.4.0/zstd-kmp-okio-iosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iosarm64/0.4.0/zstd-kmp-okio-iosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iossimulatorarm64/0.4.0/zstd-kmp-okio-iossimulatorarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iossimulatorarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iossimulatorarm64/0.4.0/zstd-kmp-okio-iossimulatorarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iossimulatorarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iossimulatorarm64/0.4.0/zstd-kmp-okio-iossimulatorarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iossimulatorarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iosx64/0.4.0/zstd-kmp-okio-iosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iosx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iosx64/0.4.0/zstd-kmp-okio-iosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iosx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "iosX64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-iosx64/0.4.0/zstd-kmp-okio-iosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-iosx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "jvmApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-api",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-jvm/0.4.0/zstd-kmp-okio-jvm-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-jvm",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "jvmRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-jvm/0.4.0/zstd-kmp-okio-jvm-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-jvm",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "jvmSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "standard-jvm",
+        "org.gradle.libraryelements": "jar",
+        "org.gradle.usage": "java-runtime",
+        "org.jetbrains.kotlin.platform.type": "jvm"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-jvm/0.4.0/zstd-kmp-okio-jvm-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-jvm",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "linuxX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "linux_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-linuxx64/0.4.0/zstd-kmp-okio-linuxx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-linuxx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "linuxX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "linux_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-linuxx64/0.4.0/zstd-kmp-okio-linuxx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-linuxx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "macosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-macosarm64/0.4.0/zstd-kmp-okio-macosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-macosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "macosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-macosarm64/0.4.0/zstd-kmp-okio-macosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-macosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "macosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-macosarm64/0.4.0/zstd-kmp-okio-macosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-macosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "macosX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-macosx64/0.4.0/zstd-kmp-okio-macosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-macosx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "macosX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-macosx64/0.4.0/zstd-kmp-okio-macosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-macosx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "macosX64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "macos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-macosx64/0.4.0/zstd-kmp-okio-macosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-macosx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvosarm64/0.4.0/zstd-kmp-okio-tvosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvosarm64/0.4.0/zstd-kmp-okio-tvosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvosarm64/0.4.0/zstd-kmp-okio-tvosarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvosarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosSimulatorArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvossimulatorarm64/0.4.0/zstd-kmp-okio-tvossimulatorarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvossimulatorarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosSimulatorArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvossimulatorarm64/0.4.0/zstd-kmp-okio-tvossimulatorarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvossimulatorarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosSimulatorArm64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_simulator_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvossimulatorarm64/0.4.0/zstd-kmp-okio-tvossimulatorarm64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvossimulatorarm64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "tvos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvosx64/0.4.0/zstd-kmp-okio-tvosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvosx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "tvos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvosx64/0.4.0/zstd-kmp-okio-tvosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvosx64",
+        "version": "0.4.0"
+      }
+    },
+    {
+      "name": "tvosX64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "tvos_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "available-at": {
+        "url": "../../zstd-kmp-okio-tvosx64/0.4.0/zstd-kmp-okio-tvosx64-0.4.0.module",
+        "group": "com.squareup.zstd",
+        "module": "zstd-kmp-okio-tvosx64",
+        "version": "0.4.0"
+      }
+    }
+  ]
+}

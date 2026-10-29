@@ -1,0 +1,47 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../okio-macosx64/2.9.0/okio-macosx64-2.9.0.module",
+    "group": "com.squareup.okio",
+    "module": "okio-macosx64",
+    "version": "2.9.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "6.6",
+      "buildId": "pvejbacnivbzrncahecbpww6qy"
+    }
+  },
+  "variants": [
+    {
+      "name": "metadata-api",
+      "attributes": {
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "common"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.4.10"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-metadata-2.9.0.jar",
+          "url": "okio-metadata-2.9.0.jar",
+          "size": 16906,
+          "sha512": "c847ef04c8f22c8c313fe483d5b65b15fadea17655d4ff0d97fcd3cd3f85de7a65d9ca207023365aa9b75e4bcbe952d40471c7b9ae901f2b5652ec79d7f8f3c3",
+          "sha256": "97c5a8449c034bc8a51c08b95f29615b7ea7afacd7ad6fb45861d7e9324dc3a4",
+          "sha1": "d6c198cf4460778d979d87d2697544ca64fc410a",
+          "md5": "1bcbd8ac0099a8c770ef8d1ad7ccb882"
+        }
+      ]
+    }
+  ]
+}

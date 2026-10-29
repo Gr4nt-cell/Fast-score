@@ -1,0 +1,132 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp-okio/0.4.0/zstd-kmp-okio-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp-okio",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "iosX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "ios_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okio",
+          "module": "okio",
+          "version": {
+            "requires": "3.16.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        },
+        {
+          "group": "com.squareup.zstd",
+          "module": "zstd-kmp",
+          "version": {
+            "requires": "0.4.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-okio-iosX64Main-0.4.0.klib",
+          "url": "zstd-kmp-okio-iosx64-0.4.0.klib",
+          "size": 17496,
+          "sha512": "a207561179b17218562a7bb92144232f1a19fc1bb26ba8936b7c9ef678efa024546ded4016b45c36a3fc185861f51cbef7cfd48aca3976f794020a10a3c2b8a3",
+          "sha256": "83072f0857f4584a3204c9874a70e9586a8c98fcb8c6fb436bc4b8e68d833288",
+          "sha1": "8894829ba6358fb0bad16521d600572c98558703",
+          "md5": "038229abfd8c92041e184165b4992eb3"
+        }
+      ]
+    },
+    {
+      "name": "iosX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "ios_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-okio-iosx64-0.4.0-sources.jar",
+          "url": "zstd-kmp-okio-iosx64-0.4.0-sources.jar",
+          "size": 5061,
+          "sha512": "6ee67178194889bd76cc46d9002ea3401a4568665c74f842d71f033634e52ec204d905533b4e2f5089909fc6f99b857c8800b3d9fe00bf38bea3277771fda984",
+          "sha256": "baa1515c12603670a7fcf1d855bb9af36e445411251d64ac6497bd4cba599606",
+          "sha1": "85af166f70a6700b5e6411cb63a3cce93a0ff50f",
+          "md5": "0072fe327b2f29f8e5f4a5ed2d5beba0"
+        }
+      ]
+    },
+    {
+      "name": "iosX64MetadataElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-metadata",
+        "org.jetbrains.kotlin.native.target": "ios_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "com.squareup.okio",
+          "module": "okio",
+          "version": {
+            "requires": "3.16.0"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        },
+        {
+          "group": "com.squareup.zstd",
+          "module": "zstd-kmp",
+          "version": {
+            "requires": "0.4.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-okio-iosx64-0.4.0-metadata.jar",
+          "url": "zstd-kmp-okio-iosx64-0.4.0-metadata.jar",
+          "size": 261,
+          "sha512": "1487e5a20c9e4d74f298e07c42e96a61be11b7a768c3fbc199ee138cd68e1fc2267d1cfe3f11f288acc05df755315344d052cc5f6f751f126ab4fe1caa5125ea",
+          "sha256": "c6deada2fac53b8ea6523dbda77597b128006674616f140f04df23264c6d1aa3",
+          "sha1": "2ad14aed781c4a73ed4dbb421966d408a0a06686",
+          "md5": "f43436d6bec321290f6af228ad602604"
+        }
+      ]
+    }
+  ]
+}

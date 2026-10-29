@@ -1,0 +1,73 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../okio/3.16.0/okio-3.16.0.module",
+    "group": "com.squareup.okio",
+    "module": "okio",
+    "version": "3.16.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.14.3"
+    }
+  },
+  "variants": [
+    {
+      "name": "linuxArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "linux_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.0"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "okio-linuxArm64Main-3.16.0.klib",
+          "url": "okio-linuxarm64-3.16.0.klib",
+          "size": 476518,
+          "sha512": "15530fefd8a8065f300a9db40af752ce0791a04342e2583f5672ae5f0f645f895ffffcab4bf8f94fd2a0793522606617cd5f071124ac99f320b1e3696dcec5e1",
+          "sha256": "878260d85f5ca8af7d9a7741fcd7e74c87fa5206467188e40145297d39a585cf",
+          "sha1": "a558e8b927c748554e2412f8f79f810f05dfb71f",
+          "md5": "b75e580102417888fb3fa28feabfacdf"
+        }
+      ]
+    },
+    {
+      "name": "linuxArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "linux_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "okio-linuxarm64-3.16.0-sources.jar",
+          "url": "okio-linuxarm64-3.16.0-sources.jar",
+          "size": 171811,
+          "sha512": "16ed3706b8a3a9a34239c0c8401537a3b5b2cdfc7c084df57627eb7d18feff1da4f282a16491197798d866634a8b32b1c6a45d2a150de1da786ac2f6bc634ed3",
+          "sha256": "f0cf45a2d88822155f17cc340cfc87b89b9f7c402dc1d531849a14100eb7f32d",
+          "sha1": "0ac8637306b1599ad8ef53167cc6011a5e7f0795",
+          "md5": "bf84a511b3a4edd56a54abed21d7f943"
+        }
+      ]
+    }
+  ]
+}

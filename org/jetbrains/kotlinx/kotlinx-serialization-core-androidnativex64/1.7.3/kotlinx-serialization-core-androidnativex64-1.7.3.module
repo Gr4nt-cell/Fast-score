@@ -1,0 +1,73 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-serialization-core/1.7.3/kotlinx-serialization-core-1.7.3.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-serialization-core",
+    "version": "1.7.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.7"
+    }
+  },
+  "variants": [
+    {
+      "name": "androidNativeX64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "android_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.0.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core.klib",
+          "url": "kotlinx-serialization-core-androidnativex64-1.7.3.klib",
+          "size": 325966,
+          "sha512": "d92683a45f4711b496574c342e51ad9941342af7fe49f3ec1ff51f61ddcc1d9a70f5dc25425fa6d0a016c5dc384489c294be04fe0fa8ad2502c2d442e6eb899c",
+          "sha256": "a60db298df13bb06957ad093f5f76327e32423cce473126a26b49d8dc72e6ed0",
+          "sha1": "01bdab1566a0d18c5a1725441b1fde8324f10476",
+          "md5": "fa00a6ff97bf3026a96b50059a539edf"
+        }
+      ]
+    },
+    {
+      "name": "androidNativeX64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "android_x64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-androidnativex64-1.7.3-sources.jar",
+          "url": "kotlinx-serialization-core-androidnativex64-1.7.3-sources.jar",
+          "size": 100861,
+          "sha512": "5989cf9c313fd18cd2ab459bc1cbeb91c7acad44574c3fd36a4572b3baa07d6ae0b64e417a8ec4917e29ba38e5764e9c8042221be74f094021575831df5cd2e5",
+          "sha256": "06d0d3d785d05aa771cf8f7ff20750f50bfeda218af7616c37c4e3f085320e4a",
+          "sha1": "c2a9b087fba77de05a1c805678518a12e709a1bc",
+          "md5": "92bc23c93a5a2f05e8ff336523715c75"
+        }
+      ]
+    }
+  ]
+}

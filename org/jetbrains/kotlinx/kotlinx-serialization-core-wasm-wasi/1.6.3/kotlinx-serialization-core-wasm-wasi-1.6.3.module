@@ -1,0 +1,127 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-serialization-core/1.6.3/kotlinx-serialization-core-1.6.3.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-serialization-core",
+    "version": "1.6.3",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "7.6.1"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmWasiApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-wasm-wasi",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-wasi-1.6.3.klib",
+          "url": "kotlinx-serialization-core-wasm-wasi-1.6.3.klib",
+          "size": 322509,
+          "sha512": "f9f8e48589b7aa901c82abab97d953579570cb0fc170296d71dfc1bee20cc1c48c7059ab360adca556966d505008090372405990fcb864e231c61827f8332aed",
+          "sha256": "9de29ee14bde4f78042a73ad26286a167e0bb9913343bb1191f65acb89d1a316",
+          "sha1": "60425fb31e39091b0759502d37b09020376062ae",
+          "md5": "7e27be700d7c51693ed8dacdbb9b2ccd"
+        }
+      ]
+    },
+    {
+      "name": "wasmWasiRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-wasm-wasi",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib-common",
+          "version": {
+            "requires": "1.9.22"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.22"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-wasi-1.6.3.klib",
+          "url": "kotlinx-serialization-core-wasm-wasi-1.6.3.klib",
+          "size": 322509,
+          "sha512": "f9f8e48589b7aa901c82abab97d953579570cb0fc170296d71dfc1bee20cc1c48c7059ab360adca556966d505008090372405990fcb864e231c61827f8332aed",
+          "sha256": "9de29ee14bde4f78042a73ad26286a167e0bb9913343bb1191f65acb89d1a316",
+          "sha1": "60425fb31e39091b0759502d37b09020376062ae",
+          "md5": "7e27be700d7c51693ed8dacdbb9b2ccd"
+        }
+      ]
+    },
+    {
+      "name": "wasmWasiSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "wasi"
+      },
+      "files": [
+        {
+          "name": "kotlinx-serialization-core-wasm-wasi-1.6.3-sources.jar",
+          "url": "kotlinx-serialization-core-wasm-wasi-1.6.3-sources.jar",
+          "size": 99069,
+          "sha512": "22f9e77b7bdbdcc5a511633b1da4c84aefc429e530fdf26d1e031a16ef41f4b67da1c2442f19f9738ef9744d440aad343905a96f9f13a8add70b20d143902800",
+          "sha256": "4d7f39d972e18cd45dda9e9d905b1f42a59fda8a444909963d8d9792c613da13",
+          "sha1": "d207d23cb0bd20bdeda5fff44845af6f4f3a490e",
+          "md5": "62f05d5adbf8fc969366d41a860b1b39"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,120 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../kotlinx-coroutines-core/1.8.1/kotlinx-coroutines-core-1.8.1.module",
+    "group": "org.jetbrains.kotlinx",
+    "module": "kotlinx-coroutines-core",
+    "version": "1.8.1",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "8.5"
+    }
+  },
+  "variants": [
+    {
+      "name": "wasmJsApiElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu-wasm-js",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-wasm-js-1.8.1.klib",
+          "url": "kotlinx-coroutines-core-wasm-js-1.8.1.klib",
+          "size": 847497,
+          "sha512": "bb67c5c57e5e7c127ca7a2f83e544bc7e2c489e65095cc5a88d824adee7c3351291f5df29f2c8f86b46bdc534215fed37aa87497b544b64d9014936430602d72",
+          "sha256": "b19fcc160cbbffc3f1408b99a9abefb82db572ff59cf7946a6f96bb3c562f414",
+          "sha1": "6379adf2812bea0a894ee866456b02337c5cf944",
+          "md5": "76b6d0ea6a5eefb3c110829f5276948d"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsRuntimeElements-published",
+      "attributes": {
+        "org.gradle.category": "library",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu-wasm-js",
+          "version": {
+            "requires": "0.23.1"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "1.9.21"
+          }
+        },
+        {
+          "group": "org.jetbrains.kotlinx",
+          "module": "atomicfu",
+          "version": {
+            "requires": "0.23.1"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-wasm-js-1.8.1.klib",
+          "url": "kotlinx-coroutines-core-wasm-js-1.8.1.klib",
+          "size": 847497,
+          "sha512": "bb67c5c57e5e7c127ca7a2f83e544bc7e2c489e65095cc5a88d824adee7c3351291f5df29f2c8f86b46bdc534215fed37aa87497b544b64d9014936430602d72",
+          "sha256": "b19fcc160cbbffc3f1408b99a9abefb82db572ff59cf7946a6f96bb3c562f414",
+          "sha1": "6379adf2812bea0a894ee866456b02337c5cf944",
+          "md5": "76b6d0ea6a5eefb3c110829f5276948d"
+        }
+      ]
+    },
+    {
+      "name": "wasmJsSourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.platform.type": "wasm",
+        "org.jetbrains.kotlin.wasm.target": "js"
+      },
+      "files": [
+        {
+          "name": "kotlinx-coroutines-core-wasm-js-1.8.1-sources.jar",
+          "url": "kotlinx-coroutines-core-wasm-js-1.8.1-sources.jar",
+          "size": 297607,
+          "sha512": "5285d6dbc63d51ad59c2e4d7fa36e4ca59105b714764e219ff3c185b575d872343dcaf4f8d566971ed77495b30e27b21a2a43cd8db35b278b88ad9e3f42a6f7b",
+          "sha256": "5173b33f3df2cf19b74c283d7c1e5c61fcc4cdef28642f93942451a8baeeb075",
+          "sha1": "b86569c36a243248ebdf4785532f3fd1bc68141d",
+          "md5": "ec5983ba8d930e17b5c56719f26586d7"
+        }
+      ]
+    }
+  ]
+}

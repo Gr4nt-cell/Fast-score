@@ -1,0 +1,82 @@
+{
+  "formatVersion": "1.1",
+  "component": {
+    "url": "../../zstd-kmp/0.4.0/zstd-kmp-0.4.0.module",
+    "group": "com.squareup.zstd",
+    "module": "zstd-kmp",
+    "version": "0.4.0",
+    "attributes": {
+      "org.gradle.status": "release"
+    }
+  },
+  "createdBy": {
+    "gradle": {
+      "version": "9.1.0"
+    }
+  },
+  "variants": [
+    {
+      "name": "linuxArm64ApiElements-published",
+      "attributes": {
+        "artifactType": "org.jetbrains.kotlin.klib",
+        "org.gradle.category": "library",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-api",
+        "org.jetbrains.kotlin.native.target": "linux_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "dependencies": [
+        {
+          "group": "org.jetbrains.kotlin",
+          "module": "kotlin-stdlib",
+          "version": {
+            "requires": "2.2.20"
+          }
+        }
+      ],
+      "files": [
+        {
+          "name": "zstd-kmp-linuxArm64Main-0.4.0.klib",
+          "url": "zstd-kmp-linuxarm64-0.4.0.klib",
+          "size": 872270,
+          "sha512": "561008c88417bb2ceac24d29e0563e6e54258794576b11e6b1e512e353e11e939fa5c57258b9a6d0d1df754b7569d30010bc23b582d45ed8c055165ebad31add",
+          "sha256": "f4dcb4ac552799990166f9eee950ac61f41fa42183ade7605e3cacb2494c3e25",
+          "sha1": "3868b1811a0a2a9afdf032a45b35ab7969a104a5",
+          "md5": "3faee2dfe1df619eeaac58f62577d6ca"
+        },
+        {
+          "name": "zstd-kmp-linuxArm64Cinterop-zstdMain-0.4.0.klib",
+          "url": "zstd-kmp-linuxarm64-0.4.0-cinterop-zstd.klib",
+          "size": 16412,
+          "sha512": "b3c9163348e20d7985110594e643b50602a42f7c98d22c81244c6a2cb997fd869b9b0e453d7156e035b8bbe4203a7a93691ad408ad516063f1de814381cbc719",
+          "sha256": "53ea3a7134095758255e414568b05742f0bf42a0dac7c6b9a746d53ac4c1e0ba",
+          "sha1": "032864725c3502e10d15e072c5f7283ae9ccfef4",
+          "md5": "fcf0ad9a992e42ab43e6e8e13a398821"
+        }
+      ]
+    },
+    {
+      "name": "linuxArm64SourcesElements-published",
+      "attributes": {
+        "org.gradle.category": "documentation",
+        "org.gradle.dependency.bundling": "external",
+        "org.gradle.docstype": "sources",
+        "org.gradle.jvm.environment": "non-jvm",
+        "org.gradle.usage": "kotlin-runtime",
+        "org.jetbrains.kotlin.native.target": "linux_arm64",
+        "org.jetbrains.kotlin.platform.type": "native"
+      },
+      "files": [
+        {
+          "name": "zstd-kmp-linuxarm64-0.4.0-sources.jar",
+          "url": "zstd-kmp-linuxarm64-0.4.0-sources.jar",
+          "size": 6751,
+          "sha512": "9f3df204e91e99db6a96c5dc0ac71f837319c0064e9b3e602051a02dd0fbbcab076fe823aae6570a4893ad1be8443a126fcc5b47afb34ddb6f842a82cc05d98e",
+          "sha256": "2880b588d16b7a6d78a00acfd05c6d2044b3f83be2c70494e83b83fee33662fe",
+          "sha1": "41fbe5bf0b2072bc67842185f108621f045d25b0",
+          "md5": "4bc50bc47516c2035af769c5c394357a"
+        }
+      ]
+    }
+  ]
+}
