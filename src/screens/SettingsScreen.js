@@ -7,8 +7,6 @@ import { useStore } from '../store';
 import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
-import { diagnose } from '../api/sofascore';
-import { SofaVerify, onSofaState, sofaNeedsTap, sofaToken } from '../api/browserBridge';
 import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
@@ -32,11 +30,6 @@ export default function SettingsScreen() {
   const [cleared, setCleared] = useState(false);
   const [server, setServer] = useState(null);
   const [notif, setNotif] = useState(null);
-  const [ssTest, setSsTest] = useState(null);
-  const [verify, setVerify] = useState(false);
-  const [sofa, setSofa] = useState({ needsTap: sofaNeedsTap(), hasToken: !!sofaToken() });
-  useEffect(() => onSofaState(setSofa), []);
-  const closeVerify = React.useCallback(() => setVerify(false), []);
   useEffect(() => {
     permissionStatus().then(setNotif);
   }, []);
@@ -142,70 +135,10 @@ export default function SettingsScreen() {
               : 'The app is fetching from ESPN directly. Everything still works; the server adds a shared cache and match history.'}
           </Text>
         </Card>
-        <SectionTitle>Data source</SectionTitle>
-        <View style={{ paddingHorizontal: 16, marginBottom: 8 }}>
-          <Segmented
-            options={[
-              { key: 'auto', label: 'Auto' },
-              { key: 'sofascore', label: 'Sofa' },
-              { key: 'espn', label: 'ESPN' },
-              { key: 'tsdb', label: 'TSDB' },
-            ]}
-            value={settings.source || 'auto'}
-            onChange={(v) => setSetting('source', v)}
-          />
-        </View>
-        <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 22, marginBottom: 14, lineHeight: 18 }}>
-          Auto uses a worldwide live feed first (every league in the world, live minute, events, lineups, stats, standings), then ESPN, then TheSportsDB, switching by itself when one can't be reached. Sofa uses SofaScore, which may ask for a quick human check.
-        </Text>
-        <Card>
-          <Row
-            last={!ssTest}
-            onPress={async () => {
-              setSsTest('running');
-              try {
-                setSsTest(await diagnose());
-              } catch (e) {
-                setSsTest([{ route: 'test', status: 0, events: null, sample: String(e.message || e) }]);
-              }
-            }}
-          >
-            <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Test SofaScore connection</Text>
-            {ssTest === 'running' ? <Text style={{ color: t.secondary }}>Testing… (up to a minute)</Text> : null}
-          </Row>
-          <Row last={!Array.isArray(ssTest)} onPress={() => setVerify(true)}>
-            <View style={{ width: 10, height: 10, borderRadius: 5, marginRight: 10, backgroundColor: sofa.hasToken ? t.green : sofa.needsTap ? t.orange : t.tertiary }} />
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600' }}>Verify SofaScore</Text>
-              <Text style={{ color: t.secondary, fontSize: 12, marginTop: 2 }}>
-                {sofa.hasToken
-                  ? 'Verified · renews by itself while the app is open'
-                  : sofa.needsTap
-                  ? 'SofaScore wants a quick human check. Tap here, then tap the box.'
-                  : 'SofaScore asks for a human check now and then. Usually it passes by itself; if not, do it here.'}
-              </Text>
-            </View>
-          </Row>
-          {Array.isArray(ssTest)
-            ? [...ssTest].sort((a, b) => (a.route === 'direct' ? -1 : b.route === 'direct' ? 1 : 0)).map((r, i) => (
-                <Row key={r.route} last={i === ssTest.length - 1}>
-                  <View style={{ width: 10, height: 10, borderRadius: 5, marginRight: 10, backgroundColor: r.events ? t.green : t.red }} />
-                  <View style={{ flex: 1 }}>
-                    <Text style={{ color: t.text, fontSize: 14.5, fontWeight: '600' }}>
-                      {{ direct: 'Phone → SofaScore', server: 'Your server → SofaScore', browser: 'Hidden browser page' }[r.route] || r.route}
-                    </Text>
-                    <Text style={{ color: t.secondary, fontSize: 12, marginTop: 2 }}>
-                      {r.events ? `Working · ${r.events} football games today · ${r.ms} ms` : `HTTP ${r.status || 'no answer'}${r.events === 0 ? ' · empty' : ''}${r.sample ? ' · ' + r.sample : ''}`}
-                    </Text>
-                  </View>
-                </Row>
-              ))
-            : null}
-        </Card>
-        <SofaVerify visible={verify} onClose={closeVerify} theme={t} />
         <SectionTitle>Data</SectionTitle>
         <Card>
           <Row
+            last
             onPress={async () => {
               await clearCache();
               setCleared(true);
@@ -213,12 +146,6 @@ export default function SettingsScreen() {
           >
             <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Clear cached data</Text>
             {cleared ? <Text style={{ color: t.secondary }}>Cleared</Text> : null}
-          </Row>
-          <Row last>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '600' }}>Data source</Text>
-              <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Free public sports feeds, with backups that take over automatically. AI Picks run on your phone.</Text>
-            </View>
           </Row>
         </Card>
         <Text style={{ color: t.tertiary, textAlign: 'center', fontSize: 12 }}>Fast Score {version}</Text>

@@ -9,8 +9,10 @@ import { SPORTS, leagueMeta, sportByKey } from '../sports';
 import { news as fetchNews } from '../api/espn';
 import { SportBar } from '../components/match';
 import { Pressable } from '../components/Touch';
-import { Card, Chevron, GlassCircle, LargeHeader, Logo, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
+import { Card, Chevron, GlassCircle, Logo, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { NewsList } from './LeagueScreen';
+import { Glass } from '../components/Glass';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function LeaguesScreen() {
   const t = useTheme();
@@ -20,6 +22,7 @@ export default function LeaguesScreen() {
   const [mode, setMode] = useState('leagues');
   const [newsItems, setNews] = useState(null);
   const sp = sportByKey(sport);
+  const insets = useSafeAreaInsets();
 
   useEffect(() => {
     if (mode !== 'news') return;
@@ -45,21 +48,26 @@ export default function LeaguesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      <LargeHeader
-        title="Leagues"
-        left={
-          <Segmented
-            options={[
-              { key: 'leagues', icon: 'trophy-outline' },
-              { key: 'news', icon: 'newspaper-outline' },
-            ]}
-            value={mode}
-            onChange={setMode}
-          />
-        }
-        right={<GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />}
-        subtitle={mode === 'news' ? `Latest ${sp.name.toLowerCase()} news` : `${SPORTS.reduce((n, s) => n + s.leagues.length, 0)} competitions across ${SPORTS.length} sports`}
-      />
+      {/* fixed top bar from the sketch: [trophy | news] · title pill · settings, then the sport bar */}
+      <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
+        <Segmented
+          options={[
+            { key: 'leagues', icon: 'trophy-outline' },
+            { key: 'news', icon: 'newspaper-outline' },
+          ]}
+          value={mode}
+          onChange={setMode}
+        />
+        <Glass radius={23} strong style={{ flex: 1, height: 46, justifyContent: 'center', paddingHorizontal: 14, marginHorizontal: 10 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center' }}>
+            <Text style={{ color: t.text, fontSize: 17, fontWeight: '800' }}>{mode === 'news' ? 'News' : 'Leagues'}</Text>
+            <Text numberOfLines={1} style={{ color: t.secondary, fontSize: 12.5, fontWeight: '600', marginLeft: 6, flexShrink: 1 }}>
+              {mode === 'news' ? sp.name : `${sp.leagues.length} competitions`}
+            </Text>
+          </View>
+        </Glass>
+        <GlassCircle icon="settings-outline" onPress={() => nav.push({ name: 'settings' })} />
+      </View>
       <View style={{ height: 14 }} />
       <SportBar value={sport} onChange={setSport} />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }}>

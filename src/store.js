@@ -37,8 +37,9 @@ export function StoreProvider({ children }) {
 
   useEffect(() => {
     Promise.all([load('settings', DEFAULT_SETTINGS), load('favs', EMPTY_FAVS)]).then(([s, f]) => {
-      setSourceMode((s && s.source) || 'auto');
-      setSettings({ ...DEFAULT_SETTINGS, ...s });
+      // the source picker is gone from Settings: everyone is on Auto
+      setSourceMode('auto');
+      setSettings({ ...DEFAULT_SETTINGS, ...s, source: 'auto' });
       setFavs({ ...EMPTY_FAVS, ...f });
       setReady(true);
     });
