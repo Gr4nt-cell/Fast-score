@@ -387,13 +387,15 @@ const KEY_TYPES = {
 /** Match details in the shape the match screen reads from ESPN's summary. */
 export async function summary(sport, eventId) {
   const s = FS_SPORT[sport] || 1;
-  const [core, sui, st, li, hh, sur] = await Promise.all([
+  const [core, sui, st, li, hh, sur, lc, momentum] = await Promise.all([
     feed(`dc_${s}_${eventId}`, 10000).catch(() => ''),
     feed(`df_sui_${s}_${eventId}`, 15000).catch(() => ''),
     feed(`df_st_${s}_${eventId}`, 20000).catch(() => ''),
     feed(`df_li_${s}_${eventId}`, 5 * 60000).catch(() => ''),
     feed(`df_hh_${s}_${eventId}`, 30 * 60000).catch(() => ''),
     feed(`df_sur_${s}_${eventId}`, 15000).catch(() => ''),
+    feed(`df_lc_${s}_${eventId}`, 15000).catch(() => ''),
+    sport === 'soccer' ? matchMomentum(eventId).catch(() => null) : null,
   ]);
   let match = findCached(eventId);
   const c = parse(core)[0] || {};
@@ -536,8 +538,22 @@ export async function summary(sport, eventId) {
   });
   if (match && info.VEN) match.venue = [info.VEN, info.TWN].filter(Boolean).join(', ');
 
+  // live commentary -> ESPN-style commentary (oldest first), with the event kind kept
+  const commentary = parse(lc)
+    .filter((r) => r.MD)
+    .reverse()
+    .map((r) => ({
+      time: { displayValue: r.MB || '' },
+      text: r.MD,
+      kind: r.MC || '',
+      important: r.MF === '1',
+      play: { scoringPlay: /goal|soccer-ball|ball/i.test(r.MC || '') && !/kick/i.test(r.MC || ''), type: { text: r.MC || '' } },
+    }));
+
   return {
     __match: match,
+    commentary: commentary.length ? commentary : undefined,
+    momentum,
     keyEvents,
     boxscore,
     rosters: rosters.length ? rosters : undefined,
@@ -548,6 +564,47 @@ export async function summary(sport, eventId) {
       attendance: info.ATT ? Number(String(info.ATT).replace(/\D/g, '')) : null,
       officials: info.REF ? [{ displayName: info.REF }] : [],
     },
+  };
+}
+
+// ---------- match momentum (Opta; Premier League, World Cup and other selected competitions) ----------
+
+const DS = 'https://2.ds.lsapp.eu/pq_graphql';
+const momProvider = new Map();
+
+async function dsJson(q, ttl) {
+  const key = 'ds:' + q;
+  const hit = mem.get(key);
+  if (hit && Date.now() - hit.t < ttl) return hit.data;
+  const r = await fetchText(`${DS}?${q}`, 12000, { Accept: 'application/json', Referer: WEB + '/', Origin: WEB });
+  if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
+  const data = JSON.parse(r.body).data;
+  mem.set(key, { t: Date.now(), data });
+  return data;
+}
+
+/** Minute-by-minute momentum: [{ t: "23'", v: -1..1 (home +, away -) }], plus goals/red cards. Null when not covered. */
+export async function matchMomentum(eventId) {
+  let provider = momProvider.get(eventId);
+  if (provider == null) {
+    const st = await dsJson(`_hash=mmte&eventId=${eventId}&projectId=2`, 6 * 3600 * 1000);
+    const m = st && st.findStaticMatchMomentumByMatchId;
+    if (!m) return null;
+    provider = (m.updateFeedProviderId && m.updateFeedProviderId.id) || 7;
+    momProvider.set(eventId, provider);
+  }
+  const d = await dsJson(`_hash=mmts&eventId=${eventId}&providerId=${provider}`, 20000);
+  const m = d && d.findMatchMomentumStatsByMatchId;
+  const entries = (m && m.momentum && m.momentum.entries) || [];
+  if (!entries.length) return null;
+  return {
+    points: entries.map((e) => ({ t: (e.timeFrame && e.timeFrame.displayTime) || '', min: e.timeFrame ? e.timeFrame.elapsedMinute + 1 : 0, half: e.timeFrame && e.timeFrame.eventStage === 13 ? 2 : 1, v: Math.max(-1, Math.min(1, Number(e.momentumValue) || 0)) })),
+    events: ((m.matchEvents && m.matchEvents.entries) || []).map((e) => ({
+      type: e.type && e.type.type,
+      teamId: e.teamId,
+      t: e.timeFrame && e.timeFrame.displayTime,
+      min: e.timeFrame ? e.timeFrame.elapsedMinute + 1 : 0,
+    })),
   };
 }
 

@@ -1,0 +1,201 @@
+// Odds from MSport Ghana (msport.com/gh), read from the JSON its website loads. Every request
+// carries the site's "operId" (3 = Ghana). MSport uses Sportradar ids, so its matches are paired
+// with ours by team names and kick-off time.
+
+const BASE = 'https://www.msport.com/api/gh/facts-center/query/frontend';
+const HEADERS = { operId: '3', Accept: 'application/json', 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' };
+const SR_SPORT = { soccer: 1, basketball: 2, baseball: 3, hockey: 4, tennis: 5, rugby: 12, football: 16, volleyball: 23 };
+export const msSupports = (sport) => !!SR_SPORT[sport];
+
+const mem = new Map();
+const inflight = new Map();
+
+async function getJson(path, ttl) {
+  const hit = mem.get(path);
+  if (hit && Date.now() - hit.t < ttl) return hit.data;
+  if (inflight.has(path)) return inflight.get(path);
+  const pr = (async () => {
+    const ctrl = new AbortController();
+    const timer = setTimeout(() => ctrl.abort(), 12000);
+    try {
+      const res = await fetch(BASE + path, { headers: HEADERS, signal: ctrl.signal });
+      if (!res.ok) throw new Error(`MSport ${res.status}`);
+      const j = await res.json();
+      if (j.bizCode !== 10000) throw new Error(j.message || 'MSport error');
+      mem.set(path, { t: Date.now(), data: j.data });
+      return j.data;
+    } finally {
+      clearTimeout(timer);
+    }
+  })().finally(() => inflight.delete(path));
+  inflight.set(path, pr);
+  return pr;
+}
+
+/** Every MSport event of a sport for today + the coming days + live (paged, deduplicated). */
+async function events(sport) {
+  const sid = `sr:sport:${SR_SPORT[sport]}`;
+  const key = 'ev:' + sport;
+  const hit = mem.get(key);
+  if (hit && Date.now() - hit.t < 60000) return hit.data;
+  const out = new Map();
+  const add = (list) => (list || []).forEach((e) => e && e.eventId && out.set(e.eventId, e));
+  await Promise.all([
+    getJson(`/live-matches/list?sportId=${sid}`, 30000)
+      .then((d) => {
+        add(d.events);
+        add(d.comingSoons);
+      })
+      .catch(() => {}),
+    (async () => {
+      for (const what of ['today', 'next-7-days']) {
+        for (let page = 1; page <= 8; page++) {
+          let d;
+          try {
+            d = await getJson(`/all-matches/${what}?sportId=${sid}&pageNum=${page}&pageSize=100`, 60000);
+          } catch {
+            break;
+          }
+          const before = out.size;
+          add(d.events);
+          // no new matches on this page: the list doesn't page further (or we have them all)
+          if (out.size === before || !d.events || d.events.length < 50) break;
+        }
+      }
+    })(),
+  ]);
+  const list = [...out.values()];
+  mem.set(key, { t: Date.now(), data: list });
+  return list;
+}
+
+// ---------- pairing ----------
+
+const STOP = new Set(['fc', 'cf', 'sc', 'afc', 'ac', 'cd', 'fk', 'sk', 'if', 'club', 'de', 'the', 'and', 'women', 'w', 'u21', 'u23', 'u19']);
+function tokens(name) {
+  return String(name || '')
+    .normalize('NFD')
+    .replace(/[̀-ͯ]/g, '')
+    .toLowerCase()
+    .replace(/&/g, ' and ')
+    .replace(/[^a-z0-9 ]/g, ' ')
+    .split(/\s+/)
+    .filter((w) => w && !STOP.has(w));
+}
+function similar(a, b) {
+  const x = tokens(a);
+  const y = tokens(b);
+  if (!x.length || !y.length) return 0;
+  const sy = new Set(y);
+  let hit = 0;
+  x.forEach((w) => {
+    if (sy.has(w) || [...sy].some((v) => (v.length > 3 && w.length > 3 && (v.startsWith(w) || w.startsWith(v))))) hit++;
+  });
+  return hit / Math.min(x.length, y.length);
+}
+const isWomen = (s) => /\bwomen\b|\(w\)| w$/i.test(String(s || ''));
+
+function pair(m, list) {
+  const t = new Date(m.date).getTime();
+  let best = null;
+  let score = 0;
+  for (const e of list) {
+    if (Math.abs(e.startTime - t) > 3 * 3600 * 1000) continue;
+    if (isWomen(e.homeTeam) !== isWomen(m.home.name)) continue;
+    const h = similar(m.home.name, e.homeTeam);
+    const a = similar(m.away.name, e.awayTeam);
+    if (h < 0.5 || a < 0.5) continue;
+    const s = h + a - Math.abs(e.startTime - t) / (6 * 3600 * 1000);
+    if (s > score) {
+      score = s;
+      best = e;
+    }
+  }
+  return best;
+}
+
+// ---------- markets ----------
+
+const decToMl = (d) => {
+  const x = Number(d);
+  if (!Number.isFinite(x) || x <= 1) return null;
+  return x >= 2 ? Math.round((x - 1) * 100) : Math.round(-100 / (x - 1));
+};
+
+function outcomes(mk) {
+  return (mk.outcomes || []).filter((o) => o.isActive !== 0 && o.odds);
+}
+
+/** The match-result market (1X2, or the two-way winner market). */
+function mainMarket(e) {
+  const ms = e.markets || [];
+  return (
+    ms.find((m) => m.id === 1) ||
+    ms.find((m) => /^(winner|1x2|match winner|winner \(incl)/i.test(m.name || '') && outcomes(m).length >= 2) ||
+    ms.find((m) => {
+      const os = outcomes(m).map((o) => (o.description || '').toLowerCase());
+      return os.includes('home') && os.includes('away');
+    })
+  );
+}
+
+/** Odds in the shape the rows / odds card use (American moneylines), plus the raw markets. */
+function oddsOf(e) {
+  const mk = mainMarket(e);
+  if (!mk) return null;
+  const os = outcomes(mk);
+  const pick = (re) => os.find((o) => re.test(o.description || ''));
+  const h = pick(/^home$|^1$/i);
+  const d = pick(/^draw$|^x$/i);
+  const a = pick(/^away$|^2$/i);
+  if (!h || !a) return null;
+  const ou = (e.markets || []).find((m) => m.id === 18 && /total=2\.5/.test(m.specifiers || '')) || (e.markets || []).find((m) => /over\/under|o\/u/i.test(m.name || '') && outcomes(m).some((o) => /2\.5/.test(o.description)));
+  return {
+    provider: 'MSport',
+    home: decToMl(h.odds),
+    draw: d ? decToMl(d.odds) : null,
+    away: decToMl(a.odds),
+    dec: { home: Number(h.odds), draw: d ? Number(d.odds) : null, away: Number(a.odds) },
+    overUnder: ou ? '2.5' : null,
+    markets: (e.markets || [])
+      .filter((m) => outcomes(m).length && m.isShown !== 0 && !/UP$/.test(m.name || ''))
+      .filter((m) => m.id !== 18 || /total=(1\.5|2\.5|3\.5)/.test(m.specifiers || ''))
+      .slice(0, 10)
+      .map((m) => ({
+        id: `${m.id}|${m.specifiers || ''}`,
+        name: `${m.name === '1x2' ? '1X2' : m.name}${/total=([\d.]+)/.test(m.specifiers || '') ? ' ' + m.specifiers.match(/total=([\d.]+)/)[1] : ''}`,
+        outcomes: outcomes(m).map((o) => ({ label: o.description, odds: Number(o.odds) })),
+      })),
+    msEventId: e.eventId,
+    live: e.status === 1,
+  };
+}
+
+/** MSport odds for one match, or null when MSport doesn't list it. */
+export async function matchOdds(m) {
+  if (!m || !msSupports(m.sport) || m.kind !== 'match') return null;
+  try {
+    const e = pair(m, await events(m.sport));
+    return e ? oddsOf(e) : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Fill `odds` on the matches of a day board (only where missing). Never throws. */
+export async function attachOdds(groups, sport) {
+  if (!msSupports(sport) || !groups || !groups.length) return groups;
+  try {
+    const list = await events(sport);
+    if (!list.length) return groups;
+    groups.forEach((g) =>
+      g.items.forEach((m) => {
+        if (m.kind !== 'match' || m.state === 'post' || (m.odds && m.odds.home != null)) return;
+        const e = pair(m, list);
+        const o = e && oddsOf(e);
+        if (o) m.odds = o;
+      })
+    );
+  } catch {}
+  return groups;
+}

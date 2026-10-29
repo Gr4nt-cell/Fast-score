@@ -9,6 +9,7 @@ import { useStore, formatOdds, americanToProb } from '../store';
 import { sportByKey } from '../sports';
 import { normalizeEvent, scoreboard, standings as fetchStandings, summary as fetchSummary } from '../api/espn';
 import { predictMatch } from '../predict';
+import { matchOdds as msportOdds } from '../api/msport';
 import { Glass } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import Standings from '../components/Standings';
@@ -318,6 +319,210 @@ function WinProb({ m, sum }) {
   );
 }
 
+
+// ---------- momentum & live action ----------
+
+const KIND_ICON = {
+  'soccer-ball': ['football', null],
+  goal: ['football', null],
+  'y-card': ['square', '#F5C400'],
+  'r-card': ['square', '#E5302F'],
+  'yr-card': ['square', '#E5302F'],
+  corner: ['flag', null],
+  substitution: ['swap-horizontal', null],
+  whistle: ['megaphone-outline', null],
+  time: ['time-outline', null],
+  var: ['tv-outline', null],
+  'penalty-missed': ['close-circle-outline', null],
+  injury: ['medkit-outline', null],
+};
+const kindIcon = (k) => KIND_ICON[k] || KIND_ICON[(k || '').replace(/-.*/, '')] || null;
+const KIND_LABEL = { 'soccer-ball': 'Goal', 'y-card': 'Yellow card', 'r-card': 'Red card', 'yr-card': 'Second yellow', corner: 'Corner', substitution: 'Substitution', whistle: 'Whistle', time: 'Added time', var: 'VAR' };
+
+/** Bars per minute: home above the line, away below. Goals marked with a ball. */
+function MomentumGraph({ m, mom, compact }) {
+  const t = useTheme();
+  const [w, setW] = useState(0);
+  if (!mom || !mom.points || !mom.points.length) return null;
+  const pts = mom.points;
+  const H = compact ? 46 : 64; // half height
+  const n = Math.max(pts.length, 90);
+  const bw = w ? w / n : 0;
+  const homeC = t.blue;
+  const awayC = t.orange;
+  const halfIdx = pts.findIndex((p) => p.half === 2);
+  const goalAt = (e) => {
+    let i = pts.findIndex((p) => p.min >= e.min && (e.min <= 45 || p.half === 2 || halfIdx < 0));
+    return i < 0 ? pts.length - 1 : i;
+  };
+  return (
+    <Card>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>Momentum</Text>
+        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: homeC, marginRight: 4 }} />
+        <Text style={{ color: t.secondary, fontSize: 12, marginRight: 10 }}>{m.home.short}</Text>
+        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: awayC, marginRight: 4 }} />
+        <Text style={{ color: t.secondary, fontSize: 12 }}>{m.away.short}</Text>
+      </View>
+      <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: H * 2 + 20 }}>
+        {w ? (
+          <>
+            <View style={{ position: 'absolute', left: 0, right: 0, top: 10 + H, height: StyleSheet.hairlineWidth, backgroundColor: t.separator }} />
+            {halfIdx > 0 ? <View style={{ position: 'absolute', top: 6, bottom: 6, left: halfIdx * bw, width: 1, backgroundColor: t.separator }} /> : null}
+            {pts.map((p, i) => {
+              const h = Math.max(1, Math.abs(p.v) * H);
+              const up = p.v >= 0;
+              return (
+                <View
+                  key={i}
+                  style={{
+                    position: 'absolute',
+                    left: i * bw + bw * 0.12,
+                    width: Math.max(1, bw * 0.76),
+                    height: h,
+                    top: up ? 10 + H - h : 10 + H,
+                    backgroundColor: up ? homeC : awayC,
+                    opacity: 0.35 + Math.min(0.65, Math.abs(p.v)),
+                    borderRadius: 1.5,
+                  }}
+                />
+              );
+            })}
+            {(mom.events || []).map((e, k) => {
+              const i = goalAt(e);
+              const home = e.teamId === m.home.id;
+              const red = /red/.test(e.type || '');
+              return (
+                <View key={k} style={{ position: 'absolute', left: Math.min(w - 14, Math.max(0, i * bw - 6)), top: home ? 0 : H * 2 + 6 }}>
+                  {red ? <View style={{ width: 9, height: 12, borderRadius: 2, backgroundColor: '#E5302F' }} /> : <Ionicons name="football" size={13} color={t.text} />}
+                </View>
+              );
+            })}
+          </>
+        ) : null}
+      </View>
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
+        <Text style={{ color: t.tertiary, fontSize: 11 }}>1'</Text>
+        {halfIdx > 0 ? <Text style={{ color: t.tertiary, fontSize: 11 }}>HT</Text> : null}
+        <Text style={{ color: t.tertiary, fontSize: 11 }}>{pts[pts.length - 1].t}</Text>
+      </View>
+    </Card>
+  );
+}
+
+/** Live in-game action: a small pitch showing who's pressing right now, and the latest plays. */
+function LiveAction({ m, sum }) {
+  const t = useTheme();
+  const [w, setW] = useState(0);
+  const items = sum && sum.commentary ? [...sum.commentary].reverse() : [];
+  const mom = sum && sum.momentum && sum.momentum.points;
+  if (m.state !== 'in' || (!items.length && !mom)) return null;
+  // pressure from the last few minutes of momentum: -1 (away pressing) .. 1 (home pressing)
+  let press = 0;
+  if (mom && mom.length) {
+    const last = mom.slice(-3);
+    press = last.reduce((a, p, i) => a + p.v * (i + 1), 0) / last.reduce((a, _, i) => a + i + 1, 0);
+  }
+  const latest = items[0];
+  const ic = latest && kindIcon(latest.kind);
+  const ballX = w ? (w / 2) * (1 + press * 0.8) : 0;
+  const pressing = Math.abs(press) < 0.15 ? 'Even contest' : `${press > 0 ? m.home.short : m.away.short} ${Math.abs(press) > 0.5 ? 'dominating' : 'pressing'}`;
+  return (
+    <Card>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
+        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: t.live, marginRight: 7 }} />
+        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>Live action</Text>
+        <Text style={{ color: t.live, fontWeight: '800', fontSize: 13 }}>{m.short}</Text>
+      </View>
+      {mom ? (
+        <>
+          <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: 92, borderRadius: 14, backgroundColor: t.dark ? '#1E5A2E' : '#2E8B47', overflow: 'hidden', justifyContent: 'center' }}>
+            {/* pitch markings */}
+            <View style={{ position: 'absolute', left: '50%', top: 0, bottom: 0, width: 1.5, backgroundColor: 'rgba(255,255,255,0.55)' }} />
+            <View style={{ position: 'absolute', left: '50%', top: 46 - 18, width: 36, height: 36, marginLeft: -18, borderRadius: 18, borderWidth: 1.5, borderColor: 'rgba(255,255,255,0.55)' }} />
+            <View style={{ position: 'absolute', left: 0, top: 20, width: 34, height: 52, borderWidth: 1.5, borderLeftWidth: 0, borderColor: 'rgba(255,255,255,0.55)' }} />
+            <View style={{ position: 'absolute', right: 0, top: 20, width: 34, height: 52, borderWidth: 1.5, borderRightWidth: 0, borderColor: 'rgba(255,255,255,0.55)' }} />
+            {/* the side under pressure glows */}
+            {Math.abs(press) >= 0.15 ? (
+              <View style={{ position: 'absolute', top: 0, bottom: 0, width: '45%', [press > 0 ? 'right' : 'left']: 0, backgroundColor: press > 0 ? 'rgba(10,132,255,0.28)' : 'rgba(255,149,0,0.3)' }} />
+            ) : null}
+            {w ? (
+              <View style={{ position: 'absolute', left: ballX - 9, top: 37, width: 18, height: 18, borderRadius: 9, backgroundColor: '#fff', alignItems: 'center', justifyContent: 'center', boxShadow: '0px 2px 6px rgba(0,0,0,0.35)' }}>
+                <Ionicons name="football" size={16} color="#111" />
+              </View>
+            ) : null}
+            <Text style={{ position: 'absolute', left: 8, top: 6, color: 'rgba(255,255,255,0.9)', fontSize: 11, fontWeight: '800' }}>{m.home.abbr || m.home.short}</Text>
+            <Text style={{ position: 'absolute', right: 8, top: 6, color: 'rgba(255,255,255,0.9)', fontSize: 11, fontWeight: '800' }}>{m.away.abbr || m.away.short}</Text>
+          </View>
+          <Text style={{ color: t.secondary, fontSize: 12.5, fontWeight: '700', textAlign: 'center', marginTop: 6 }}>{pressing}</Text>
+        </>
+      ) : null}
+      {latest ? (
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: mom ? 10 : 0, padding: 12, borderRadius: 14, backgroundColor: t.track }}>
+          <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
+            <Ionicons name={(ic && ic[0]) || 'radio-outline'} size={18} color={(ic && ic[1]) || t.text} />
+          </View>
+          <View style={{ flex: 1 }}>
+            <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '800' }}>
+              {latest.time.displayValue}
+              {KIND_LABEL[latest.kind] ? ` · ${KIND_LABEL[latest.kind]}` : ''}
+            </Text>
+            <Text style={{ color: t.text, fontSize: 14.5, lineHeight: 20, fontWeight: latest.important ? '700' : '500', marginTop: 2 }}>{latest.text}</Text>
+          </View>
+        </View>
+      ) : null}
+      {items.slice(1, 5).map((c, i) => {
+        const ci = kindIcon(c.kind);
+        return (
+          <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', paddingTop: 10 }}>
+            <Text style={{ width: 44, color: t.secondary, fontSize: 12, fontWeight: '800' }}>{c.time.displayValue}</Text>
+            {ci ? <Ionicons name={ci[0]} size={14} color={ci[1] || t.secondary} style={{ marginRight: 6, marginTop: 2 }} /> : null}
+            <Text style={{ flex: 1, color: t.text, fontSize: 13, lineHeight: 18 }} numberOfLines={2}>
+              {c.text}
+            </Text>
+          </View>
+        );
+      })}
+    </Card>
+  );
+}
+
+/** Every MSport market for the match, in the chosen odds format. */
+function MSportMarkets({ m }) {
+  const t = useTheme();
+  const { settings } = useStore();
+  const o = m.odds;
+  if (!o || o.provider !== 'MSport' || !o.markets || !o.markets.length || !settings.showOdds) return null;
+  const fmt = (d) => {
+    const ml = d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1));
+    return settings.oddsFormat === 'decimal' ? d.toFixed(2) : formatOdds(ml, settings.oddsFormat);
+  };
+  return (
+    <Card>
+      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
+        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>MSport odds</Text>
+        {o.live ? <Text style={{ color: t.live, fontWeight: '800', fontSize: 12 }}>LIVE</Text> : null}
+      </View>
+      {o.markets.map((mk, i) => (
+        <View key={mk.id} style={{ paddingVertical: 9, borderBottomWidth: i === o.markets.length - 1 ? 0 : StyleSheet.hairlineWidth, borderBottomColor: t.separator }}>
+          <Text style={{ color: t.secondary, fontSize: 12.5, fontWeight: '700', marginBottom: 6 }}>{mk.name}</Text>
+          <View style={{ flexDirection: 'row', gap: 6 }}>
+            {mk.outcomes.map((oc, k) => (
+              <View key={k} style={{ flex: 1, paddingVertical: 7, borderRadius: 11, backgroundColor: t.track, alignItems: 'center' }}>
+                <Text style={{ color: t.secondary, fontSize: 11 }} numberOfLines={1}>
+                  {oc.label}
+                </Text>
+                <Text style={{ color: t.text, fontSize: 15, fontWeight: '800', marginTop: 1 }}>{fmt(oc.odds)}</Text>
+              </View>
+            ))}
+          </View>
+        </View>
+      ))}
+      <Text style={{ color: t.tertiary, fontSize: 11, marginTop: 8 }}>Prices change quickly. 18+, bet responsibly.</Text>
+    </Card>
+  );
+}
+
 // ---------- lineups ----------
 
 function lineOf(abbr = '') {
@@ -579,7 +784,7 @@ function Commentary({ m, sum }) {
   const [scoringOnly, setScoringOnly] = useState(false);
   let items = [];
   if (sum.commentary && sum.commentary.length) {
-    items = [...sum.commentary].reverse().map((c) => ({ clock: c.time && c.time.displayValue, text: c.text, scoring: c.play && c.play.scoringPlay, type: c.play && c.play.type && c.play.type.text }));
+    items = [...sum.commentary].reverse().map((c) => ({ clock: c.time && c.time.displayValue, text: c.text, scoring: (c.play && c.play.scoringPlay) || c.important, kind: c.kind, type: c.play && c.play.type && c.play.type.text }));
   } else if (sum.plays && sum.plays.length) {
     items = [...sum.plays]
       .reverse()
@@ -604,6 +809,7 @@ function Commentary({ m, sum }) {
       {shown.map((c, i) => (
         <View key={i} style={{ flexDirection: 'row', paddingVertical: 9, borderBottomWidth: i === shown.length - 1 ? 0 : StyleSheet.hairlineWidth, borderBottomColor: t.separator }}>
           <Text style={{ width: 56, color: c.scoring ? t.green : t.secondary, fontWeight: '800', fontSize: 12.5 }}>{c.clock}</Text>
+          {kindIcon(c.kind) ? <Ionicons name={kindIcon(c.kind)[0]} size={15} color={kindIcon(c.kind)[1] || t.secondary} style={{ marginRight: 8, marginTop: 2 }} /> : null}
           <View style={{ flex: 1 }}>
             <Text style={{ color: t.text, fontSize: 14, lineHeight: 19, fontWeight: c.scoring ? '700' : '400' }}>{c.text}</Text>
             {c.score ? <Text style={{ color: t.secondary, fontSize: 12, marginTop: 2 }}>{c.score}</Text> : null}
@@ -813,6 +1019,22 @@ export default function MatchScreen({ route }) {
     return () => clearInterval(iv);
   }, [m.state, refresh]);
 
+  // MSport prices: on open, then every minute while the match is on
+  useEffect(() => {
+    if (!teamGame) return undefined;
+    let alive = true;
+    const get = () =>
+      msportOdds(m).then((o) => {
+        if (alive && o) setM((old) => ({ ...old, odds: old.odds && old.odds.home != null && old.odds.provider !== 'MSport' && !o ? old.odds : o }));
+      });
+    get();
+    const iv = m.state === 'post' ? null : setInterval(get, 60000);
+    return () => {
+      alive = false;
+      iv && clearInterval(iv);
+    };
+  }, [m.state === 'post']); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (!teamGame) return;
     fetchStandings(sport, m.league)
@@ -873,7 +1095,12 @@ export default function MatchScreen({ route }) {
       case 'lineups':
         return sport === 'soccer' ? <SoccerLineups m={m} sum={sum} /> : <BoxScore m={m} sum={sum} />;
       case 'stats':
-        return <TeamStats m={m} sum={sum} />;
+        return (
+          <View>
+            <MomentumGraph m={m} mom={sum.momentum} compact />
+            <TeamStats m={m} sum={sum} />
+          </View>
+        );
       case 'commentary':
         return <Commentary m={m} sum={sum} />;
       case 'standings':
@@ -895,10 +1122,13 @@ export default function MatchScreen({ route }) {
           <View>
             {m.kind === 'field' ? <Leaderboard m={m} /> : null}
             {sport === 'tennis' ? <TennisSets m={m} /> : null}
+            <LiveAction m={m} sum={sum} />
             <Timeline m={m} events={events} />
+            <MomentumGraph m={m} mom={sum.momentum} />
             {m.state !== 'post' ? <AIPrediction m={m} pred={pred} /> : null}
             <WinProb m={m} sum={sum} />
             <OddsCard m={m} pick={sum.pickcenter} />
+            <MSportMarkets m={m} />
             {m.state === 'post' && pred ? <AIPrediction m={m} pred={pred} /> : null}
             <InfoCard m={m} sum={sum} />
           </View>

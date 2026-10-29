@@ -7,6 +7,7 @@ import { useStore } from '../store';
 import { useNav } from '../nav';
 import { SPORTS, sportByKey } from '../sports';
 import { dayBoard, pool, sameDay } from '../api/espn';
+import { attachOdds } from '../api/msport';
 import { LeagueBlock, SportPill } from '../components/match';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { Empty, GlassCircle, LiveDot, Loading } from '../components/ui';
@@ -50,13 +51,22 @@ export default function MatchesScreen({ liveMode = false }) {
         }
         if (id !== reqId.current) return;
         setGroups(res);
+        // odds view: MSport prices for every match it lists
+        if (view === 'odds') {
+          const sports = sport === 'all' ? SPORTS.map((x) => x.key) : [sport];
+          await Promise.all(sports.map((k) => attachOdds(res.filter((g) => (g.sport || sport) === k), k)));
+          if (id !== reqId.current) return;
+          const copy = res.map((g) => ({ ...g, items: [...g.items] }));
+          copy.source = res.source;
+          setGroups(copy);
+        }
       } catch (e) {
         if (id !== reqId.current) return;
         setError(e.message || 'Could not load matches');
         setGroups([]);
       }
     },
-    [sport, date, live, settings.source] // eslint-disable-line react-hooks/exhaustive-deps
+    [sport, date, live, settings.source, view] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {

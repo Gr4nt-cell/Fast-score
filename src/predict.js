@@ -4,12 +4,13 @@
 //    games (recent games count a little more, games at the same venue as this one a little more),
 //    plus home advantage;
 //  - other team sports: win rate and points difference over the last 10 (log5), plus home advantage.
-// Bookmaker odds, when ESPN has them, are blended in at 25% as a sanity check.
+// Bookmaker odds (MSport, or ESPN's where it has them) are blended in at 25% as a sanity check.
 // Every day the five most confident calls become the "AI Picks" and are saved, so the next day the
 // app can show how they did.
 import { americanToProb, load, save } from './store';
 import { SPORTS, sportByKey } from './sports';
 import { addDays, dayBoard, pool, recentGames, scoreboard, ymd } from './api/espn';
+import { attachOdds } from './api/msport';
 
 export const LAST_N = 10;
 export const PICK_THRESHOLD = 0.9; // calls at or above this are marked 90%+ and listed first
@@ -258,6 +259,8 @@ async function upcoming(date, onProgress, past = false) {
     onProgress && onProgress(`Scanning ${sp.name.toLowerCase()}…`);
     try {
       const gs = await dayBoard(ps.sport, date, { leagues, ttl: 120000 });
+      // bookmaker prices (MSport) feed the 25% market blend; finished days keep the model honest
+      if (!past) await attachOdds(gs, ps.sport);
       gs.forEach((g) =>
         g.items.forEach((m) => {
           if (m.postponed) return;
