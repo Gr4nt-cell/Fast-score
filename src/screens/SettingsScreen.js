@@ -12,6 +12,7 @@ import { askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarm
 import { AppState, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LANGUAGES } from '../i18n';
+import { useNav } from '../nav';
 import { LanguageWheel } from '../components/LanguageWheel';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
@@ -51,6 +52,7 @@ export default function SettingsScreen() {
     serverStatus().then(setServer);
   }, []);
   const [langOpen, setLangOpen] = useState(false);
+  const nav = useNav();
   const curLang = LANGUAGES.find((l) => l.code === (settings.language || 'system')) || LANGUAGES[0];
   const version = (Constants.expoConfig && Constants.expoConfig.version) || '1.0.0';
   return (
@@ -201,10 +203,10 @@ export default function SettingsScreen() {
         </Card>
         <SectionTitle>About</SectionTitle>
         <Card>
-          <Row onPress={() => Linking.openURL('https://fast-score.gstephen116.workers.dev/privacy').catch(() => {})}>
+          <Row onPress={() => nav.push({ name: 'article', url: 'https://fast-score.gstephen116.workers.dev/privacy', title: 'Privacy policy' })}>
             <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Privacy policy</Text>
           </Row>
-          <Row last onPress={() => Linking.openURL('https://fast-score.gstephen116.workers.dev/child-safety').catch(() => {})}>
+          <Row last onPress={() => nav.push({ name: 'article', url: 'https://fast-score.gstephen116.workers.dev/child-safety', title: 'Child safety standards' })}>
             <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Child safety standards</Text>
           </Row>
         </Card>

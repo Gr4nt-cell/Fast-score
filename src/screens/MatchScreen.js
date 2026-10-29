@@ -1030,10 +1030,11 @@ function Leaderboard({ m }) {
 
 function News({ sum }) {
   const t = useTheme();
+  const nav = useNav();
   const arts = (sum.news && sum.news.articles) || [];
   if (!arts.length) return <Empty icon="newspaper-outline" title="No news for this match" />;
   return arts.map((a, i) => (
-    <Pressable key={i} onPress={() => a.links && a.links.web && Linking.openURL(a.links.web.href)}>
+    <Pressable key={i} onPress={() => a.links && a.links.web && nav.push({ name: 'article', url: a.links.web.href, title: a.headline || a.title })}>
       <Card>
         {a.images && a.images[0] ? <Image source={{ uri: a.images[0].url }} style={{ height: 160, borderRadius: 14, marginBottom: 10 }} contentFit="cover" /> : null}
         <Text style={{ color: t.text, fontWeight: '800', fontSize: 15.5 }}>{a.headline}</Text>

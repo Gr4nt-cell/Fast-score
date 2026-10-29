@@ -17,10 +17,11 @@ import { Card, Chevron, Empty, GlassCircle, Loading, Logo, PushHeader, Row, TabS
 
 export function NewsList({ items }) {
   const t = useTheme();
+  const nav = useNav();
   if (!items) return <Loading />;
   if (!items.length) return <Empty icon="newspaper-outline" title="No news right now" />;
   return items.map((a) => (
-    <Pressable key={a.id} onPress={() => a.url && Linking.openURL(a.url)}>
+    <Pressable key={a.id} onPress={() => a.url && nav.push({ name: 'article', url: a.url, title: a.title })}>
       <Card>
         {a.image ? <Image source={{ uri: a.image }} style={{ height: 170, borderRadius: 14, marginBottom: 10 }} contentFit="cover" transition={150} /> : null}
         <Text style={{ color: t.text, fontWeight: '800', fontSize: 16 }}>{a.title}</Text>

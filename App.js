@@ -35,6 +35,7 @@ import LeagueScreen from './src/screens/LeagueScreen';
 import TeamScreen from './src/screens/TeamScreen';
 import PlayerScreen from './src/screens/PlayerScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
+import ArticleScreen from './src/screens/ArticleScreen';
 
 const PANE_ROUTES = new Set(['match', 'league', 'team', 'player']);
 
@@ -58,6 +59,7 @@ const ROUTES = {
   team: TeamScreen,
   player: PlayerScreen,
   settings: SettingsScreen,
+  article: ArticleScreen,
 };
 
 // Watches followed matches and teams. While the app is on screen a goal shows as a banner;
