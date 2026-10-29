@@ -21,7 +21,7 @@ jobs:
           disable-animations: true
           profile: pixel_6
           script: |
-            mkdir -p out; ls apk; adb install -r $(ls apk/*.apk | head -1); adb logcat -c; python3 drive.py news | tee out/drive-news.txt; adb logcat -d > out/logcat-news.txt; adb logcat -c; adb shell am force-stop com.gr4nt.fastscore; python3 drive.py privacy | tee out/drive-priv.txt; adb logcat -d > out/logcat-priv.txt
+            mkdir -p out; ls apk; adb install -r $(ls apk/*.apk | head -1); adb logcat -c; python3 drive.py | tee out/drive.txt; adb logcat -d > out/logcat.txt
       - if: always()
         run: |
           grep -E "FATAL|AndroidRuntime|ReactNativeJS|Exception|chromium" out/logcat-*.txt | head -150 || true
