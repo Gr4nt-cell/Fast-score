@@ -51,6 +51,8 @@ export default function MatchesScreen({ liveMode = false }) {
         }
         if (id !== reqId.current) return;
         setGroups(res);
+        // today: note MSport's prices in the background, so finished matches can show closing odds
+        if (view !== 'odds' && isToday && !live && sport !== 'all') attachOdds(res, sport).catch(() => {});
         // odds view: MSport prices for every match it lists
         if (view === 'odds') {
           const sports = sport === 'all' ? SPORTS.map((x) => x.key) : [sport];

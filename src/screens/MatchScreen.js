@@ -342,28 +342,42 @@ function MatchTopBar({ m, fav, onFav }) {
 }
 
 /** One-line 1 · X · 2 prices under the tabs (MSport, or the provider the match came with). */
-function OddsBar({ m }) {
+function OddsBar({ m, checked }) {
   const t = useTheme();
   const { settings } = useStore();
+  if (!settings.showOdds) return null;
   const o = m.odds && m.odds.home != null ? m.odds : null;
-  if (!o || !settings.showOdds) return null;
   const sp = sportByKey(m.sport);
   const fmtDec = (d) => (settings.oddsFormat === 'decimal' ? Number(d).toFixed(2) : formatOdds(d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1)), settings.oddsFormat));
   const val = (k) => (o.dec && o.dec[k] ? fmtDec(o.dec[k]) : formatOdds(Number(o[k]), settings.oddsFormat));
-  const items = [['1', 'home'], ...(sp.draws && o.draw != null ? [['X', 'draw']] : []), ['2', 'away']];
+  const items = [['1', 'home'], ...(sp.draws && (!o || o.draw != null) ? [['X', 'draw']] : []), ['2', 'away']];
+  // which side the prices said would win (for finished matches: did the favourite win?)
+  const fav = o ? items.reduce((b, [, k]) => (o.dec && o.dec[k] && (!b || o.dec[k] < o.dec[b]) ? k : b), null) : null;
+  const result = m.state === 'post' && m.home.score != null ? (Number(m.home.score) > Number(m.away.score) ? 'home' : Number(m.home.score) < Number(m.away.score) ? 'away' : 'draw') : null;
   return (
     <View style={{ paddingHorizontal: 16, marginBottom: 10 }}>
       <Glass radius={20} strong style={{ height: 44, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 }}>
-        <Text style={{ color: t.secondary, fontSize: 11.5, fontWeight: '800', marginHorizontal: 8 }} numberOfLines={1}>
-          {o.provider || 'Odds'}
-          {o.live ? <Text style={{ color: t.live }}> · LIVE</Text> : null}
-        </Text>
-        {items.map(([lbl, k]) => (
-          <View key={k} style={{ flex: 1, height: 34, marginHorizontal: 3, borderRadius: 14, backgroundColor: t.track, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-            <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '700', marginRight: 6 }}>{lbl}</Text>
-            <Text style={{ color: t.text, fontSize: 15, fontWeight: '800' }}>{val(k)}</Text>
-          </View>
-        ))}
+        <View style={{ marginHorizontal: 8 }}>
+          <Text style={{ color: t.secondary, fontSize: 11.5, fontWeight: '800' }} numberOfLines={1}>
+            {o ? o.provider || 'Odds' : 'Odds'}
+          </Text>
+          {o && (o.live || o.closing) ? <Text style={{ color: o.live ? t.live : t.tertiary, fontSize: 9.5, fontWeight: '800' }}>{o.live ? 'LIVE' : 'CLOSING'}</Text> : null}
+        </View>
+        {o ? (
+          items.map(([lbl, k]) => {
+            const won = result === k;
+            return (
+              <View key={k} style={{ flex: 1, height: 34, marginHorizontal: 3, borderRadius: 14, backgroundColor: won ? (t.dark ? 'rgba(48,209,88,0.25)' : 'rgba(52,199,89,0.16)') : t.track, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ color: won ? t.green : t.secondary, fontSize: 12, fontWeight: '700', marginRight: 6 }}>{lbl}</Text>
+                <Text style={{ color: won ? t.green : t.text, fontSize: 15, fontWeight: '800' }}>{val(k)}</Text>
+              </View>
+            );
+          })
+        ) : (
+          <Text style={{ flex: 1, color: t.secondary, fontSize: 13 }} numberOfLines={1}>
+            {!checked ? 'Checking MSport…' : m.state === 'post' ? 'Match over · no saved prices' : 'MSport has no prices for this match yet'}
+          </Text>
+        )}
       </Glass>
     </View>
   );
@@ -1069,12 +1083,15 @@ export default function MatchScreen({ route }) {
   }, [m.state, refresh]);
 
   // MSport prices: on open, then every minute while the match is on
+  const [oddsChecked, setOddsChecked] = useState(false);
   useEffect(() => {
     if (!teamGame) return undefined;
     let alive = true;
     const get = () =>
       msportOdds(m).then((o) => {
-        if (alive && o) setM((old) => ({ ...old, odds: old.odds && old.odds.home != null && old.odds.provider !== 'MSport' && !o ? old.odds : o }));
+        if (!alive) return;
+        setOddsChecked(true);
+        if (o) setM((old) => ({ ...old, odds: o }));
       });
     get();
     const iv = m.state === 'post' ? null : setInterval(get, 60000);
@@ -1191,7 +1208,7 @@ export default function MatchScreen({ route }) {
       <MatchTopBar m={m} fav={fav} onFav={() => toggle('matches', favMatch(m))} />
       {m.kind === 'match' ? <ScoreHeader m={m} sport={sport} /> : null}
       {tabs.length > 1 ? <TabStrip tabs={tabs} value={tab} onChange={setTab} /> : null}
-      {teamGame ? <OddsBar m={m} /> : null}
+      {teamGame ? <OddsBar m={m} checked={oddsChecked} /> : null}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40, paddingTop: 2 }}>
         {body()}
       </ScrollView>

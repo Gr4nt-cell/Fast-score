@@ -2,6 +2,8 @@
 // carries the site's "operId" (3 = Ghana). MSport uses Sportradar ids, so its matches are paired
 // with ours by team names and kick-off time.
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 const BASE = 'https://www.msport.com/api/gh/facts-center/query/frontend';
 const HEADERS = { operId: '3', Accept: 'application/json', 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' };
 const SR_SPORT = { soccer: 1, basketball: 2, baseball: 3, hockey: 4, tennis: 5, rugby: 12, football: 16, volleyball: 23 };
@@ -171,12 +173,46 @@ function oddsOf(e) {
   };
 }
 
-/** MSport odds for one match, or null when MSport doesn't list it. */
+// last prices seen for each match, kept so finished matches can show their closing odds
+const CLOSING = 'ms:closing';
+let closing = null;
+async function closingMap() {
+  if (!closing) {
+    try {
+      closing = JSON.parse((await AsyncStorage.getItem(CLOSING)) || '{}');
+    } catch {
+      closing = {};
+    }
+  }
+  return closing;
+}
+let closingSave = null;
+async function remember(m, o) {
+  if (!o || o.live) return; // pre-match prices only: that's what "closing odds" means
+  const c = await closingMap();
+  c[m.key] = { ...o, t: Date.now() };
+  clearTimeout(closingSave);
+  closingSave = setTimeout(() => {
+    // keep two weeks
+    Object.keys(c).forEach((k) => Date.now() - c[k].t > 14 * 86400000 && delete c[k]);
+    AsyncStorage.setItem(CLOSING, JSON.stringify(c)).catch(() => {});
+  }, 2000);
+}
+
+/** MSport odds for one match: live/current prices, or the closing prices once it's over. */
 export async function matchOdds(m) {
   if (!m || !msSupports(m.sport) || m.kind !== 'match') return null;
   try {
-    const e = pair(m, await events(m.sport));
-    return e ? oddsOf(e) : null;
+    if (m.state !== 'post') {
+      const e = pair(m, await events(m.sport));
+      const o = e ? oddsOf(e) : null;
+      if (o) {
+        remember(m, o);
+        return o;
+      }
+    }
+    const c = (await closingMap())[m.key];
+    return c ? { ...c, closing: true, live: false } : null;
   } catch {
     return null;
   }
@@ -193,7 +229,10 @@ export async function attachOdds(groups, sport) {
         if (m.kind !== 'match' || m.state === 'post' || (m.odds && m.odds.home != null)) return;
         const e = pair(m, list);
         const o = e && oddsOf(e);
-        if (o) m.odds = o;
+        if (o) {
+          m.odds = o;
+          remember(m, o);
+        }
       })
     );
   } catch {}
