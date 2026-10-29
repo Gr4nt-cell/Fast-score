@@ -5,11 +5,25 @@ jobs:
   run:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
       - run: |
-          npm i playwright@1.48.2 >/dev/null 2>&1 && npx playwright install --with-deps chromium >/dev/null 2>&1
-          mkdir -p out && node sniff.js; ls out | head -80
+          mkdir -p out
+          C=2bf1d295f2fa7b2716d4520cf5db47d5
+          ID=$(curl -s -H 'operId: 3' 'https://www.msport.com/api/gh/facts-center/query/frontend/live-matches/list?sportId=sr:sport:1' | grep -o 'sr:match:[0-9]*' | head -1 | tr -dc 0-9)
+          echo "id=$ID" | tee out/id.txt
+          for u in "https://widgets.sir.sportradar.com/$C/widgetloader" \
+                   "https://widgets.fn.sportradar.com/$C/en/Etc:UTC/gismo/match_timeline/$ID" \
+                   "https://widgets.fn.sportradar.com/$C/en/Etc:UTC/gismo/match_info/$ID" \
+                   "https://widgets.fn.sportradar.com/$C/en/Etc:UTC/gismo/match_detailsextended/$ID" \
+                   "https://lmt.fn.sportradar.com/$C/en/Etc:UTC/gismo/match_timeline/$ID" \
+                   "https://widgets.fn.sportradar.com/msport/en/Etc:UTC/gismo/match_timeline/$ID" \
+                   "https://widgets.fn.sportradar.com/common/en/Etc:UTC/gismo/match_timeline/$ID"; do
+            for ref in "https://www.msport.com/" ""; do
+              f=out/$(echo "$u$ref" | md5sum | cut -c1-8).txt
+              code=$(curl -s -o $f -w '%{http_code} %{content_type}' ${ref:+-H "Referer: $ref" -H "Origin: https://www.msport.com"} "$u")
+              echo "$code $(wc -c <$f) ref=${ref:-none} $u $(head -c 200 $f | tr '\n' ' ')" | tee -a out/summary.txt
+            done
+          done
       - if: always()
         run: |
-          git config user.name probe; git config user.email probe@x
-          git checkout --orphan probe-out; git rm -rqf . ; git add -f out; git commit -qm out; git push -f origin probe-out
+          git config --global user.name probe; git config --global user.email probe@x
+          git init -q r && cd r && cp -r ../out . && git checkout -q -b probe-out && git add -f out && git commit -qm out && git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" probe-out
