@@ -1,0 +1,57 @@
+name: Probe
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch samples
+        run: |
+          mkdir out && cd out
+          UA='Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36'
+          get() { curl -sSL -m 25 -A "$UA" -H 'x-fsign: SW9D1eZo' -H 'Referer: https://www.flashscore.com/' -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> status.txt || echo "$1 fail" >> status.txt; }
+          E=fXmefEGl
+          get mpage.html "https://www.flashscore.com/match/$E/#/match-summary/match-statistics/0"
+          mkdir js
+          for u in $(grep -oE 'https://static\.flashscore\.com/res/_fs/build/[A-Za-z0-9_.\-]+\.js' mpage.html | sort -u); do curl -sS -m 20 "$u" -o "js/$(basename $u)"; done
+          M=$(grep -ohE 'flash-momentum\.[A-Za-z0-9_\-]+\.js' js/*.js mpage.html | head -1); echo "momjs $M" >> status.txt
+          curl -sS -m 20 "https://static.flashscore.com/res/_fs/build/$M" -o js/zz-mom.js
+          for f in $(grep -ohE '"\./[A-Za-z0-9_.\-]+\.js"' js/zz-mom.js | tr -d '"' | sed 's#^\./##' | sort -u | head -40); do [ -f "js/$f" ] || curl -sS -m 20 "https://static.flashscore.com/res/_fs/build/$f" -o "js/$f"; done
+          grep -ohE '.{250}(MATCH_MOMENTUM_STATS_QUERY|MATCH_MOMENTUM_SETTINGS_QUERY).{350}' js/*.js | sort -u | head -12 > jsmm.txt
+          grep -ohE 'class [A-Za-z_$]{1,4}\{constructor\([^)]*\)\{[^}]{0,300}\}getParameters\(\)\{return new URLSearchParams\(\{[^}]{0,300}\}' js/*.js | grep -i "MOMENTUM" | head > jsmm2.txt
+          grep -ohE 'getParameters\(\)\{return new URLSearchParams\(\{_hash:[A-Za-z$_]{1,4}\.MATCH_MOMENTUM[^}]{0,300}\}' js/*.js | head >> jsmm2.txt
+          rm -rf js
+          MS=https://www.msport.com/api/gh/facts-center/query/frontend
+          msget() { curl -sS -m 25 -A "$UA" -H 'operId: 3' -o "$1" -w "$1 %{http_code} %{size_download}\n" "$2" >> status.txt; }
+          msget ms_today.json "$MS/all-matches/today?sportId=sr:sport:1"
+          msget ms_next7.json "$MS/all-matches/next-7-days?sportId=sr:sport:1"
+          msget ms_live.json "$MS/live-matches/list?sportId=sr:sport:1"
+          msget ms_bk.json "$MS/all-matches/today?sportId=sr:sport:2"
+          ID=$(python3 -c "import json;d=json.load(open('ms_live.json'))['data'];print((d.get('events') or d.get('comingSoons') or [{}])[0].get('eventId',''))")
+          echo "msid $ID" >> status.txt
+          msget ms_match.json "$MS/match?eventId=$ID"
+          python3 - <<'PY' >> status.txt
+          import json
+          for f in ['ms_today.json','ms_next7.json','ms_live.json','ms_match.json']:
+              try:
+                  j=json.load(open(f)); d=j.get('data'); print('##',f,j.get('bizCode'), type(d).__name__, list(d.keys()) if isinstance(d,dict) else len(d or []))
+                  print(json.dumps(d)[:1800])
+              except Exception as e: print('##',f,'ERR',e)
+          PY
+          F=https://global.flashscore.ninja/2/x/feed
+          get f0.txt "$F/f_1_0_0_en_1"
+          L=$(python3 -c "
+          import re;t=open('f0.txt',encoding='utf8').read()
+          print(' '.join(re.search('AA÷([^¬]+)',r).group(1) for r in t.split('~') if r.startswith('AA') and '¬AB÷2¬' in r)[:200])")
+          echo "live $L" >> status.txt
+          for id in $(echo $L | cut -d' ' -f1-3); do get "lc_$id.txt" "$F/df_lc_1_$id"; get "dc_$id.txt" "$F/dc_1_$id"; done
+          get mmte.json "https://2.ds.lsapp.eu/pq_graphql?_hash=mmte&eventId=$E&projectId=2"
+          cat status.txt | cut -c1-2500
+      - name: Save to the probe branch
+        run: |
+          cd out
+          git init -q && git checkout -q -b probe
+          git config user.name probe && git config user.email probe@users.noreply.github.com
+          git add -A && git commit -qm "samples"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" probe
