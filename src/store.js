@@ -11,8 +11,11 @@ export async function load(key, fallback) {
     return fallback;
   }
 }
+export async function saveAndWait(key, value) {
+  await AsyncStorage.setItem(key, JSON.stringify(value));
+}
 export function save(key, value) {
-  AsyncStorage.setItem(key, JSON.stringify(value)).catch(() => {});
+  return saveAndWait(key, value).catch(() => {});
 }
 
 const DEFAULT_SETTINGS = {

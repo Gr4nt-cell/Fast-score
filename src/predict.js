@@ -7,11 +7,12 @@
 // Bookmaker odds (MSport, or ESPN's where it has them) are blended in at 25% as a sanity check.
 // Every day the five most confident calls become the "AI Picks" and are saved, so the next day the
 // app can show how they did.
-import { americanToProb, load, save } from './store';
+import { americanToProb, load, saveAndWait } from './store';
 import { SPORTS, sportByKey } from './sports';
 import { addDays, dayBoard, pool, recentGames, scoreboard, standings, teamSchedule, ymd } from './api/espn';
 import { attachOdds } from './api/msport';
 import { domesticProfile, tableContext, contextAdjustment } from './competitionContext';
+import { datesForPickHistory, getOrCreatePickDay } from './pickArchive';
 
 export const LAST_N = 10;
 export const PICK_THRESHOLD = 0.9; // calls at or above this are marked 90%+ and listed first
@@ -352,18 +353,33 @@ export async function generatePicks(date = new Date(), onProgress, { past = fals
   return { modelVersion: 2, date: ymd(date), generatedAt: Date.now(), scanned: boards.length, modelled: preds.filter(Boolean).length, threshold: PICK_THRESHOLD, picks };
 }
 
-export async function getDailyPicks({ force = false, onProgress } = {}) {
+let pickIndexWrite = Promise.resolve();
+
+function indexPickDate(dateKey) {
+  const write = pickIndexWrite.then(async () => {
+    const previous = await load('picks5:index', []);
+    const dates = [...new Set([...(Array.isArray(previous) ? previous : []), dateKey])].sort();
+    if (dates.length !== (Array.isArray(previous) ? previous.length : 0)) await saveAndWait('picks5:index', dates);
+  });
+  pickIndexWrite = write.catch(() => {});
+  return write;
+}
+
+async function archivedPicks(date, { onProgress, past = false, spill = false, legacyKeys = [] } = {}) {
+  const dateKey = ymd(date);
+  return getOrCreatePickDay(dateKey, {
+    read: load,
+    write: saveAndWait,
+    ensureIndexed: indexPickDate,
+    legacyKeys,
+    create: () => generatePicks(date, onProgress, { past, spill }),
+  });
+}
+
+export async function getDailyPicks({ onProgress } = {}) {
   const today = new Date();
-  const key = 'picks5:' + ymd(today);
-  const saved = await load(key, null);
-  if (saved && !force && saved.modelVersion === 2) return saved;
-  // once a pick has kicked off, the day's list is locked so the track record stays honest
-  if (saved && saved.picks.some((p) => new Date(p.date) < new Date())) return saved;
-  const fresh = await generatePicks(today, onProgress);
-  save(key, fresh);
-  const idx = await load('picks5:index', []);
-  if (!idx.includes(fresh.date)) save('picks5:index', [...idx, fresh.date].slice(-30));
-  return fresh;
+  const { day } = await archivedPicks(today, { onProgress, spill: true });
+  return day;
 }
 
 function judge(p, m) {
@@ -424,7 +440,7 @@ async function settle(key, day, date) {
       } catch {}
     }
   });
-  if (changed) save(key, day);
+  if (changed) await saveAndWait(key, day);
   return day;
 }
 
@@ -434,9 +450,9 @@ const parseYmd = (d) => new Date(Number(d.slice(0, 4)), Number(d.slice(4, 6)) - 
 export async function pickHistory(days = 14) {
   const idx = await load('picks5:index', []);
   const today = ymd(new Date());
+  const earliest = ymd(addDays(parseYmd(today), -days));
   const out = [];
-  for (const d of idx.slice(-days).reverse()) {
-    if (d === today) continue;
+  for (const d of datesForPickHistory(idx, today, earliest)) {
     const key = 'picks5:' + d;
     const day = await load(key, null);
     if (!day) continue;
@@ -446,35 +462,28 @@ export async function pickHistory(days = 14) {
 }
 
 /**
- * The five picks for any calendar day:
- *  - today: the day's locked list (as before);
- *  - an earlier day: the list the app made that day, with results; if the app wasn't opened that
- *    day, the list is worked out afterwards from each team's games before kick-off ("worked out
- *    later"), so it's still an honest test of the model;
- *  - a later day: a preview from the fixtures known so far (refreshed every few hours).
+ * The first non-empty list generated for a date is archived and never recomputed.
+ * Results may settle later, but the selection itself remains fixed.
  * Returns the day plus `kind`: 'today' | 'saved' | 'backtest' | 'preview'.
  */
-export async function picksForDate(date, { force = false, onProgress } = {}) {
+export async function picksForDate(date, { onProgress } = {}) {
   const d = ymd(date);
   const today = ymd(new Date());
-  if (d === today) return { ...(await getDailyPicks({ force, onProgress })), kind: 'today' };
-  if (d < today) {
-    const saved = await load('picks5:' + d, null);
-    if (saved) return { ...(await settle('picks5:' + d, saved, date)), kind: 'saved' };
-    const btKey = 'picksbt:' + d;
-    let bt = force ? null : await load(btKey, null);
-    if (!bt || !bt.picks.length) {
-      bt = await generatePicks(date, onProgress, { past: true, spill: false });
-      save(btKey, bt);
-    }
-    return { ...(await settle(btKey, bt, date)), kind: 'backtest' };
-  }
-  const fKey = 'picksf:' + d;
-  const cached = force ? null : await load(fKey, null);
-  if (cached && Date.now() - cached.generatedAt < 3 * 3600 * 1000 && cached.picks.length) return { ...cached, kind: 'preview' };
-  const fresh = await generatePicks(date, onProgress, { spill: false });
-  save(fKey, fresh);
-  return { ...fresh, kind: 'preview' };
+  if (d === today) return { ...(await getDailyPicks({ onProgress })), kind: 'today' };
+
+  const past = d < today;
+  const legacyKeys = past ? [`picksbt:${d}`] : [`picksf:${d}`];
+  const { day, origin } = await archivedPicks(date, {
+    onProgress,
+    past,
+    spill: false,
+    legacyKeys,
+  });
+  if (!day.picks.length) return { ...day, kind: past ? 'backtest' : 'preview' };
+
+  const settled = past ? await settle('picks5:' + d, day, date) : day;
+  const kind = past ? origin === 'saved' ? 'saved' : 'backtest' : 'preview';
+  return { ...settled, kind };
 }
 
 export { SPORTS };

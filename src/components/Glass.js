@@ -182,6 +182,21 @@ export function Glass({
         />
       ) : null}
       <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? tintOpacity : 1 }]} />
+      {/* A low-contrast spectral band gives the clear surface a refracted-glass look. */}
+      {!flat ? (
+        <LinearGradient
+          pointerEvents="none"
+          colors={
+            dark
+              ? ['rgba(109,190,255,0.025)', 'rgba(129,177,255,0.09)', 'rgba(202,159,255,0.075)', 'rgba(255,255,255,0.025)']
+              : ['rgba(85,185,255,0.035)', 'rgba(123,191,255,0.09)', 'rgba(187,160,255,0.075)', 'rgba(255,203,163,0.035)']
+          }
+          locations={[0, 0.34, 0.68, 1]}
+          start={{ x: 0, y: 0.08 }}
+          end={{ x: 1, y: 0.92 }}
+          style={[StyleSheet.absoluteFill, { borderRadius: radius, opacity: vivid ? 0.75 : 0.52 }]}
+        />
+      ) : null}
       {/* specular highlight */}
       <LinearGradient
         pointerEvents="none"

@@ -170,7 +170,7 @@ export default function PicksScreen() {
     day && day.kind === 'backtest'
       ? 'Worked out afterwards: the app wasn’t opened that day, so these picks were made from each team’s games before kick-off.'
       : day && day.kind === 'preview'
-      ? 'Preview from the fixtures known so far. The final list is made on the day and locks at the first kick-off.'
+      ? 'Saved preview from the fixtures known so far. This date’s picks stay fixed; results update after matches finish.'
       : null;
 
   return (
@@ -217,7 +217,7 @@ export default function PicksScreen() {
           <Card>
             <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>How the picks are made</Text>
             <Text style={{ color: t.secondary, fontSize: 13.5, lineHeight: 20 }}>
-              Every day the app scans the day's football, NBA, NHL, NFL, MLB and rugby fixtures and looks at each team's last 10 finished matches. For football, a Poisson goals model uses the goals each side scored and conceded in those games, with recent games and games at the same venue counting a little more, plus home advantage. Other sports use win rate and points difference over the last 10. Bookmaker odds, when available, count for 25% as a sanity check. Every day the five most confident calls make the list (at most two per competition). Calls the model rates at 90% or more carry a 90%+ badge. Besides the result, the model also considers double chance (team or draw), over 1.5 goals and under 3.5 goals. Today's list locks once the first pick kicks off, so the track record is honest.{'\n\n'}Use the calendar to see earlier days with their results, or a preview of the coming week. A day the app wasn't opened is worked out afterwards using only games played before each kick-off. A percentage is the model's estimate, not a guarantee.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
+              Every day the app scans the day's football, NBA, NHL, NFL, MLB and rugby fixtures and looks at each team's last 10 finished matches. For football, a Poisson goals model uses the goals each side scored and conceded in those games, with recent games and games at the same venue counting a little more, plus home advantage. Other sports use win rate and points difference over the last 10. Bookmaker odds, when available, count for 25% as a sanity check. Every day the five most confident calls make the list (at most two per competition). Calls the model rates at 90% or more carry a 90%+ badge. Besides the result, the model also considers double chance (team or draw), over 1.5 goals and under 3.5 goals. Each day's first non-empty list is saved and stays fixed, including previews for future dates. Refreshing updates match results, never replaces the picks.{'\n\n'}Use the calendar to see earlier saved picks and their results, or preview the coming week. A day the app wasn't opened is worked out afterwards using only games played before each kick-off. A percentage is the model's estimate, not a guarantee.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
             </Text>
           </Card>
         ) : null}
