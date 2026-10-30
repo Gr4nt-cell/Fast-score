@@ -136,8 +136,8 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                 <Glass
                   radius={27}
                   selected
-                  style={{ flex: 1, boxShadow: `0px 1px 4px rgba(0,0,0,${t.dark ? 0.126 : 0.034})` }}
-                  tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.06)'}
+                  style={{ flex: 1, borderWidth: 1, borderColor: t.dark ? 'rgba(255,255,255,0.2)' : '#FFFFFF', boxShadow: `0px 1px 6px rgba(${t.dark ? '0,0,0,0.2' : '60,120,140,0.12'})` }}
+                  tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.8)'}
                   tintOpacity={0.9}
                 />
               </FlatBackdropContext.Provider>
@@ -146,7 +146,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
           <View style={{ flexDirection: 'row', flex: 1, paddingHorizontal: 4 }} {...responder.panHandlers}>
             {tabs.map((tab, i) => {
               const on = hover >= 0 ? i === hover : tab.key === active;
-              const color = on ? t.blue : t.text;
+              const color = on ? t.blue : t.secondary;
               return (
                 <View key={tab.key} style={styles.item} pointerEvents="none">
                   <View style={{ transform: [{ scale: hover === i ? 1.1 : 1 }] }}>

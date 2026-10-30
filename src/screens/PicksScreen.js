@@ -104,7 +104,7 @@ function PickCard({ p, i }) {
         </View>
         <ProbBar probs={p.probs} draws={sp.draws} />
         <View style={{ marginTop: 10, gap: 4 }}>
-          {p.reasons.slice(0, 3).map((r, k) => (
+          {p.reasons.slice(0, 5).map((r, k) => (
             <Text key={k} style={{ color: t.secondary, fontSize: 12.5, lineHeight: 17 }} numberOfLines={2}>
               • {r}
             </Text>

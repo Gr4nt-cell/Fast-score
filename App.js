@@ -8,7 +8,7 @@ import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { NavContext } from './src/nav';
-import { useTheme } from './src/theme';
+import { useTheme, GlassBackdropContext } from './src/theme';
 import { StoreProvider, useStore, load, save } from './src/store';
 import { sportByKey } from './src/sports';
 import { success } from './src/haptics';
@@ -20,7 +20,7 @@ import { warmOdds } from './src/api/msport';
 import { setLanguage } from './src/i18n';
 import { pickToMatch } from './src/screens/PicksScreen';
 import TabBar, { TABS } from './src/components/TabBar';
-import { BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext } from './src/components/Glass';
+import { Backdrop, BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext } from './src/components/Glass';
 import { Pressable } from './src/components/Touch';
 import { Logo } from './src/components/ui';
 import Boundary from './src/components/Boundary';
@@ -276,20 +276,23 @@ function Main() {
   }
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
+  const glassOn = settings.glass !== false;
 
   return (
     <NavContext.Provider value={nav}>
-      <GlassModeContext.Provider value={settings.glass === false ? 'plain' : 'clear'}>
-        <FlatBackdropContext.Provider value>
+      <GlassBackdropContext.Provider value={glassOn}>
+      <GlassModeContext.Provider value={glassOn ? 'clear' : 'plain'}>
+        <FlatBackdropContext.Provider value={!glassOn}>
           <GlassTargetContext.Provider value={blurTarget}>
             <StatusBar style={t.dark ? 'light' : 'dark'} />
             <View style={{ flex: 1, backgroundColor: t.bg }}>
               <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg, flexDirection: wide ? 'row' : 'column' }}>
+                {glassOn ? <Backdrop /> : null}
                 <View style={wide ? { width: Math.round(Math.min(520, Math.max(380, winW * 0.4))) } : { flex: 1 }}>
                   <Boundary resetKey={tab}>{screen}</Boundary>
                 </View>
                 {wide ? (
-                  <View style={{ flex: 1, borderLeftWidth: 1, borderLeftColor: t.separator }}>
+                  <View style={{ flex: 1, borderLeftWidth: 1, borderLeftColor: glassOn ? 'rgba(255,255,255,0.5)' : t.separator }}>
                     {detail && ROUTES[detail.name] ? (
                       <NavContext.Provider value={paneNav}>
                         <Boundary resetKey={detail.key}>
@@ -321,6 +324,7 @@ function Main() {
                       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.38)', alignItems: 'center', justifyContent: 'center' }}>
                         <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onPress={pop} feedback="none" />
                         <View style={{ width: w, height: h, borderRadius: 28, overflow: 'hidden', backgroundColor: t.bg }}>
+                          {glassOn ? <Backdrop /> : null}
                           <Boundary resetKey={route.key}>
                             <Screen route={route} />
                           </Boundary>
@@ -334,6 +338,7 @@ function Main() {
                 <Modal key={route.key} visible animationType="slide" onRequestClose={pop} statusBarTranslucent navigationBarTranslucent>
                   <SafeAreaProvider>
                     <View style={{ flex: 1, backgroundColor: t.bg }}>
+                      {glassOn ? <Backdrop /> : null}
                       <Boundary resetKey={route.key}>
                         <Screen route={route} />
                       </Boundary>
@@ -345,6 +350,7 @@ function Main() {
           </GlassTargetContext.Provider>
         </FlatBackdropContext.Provider>
       </GlassModeContext.Provider>
+      </GlassBackdropContext.Provider>
     </NavContext.Provider>
   );
 }

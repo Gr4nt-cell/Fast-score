@@ -1,19 +1,16 @@
-# Builds the APK on GitHub's own machines (no Expo build quota needed) and publishes it
-# to the "latest" release of this repo, plus a workflow artifact.
-name: Build APK
+name: Build signed Android
 
 on:
   push:
     branches: [main]
     paths-ignore:
       - 'server/**'
-      - '.github/workflows/deploy-server.yml'
-      - '.github/workflows/check-server.yml'
       - 'wrangler.toml'
       - '.github/workflows/odds.yml'
       - '.github/workflows/leagues-index.yml'
-      - 'scripts/**'
       - '.github/workflows/plugin-mirror.yml'
+      - '.github/workflows/deploy-server.yml'
+      - '.github/workflows/check-server.yml'
   workflow_dispatch:
 
 permissions:
@@ -30,123 +27,88 @@ jobs:
     steps:
       - uses: actions/checkout@v5
         with:
-          fetch-depth: 0 # the build number is the commit count
-
+          fetch-depth: 0
       - uses: actions/setup-node@v5
         with:
           node-version: 22
-
       - uses: actions/setup-java@v5
         with:
           distribution: zulu
           java-version: 17
-
       - uses: gradle/actions/setup-gradle@v4
-
+      - name: Require signing credentials
+        env:
+          KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
+          PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
+        run: |
+          test -n "$KEYSTORE" && test -n "$PASSWORD" || {
+            echo "::error::Android signing secrets are missing. Refusing a debug-signed release."
+            exit 1
+          }
       - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Set the build number (versionCode)
-        run: echo "VERSION_CODE=$((100 + $(git rev-list --count HEAD)))" >> "$GITHUB_ENV"
-
-      - name: Generate native Android project
+        run: npm ci --no-audit --no-fund
+      - name: Check context model
+        run: node --experimental-default-type=module --test tests/competition-context.test.js
+      - name: Set version code
+        run: |
+          export VERSION_CODE=$((100 + $(git rev-list --count HEAD)))
+          echo "VERSION_CODE=$VERSION_CODE" >> "$GITHUB_ENV"
+          node -e 'const fs=require("fs");const p="app.json";const j=JSON.parse(fs.readFileSync(p));j.expo.android.versionCode=Number(process.env.VERSION_CODE);fs.writeFileSync(p,JSON.stringify(j,null,2)+"\n")'
+      - name: Generate Android project
         run: npx expo prebuild --platform android --no-install
         env:
           CI: 1
-
-      - name: Build release APK
-        working-directory: android
-        run: |
-          set -o pipefail
-          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
-          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=arm64-v8a,armeabi-v7a 2>&1 | tee "$RUNNER_TEMP/gradle.log"
-
-      - name: Build the Play bundle (AAB)
-        working-directory: android
+      - name: Configure release signing
         env:
-          UPLOAD_KS: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
-          UPLOAD_PW: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
+          KEYSTORE: ${{ secrets.ANDROID_UPLOAD_KEYSTORE_BASE64 }}
         run: |
-          set -o pipefail
-          if [ -n "$UPLOAD_KS" ]; then
-            echo "$UPLOAD_KS" | base64 -d > "$RUNNER_TEMP/upload.jks"
-            cat >> app/build.gradle <<EOF
+          umask 077
+          printf '%s' "$KEYSTORE" | base64 --decode > "$RUNNER_TEMP/upload.jks"
+          cat >> android/app/build.gradle <<'GRADLE'
 
-          // Play upload key (from the repo secrets) for the AAB
           android {
             signingConfigs {
               upload {
-                storeFile file("$RUNNER_TEMP/upload.jks")
-                storePassword System.getenv("UPLOAD_PW")
+                storeFile file(System.getenv("RUNNER_TEMP") + "/upload.jks")
+                storePassword System.getenv("UPLOAD_PASSWORD")
                 keyAlias "upload"
-                keyPassword System.getenv("UPLOAD_PW")
+                keyPassword System.getenv("UPLOAD_PASSWORD")
               }
             }
             buildTypes { release { signingConfig signingConfigs.upload } }
           }
-          EOF
-            echo "SIGNED=upload" >> "$GITHUB_ENV"
-          else
-            echo "::warning::No upload key in the repo secrets (ANDROID_UPLOAD_KEYSTORE_BASE64 / ANDROID_UPLOAD_PASSWORD): the AAB is signed with the debug key and Play will refuse it."
-            echo "SIGNED=debug" >> "$GITHUB_ENV"
-          fi
-          # all four ABIs: Play serves each phone only its own
-          ./gradlew bundleRelease --no-daemon 2>&1 | tee -a "$RUNNER_TEMP/gradle.log"
-
-      - name: Check the bundle against Play's requirements
-        run: |
-          AAB=android/app/build/outputs/bundle/release/app-release.aab
-          python3 - "$AAB" <<'PY'
-          import sys, zipfile, struct
-          z = zipfile.ZipFile(sys.argv[1])
-          names = z.namelist()
-          bad, libs = [], [n for n in names if n.endswith('.so')]
-          for n in libs:
-              d = z.read(n)
-              if d[:4] != b'\x7fELF' or d[4] != 2:  # 64-bit only matters for 16 KB
-                  continue
-              phoff = struct.unpack_from('<Q', d, 0x20)[0]; phentsize, phnum = struct.unpack_from('<HH', d, 0x36)
-              for i in range(phnum):
-                  o = phoff + i * phentsize
-                  if struct.unpack_from('<I', d, o)[0] == 1 and struct.unpack_from('<Q', d, o + 48)[0] < 16384:
-                      bad.append(n); break
-          abis = sorted({n.split('/')[2] for n in libs if n.count('/') >= 3})
-          print(f'native libraries: {len(libs)} · ABIs: {abis}')
-          if 'arm64-v8a' not in abis: print('::error::No 64-bit (arm64-v8a) libraries: Play requires them')
-          if bad: print('::error::Not 16 KB page aligned (Play requirement): ' + ', '.join(sorted(set(b.split('/')[-1] for b in bad)))[:900])
-          else: print('::notice::Bundle check passed: 64-bit libraries present, all native libraries 16 KB aligned')
-          PY
-          python3 - <<'PY'
-          import json
-          a = json.load(open('app.json'))['expo']['android']
-          print('::notice::targetSdk 36 · versionCode set from the commit count · signed with: ' + __import__('os').environ.get('SIGNED', '?'))
-          PY
-
-      - name: Publish the failure log
-        if: failure()
+          GRADLE
+      - name: Build signed APK and AAB
+        working-directory: android
         env:
-          GH_TOKEN: ${{ github.token }}
+          UPLOAD_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
         run: |
-          grep -nE "error:|FAILED|What went wrong|Could not resolve|Caused by|^e: " "$RUNNER_TEMP/gradle.log" | tail -60 > apk-build-error.txt || true
-          head -c 60000 apk-build-error.txt | sed 's/%/%25/g' | while IFS= read -r line; do echo "::error::${line:0:900}"; done | head -45
-          echo "----- last lines -----" >> apk-build-error.txt
-          tail -120 "$RUNNER_TEMP/gradle.log" >> apk-build-error.txt || true
-          gh release view latest >/dev/null 2>&1 || gh release create latest --title "Latest APK" --notes "Built automatically from main."
-          gh release upload latest apk-build-error.txt --clobber || true
-
-      - name: Upload APK artifact
-        uses: actions/upload-artifact@v4
+          sed -i 's/^org.gradle.jvmargs=.*/org.gradle.jvmargs=-Xmx6g -XX:MaxMetaspaceSize=1g -Dfile.encoding=UTF-8/' gradle.properties
+          ./gradlew assembleRelease bundleRelease --no-daemon
+      - name: Verify signatures and export public certificate
+        env:
+          UPLOAD_PASSWORD: ${{ secrets.ANDROID_UPLOAD_PASSWORD }}
+        run: |
+          mkdir -p release
+          cp android/app/build/outputs/apk/release/app-release.apk release/fast-score.apk
+          cp android/app/build/outputs/bundle/release/app-release.aab release/fast-score.aab
+          APKSIGNER=$(find "$ANDROID_HOME/build-tools" -name apksigner | sort -V | tail -1)
+          "$APKSIGNER" verify --verbose --print-certs release/fast-score.apk
+          jarsigner -verify release/fast-score.aab | grep -q 'jar verified'
+          keytool -exportcert -rfc -keystore "$RUNNER_TEMP/upload.jks" -storepass:env UPLOAD_PASSWORD -alias upload -file release/upload-certificate.pem
+          sha256sum release/fast-score.apk release/fast-score.aab > release/SHA256SUMS
+      - uses: actions/upload-artifact@v4
         with:
-          name: fast-score-apk
-          path: android/app/build/outputs/apk/release/app-release.apk
-
-      - name: Publish to the "latest" release
+          name: fast-score-signed-android
+          path: release/
+          if-no-files-found: error
+      - name: Publish built files
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          cp android/app/build/outputs/apk/release/app-release.apk fast-score.apk
-          gh release view latest >/dev/null 2>&1 || gh release create latest --title "Latest APK" --notes "Built automatically from main."
-          gh release upload latest fast-score.apk --clobber
-          cp android/app/build/outputs/bundle/release/app-release.aab fast-score.aab
-          gh release upload latest fast-score.aab --clobber
-          gh release edit latest --notes "Built from ${GITHUB_SHA::7} on $(date -u '+%Y-%m-%d %H:%M UTC'). AAB signed with: ${SIGNED}."
+          gh release view latest >/dev/null 2>&1 || gh release create latest --title "Fast Score Android" --notes "Signed Android builds."
+          gh release upload latest release/* --clobber
+          gh release edit latest --notes "Built from ${GITHUB_SHA}. APK and AAB are signed with the Fast Score upload key. The PEM is the public certificate, not the private key."
+      - name: Remove temporary keystore
+        if: always()
+        run: rm -f "$RUNNER_TEMP/upload.jks"

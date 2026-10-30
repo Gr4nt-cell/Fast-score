@@ -36,8 +36,8 @@ export function Logo({ uri, name, size = 24, round = false }) {
     );
   }
   return (
-    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: t.dark ? '#2C2C2E' : '#E9E9EE', alignItems: 'center', justifyContent: 'center' }}>
-      <Text style={{ color: t.secondary, fontWeight: '700', fontSize: size * 0.38 }} allowFontScaling={false}>
+    <View style={{ width: size, height: size, borderRadius: r, backgroundColor: t.dark ? 'rgba(111,168,255,0.16)' : 'rgba(190,236,250,0.75)', borderWidth: size > 20 ? 1 : 0, borderColor: t.dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.95)', alignItems: 'center', justifyContent: 'center' }}>
+      <Text style={{ color: t.blue, fontWeight: '700', fontSize: size * 0.38 }} allowFontScaling={false}>
         {initials(name)}
       </Text>
     </View>
@@ -95,7 +95,9 @@ export function Segmented({ options, value, onChange, height = 46 }) {
                 alignItems: 'center',
                 justifyContent: 'center',
                 flexDirection: 'row',
-                backgroundColor: on ? (t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(0,0,0,0.07)') : 'transparent',
+                backgroundColor: on ? (t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.85)') : 'transparent',
+                borderWidth: on ? 1 : 0,
+                borderColor: t.dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)',
               }}
             >
               {o.icon ? <Ionicons name={o.icon} size={20} color={on ? t.text : t.secondary} /> : null}
@@ -214,10 +216,12 @@ export function TabStrip({ tabs, value, onChange }) {
                     paddingHorizontal: 16,
                     borderRadius: 19,
                     justifyContent: 'center',
-                    backgroundColor: on ? t.blue : 'transparent',
+                    backgroundColor: on ? (t.dark ? 'rgba(111,168,255,0.22)' : 'rgba(255,255,255,0.88)') : 'transparent',
+                    borderWidth: on ? 1 : 0,
+                    borderColor: t.dark ? 'rgba(255,255,255,0.22)' : '#FFFFFF',
                   }}
                 >
-                  <Text style={{ color: on ? '#fff' : t.text, fontWeight: on ? '700' : '600', fontSize: 14 }}>{x.label}</Text>
+                  <Text style={{ color: on ? t.blue : t.text, fontWeight: on ? '700' : '600', fontSize: 14 }}>{x.label}</Text>
                 </View>
               </Pressable>
             );
@@ -262,7 +266,7 @@ export function SectionTitle({ children, right }) {
   const t = useTheme();
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 22, marginTop: 6, marginBottom: 8 }}>
-      <Text style={{ color: t.text, fontSize: 20, fontWeight: '800', letterSpacing: -0.3 }}>{children}</Text>
+      <Text style={{ color: t.text, fontSize: 19, fontWeight: '700', letterSpacing: -0.2 }}>{children}</Text>
       {right}
     </View>
   );
@@ -347,7 +351,7 @@ export function Star({ on, onPress, size = 22 }) {
 
 export function LiveDot() {
   const t = useTheme();
-  return <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.live, marginRight: 5 }} />;
+  return <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: t.live, marginRight: 5, borderWidth: 1, borderColor: 'rgba(255,255,255,0.7)' }} />;
 }
 
 const st = StyleSheet.create({

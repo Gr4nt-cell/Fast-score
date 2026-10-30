@@ -2,7 +2,7 @@ import React, { createContext, useContext } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import * as ExpoBlur from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme } from '../theme';
+import { useTheme, backdropColors } from '../theme';
 
 // Liquid-glass style material: real background blur where Android supports it,
 // a translucent fill, a bright specular rim on top and a darker lower edge.
@@ -137,8 +137,8 @@ export function Glass({
       ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
       : dark ? (tinted ? 0.66 : 0.38) : tinted ? 0.58 : 0.2
     : dark
-    ? realBlur ? (tinted ? 0.62 : 0.3) : tinted ? 0.86 : 0.58
-    : realBlur ? (tinted ? 0.55 : 0.18) : tinted ? 0.72 : 0.32;
+    ? realBlur ? (tinted ? 0.62 : 0.3) : tinted ? 0.8 : 0.5
+    : realBlur ? (tinted ? 0.55 : 0.22) : tinted ? 0.7 : 0.44;
   // Over a flat backdrop a translucent fill just shows more of the same white
   // or black, so the panel is given its own solid surface instead.
   const a = alpha * fillScale;
@@ -146,16 +146,16 @@ export function Glass({
     ? tint
     : flat
     ? dark ? '#1C1C1E' : '#FFFFFF'
-    : dark ? `rgba(44,44,48,${a})` : `rgba(255,255,255,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.9)';
+    : dark ? `rgba(36,54,62,${a})` : `rgba(255,255,255,${a})`;
+  const rimTop = dark ? 'rgba(255,255,255,0.30)' : 'rgba(255,255,255,0.95)';
   const rim = flat
     ? lifted.borderColor
     : strong
-    ? dark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.24)'
+    ? dark ? 'rgba(255,255,255,0.26)' : 'rgba(255,255,255,0.92)'
     : outline
-    ? dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.16)'
-    : dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
-  const edge = dark ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.04)';
+    ? dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.85)'
+    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.7)';
+  const edge = dark ? 'rgba(0,0,0,0.25)' : 'rgba(40,90,110,0.06)';
   const highlight = flat
     ? dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
@@ -244,10 +244,39 @@ export function Glass({
     <View
       pointerEvents={pointerEvents}
       onLayout={onLayout}
-      style={[{ borderRadius: radius, overflow: 'hidden', transform: [{ scale: pressed ? 1.04 : 1 }] }, style]}
+      style={[{ borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }], boxShadow: tint ? undefined : dark ? '0px 4px 14px rgba(0,0,0,0.28)' : '0px 4px 14px rgba(60,120,140,0.10)' }, style]}
     >
-      {decoration}
+      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
+        {decoration}
+      </View>
       {children}
+    </View>
+  );
+}
+
+// Soft radial glow faked with stacked translucent discs (no live blur).
+function Glow({ color, size, style }) {
+  const rings = 14;
+  return (
+    <View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
+      {Array.from({ length: rings }).map((_, i) => {
+        const d = size * (1 - i / rings);
+        return <View key={i} style={{ position: 'absolute', width: d, height: d, borderRadius: d / 2, backgroundColor: color, opacity: 0.075 }} />;
+      })}
+    </View>
+  );
+}
+
+/** Pastel cyan / coral / mint field the glass sits on. */
+export function Backdrop({ style }) {
+  const t = useTheme();
+  const c = backdropColors(t.dark);
+  return (
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }, style]}>
+      <LinearGradient colors={c.base} locations={[0, 0.5, 1]} start={{ x: 0.1, y: 0 }} end={{ x: 0.6, y: 1 }} style={StyleSheet.absoluteFill} />
+      <Glow color={c.cyan} size={560} style={{ top: -220, left: -200 }} />
+      <Glow color={c.coral} size={520} style={{ top: '22%', right: -260 }} />
+      <Glow color={c.mint} size={620} style={{ bottom: -260, left: -120 }} />
     </View>
   );
 }

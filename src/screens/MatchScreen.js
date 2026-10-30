@@ -1,6 +1,7 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { Animated, Easing, Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../components/Text';
+import MSportLiveAction from '../components/MSportLiveAction';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useTheme } from '../theme';
@@ -607,7 +608,7 @@ function LiveAction({ m, sum }) {
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: t.live, marginRight: 7 }} />
-        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>Live action</Text>
+        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>Match momentum · illustrative</Text>
         <Text style={{ color: t.live, fontWeight: '800', fontSize: 13 }}>{m.short}</Text>
       </View>
       {showPitch ? (
@@ -1359,6 +1360,7 @@ export default function MatchScreen({ route }) {
           <View>
             {m.kind === 'field' ? <Leaderboard m={m} /> : null}
             {sport === 'tennis' ? <TennisSets m={m} /> : null}
+            <MSportLiveAction match={m} />
             <LiveAction m={m} sum={sum} />
             <Timeline m={m} events={events} />
             <MomentumGraph m={m} mom={sum.momentum} />

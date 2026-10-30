@@ -9,8 +9,9 @@
 // app can show how they did.
 import { americanToProb, load, save } from './store';
 import { SPORTS, sportByKey } from './sports';
-import { addDays, dayBoard, pool, recentGames, scoreboard, ymd } from './api/espn';
+import { addDays, dayBoard, pool, recentGames, scoreboard, standings, teamSchedule, ymd } from './api/espn';
 import { attachOdds } from './api/msport';
+import { domesticProfile, tableContext, contextAdjustment } from './competitionContext';
 
 export const LAST_N = 10;
 export const PICK_THRESHOLD = 0.9; // calls at or above this are marked 90%+ and listed first
@@ -40,7 +41,7 @@ export async function lastMatches(sport, league, teamId, before = new Date()) {
       const gf = Number(me.score);
       const ga = Number(op.score);
       if (!Number.isFinite(gf) || !Number.isFinite(ga)) return null;
-      return { date: g.date, home, gf, ga, opponent: op.name, opLogo: op.logo, result: gf > ga ? 'W' : gf < ga ? 'L' : 'D', key: g.key };
+      return { date: g.date, home, gf, ga, league: g.league, leagueName: g.leagueName, country: g.country, opponent: op.name, opLogo: op.logo, result: gf > ga ? 'W' : gf < ga ? 'L' : 'D', key: g.key };
     })
     .filter(Boolean)
     .sort((a, b) => new Date(b.date) - new Date(a.date))
@@ -78,7 +79,7 @@ function poisson(k, l) {
   return (Math.exp(-l) * Math.pow(l, k)) / f;
 }
 
-function soccerModel(m, H, A) {
+function soccerModel(m, H, A, context = 0) {
   // league scoring level from both teams' recent games, steadied towards a typical value
   const sample = H.n + A.n;
   const avg = sample ? (((H.gf + H.ga) * H.n + (A.gf + A.ga) * A.n) / (2 * sample)) * (sample / (sample + 6)) + AVG_GOALS * (6 / (sample + 6)) : AVG_GOALS;
@@ -88,8 +89,8 @@ function soccerModel(m, H, A) {
   const attA = steady(A.gf, A.n) / avg;
   const defA = steady(A.ga, A.n) / avg;
   const [ha, aa] = m.neutral ? [1, 1] : HOME_ADV.soccer;
-  const lh = Math.min(Math.max(avg * attH * defA * ha, 0.15), 4.5);
-  const la = Math.min(Math.max(avg * attA * defH * aa, 0.15), 4.5);
+  const lh = Math.min(Math.max(avg * attH * defA * ha * Math.exp(context), 0.15), 4.5);
+  const la = Math.min(Math.max(avg * attA * defH * aa * Math.exp(-context), 0.15), 4.5);
   let ph = 0;
   let pd = 0;
   let pa = 0;
@@ -139,6 +140,39 @@ function marketProbs(odds, draws) {
 const pct = (p) => `${Math.round(p * 100)}%`;
 const recText = (r) => `${r.W}W ${r.D}D ${r.L}L`;
 
+async function competitionContext(m, hg, ag) {
+  if (m.sport !== 'soccer') return { adjustment: 0, reasons: [] };
+  const resolveProfile = async (side, games) => {
+    const profile = domesticProfile(m, side, games);
+    if (profile) return profile;
+    // Lightweight H2H feeds often omit league metadata; a team's results page retains it.
+    try {
+      const schedule = await teamSchedule(m.sport, m.league, m[side].id);
+      const prior = schedule.filter((g) => g.state === 'post' && new Date(g.date) < new Date(m.date));
+      return domesticProfile(m, side, prior.slice(-30));
+    } catch { return null; }
+  };
+  const [home, away] = await Promise.all([resolveProfile('home', hg), resolveProfile('away', ag)]);
+  // Current tables must never leak into historical predictions.
+  const historical = new Date(m.date).getTime() < Date.now();
+  const getTable = async (profile, id) => {
+    const league = profile?.league || m.league;
+    if (historical || !league) return null;
+    try { return tableContext(await standings(m.sport, league), id); }
+    catch { return null; }
+  };
+  const [ht, at] = await Promise.all([getTable(home, m.home.id), getTable(away, m.away.id)]);
+  const label = (team, profile, table) => `${team.short || team.name}: ` +
+    (profile ? `${profile.name}, division ${profile.division}, strength prior ${profile.strength.toFixed(2)}` : 'domestic league/division unverified') +
+    (table ? `; standing ${table.rank}/${table.total} (${table.played} played)` : '; standing unavailable');
+  return {
+    adjustment: contextAdjustment(home, away, ht, at),
+    complete: !!(home && away && ht && at),
+    home, away, homeTable: ht, awayTable: at,
+    reasons: [label(m.home, home, ht), label(m.away, away, at)],
+  };
+}
+
 /** Prediction for one match, or null when there isn't enough to go on. */
 export async function predictMatch(m) {
   if (!m || m.kind !== 'match' || sportByKey(m.sport).individual) return null;
@@ -146,9 +180,10 @@ export async function predictMatch(m) {
   const [hg, ag] = await Promise.all([lastMatches(m.sport, m.league, m.home.id, m.date), lastMatches(m.sport, m.league, m.away.id, m.date)]);
   const H = summarise(hg, true);
   const A = summarise(ag, false);
+  const context = await competitionContext(m, hg, ag);
   const market = marketProbs(m.odds, sp.draws);
   // need at least 3 recent games for each side
-  const model = H.n >= 3 && A.n >= 3 ? (m.sport === 'soccer' ? soccerModel(m, H, A) : genericModel(m, H, A, m.sport)) : null;
+  const model = H.n >= 3 && A.n >= 3 ? (m.sport === 'soccer' ? soccerModel(m, H, A, context.adjustment) : genericModel(m, H, A, m.sport)) : null;
   if (!model) return null;
   const blend = (k) => (market ? (1 - MARKET_WEIGHT) * model[k] + MARKET_WEIGHT * market[k] : model[k]);
   const probs = { home: blend('home'), draw: sp.draws ? blend('draw') : 0, away: blend('away') };
@@ -189,6 +224,7 @@ export async function predictMatch(m) {
 
   const unit = m.sport === 'soccer' ? '' : ' pts';
   const reasons = [
+    ...context.reasons,
     `${hn} last ${H.n}: ${recText(H.rec)} · ${H.gf.toFixed(1)}${unit} scored, ${H.ga.toFixed(1)} conceded a game`,
     `${an} last ${A.n}: ${recText(A.rec)} · ${A.gf.toFixed(1)}${unit} scored, ${A.ga.toFixed(1)} conceded a game`,
   ];
@@ -203,8 +239,10 @@ export async function predictMatch(m) {
     if (mk != null) reasons.push(`Bookmakers imply ${pct(mk)} for this outcome (counted at 25%)`);
   }
 
-  const quality = H.n >= 8 && A.n >= 8 ? (market ? 'high' : 'medium') : 'low';
+  const quality = H.n >= 8 && A.n >= 8 ? (market && (m.sport !== 'soccer' || context.complete) ? 'high' : 'medium') : 'low';
   return {
+    context,
+    modelVersion: 2,
     probs,
     tip,
     reasons,
@@ -311,16 +349,16 @@ export async function generatePicks(date = new Date(), onProgress, { past = fals
     }
   }
   picks.sort((a, b) => b.tip.prob - a.tip.prob);
-  return { date: ymd(date), generatedAt: Date.now(), scanned: boards.length, modelled: preds.filter(Boolean).length, threshold: PICK_THRESHOLD, picks };
+  return { modelVersion: 2, date: ymd(date), generatedAt: Date.now(), scanned: boards.length, modelled: preds.filter(Boolean).length, threshold: PICK_THRESHOLD, picks };
 }
 
 export async function getDailyPicks({ force = false, onProgress } = {}) {
   const today = new Date();
   const key = 'picks5:' + ymd(today);
   const saved = await load(key, null);
-  if (saved && !force) return saved;
+  if (saved && !force && saved.modelVersion === 2) return saved;
   // once a pick has kicked off, the day's list is locked so the track record stays honest
-  if (saved && force && saved.picks.some((p) => new Date(p.date) < new Date())) return saved;
+  if (saved && saved.picks.some((p) => new Date(p.date) < new Date())) return saved;
   const fresh = await generatePicks(today, onProgress);
   save(key, fresh);
   const idx = await load('picks5:index', []);
