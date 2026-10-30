@@ -2,7 +2,7 @@ import React, { createContext, useContext } from 'react';
 import { Platform, StyleSheet, View } from 'react-native';
 import * as ExpoBlur from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
-import { useTheme, backdropColors } from '../theme';
+import { useTheme } from '../theme';
 
 // Liquid-glass style material: real background blur where Android supports it,
 // a translucent fill, a bright specular rim on top and a darker lower edge.
@@ -44,11 +44,11 @@ function lift(dark, soft) {
   // polygonal approximation of the view's outline, which turned the round keys
   // into decagons. boxShadow follows the border radius exactly, so a circle
   // casts a circle. (React Native 0.76+ on Android.)
-  const a = soft ? (dark ? 0.21 : 0.056) : dark ? 0.385 : 0.112;
-  const y = soft ? 1 : 3;
-  const blur = soft ? 4 : 9;
+  const a = soft ? (dark ? 0.21 : 0.08) : dark ? 0.385 : 0.16;
+  const y = soft ? 2 : 4;
+  const blur = soft ? 6 : 12;
   return {
-    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.20)',
+    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(32,57,73,0.17)',
     boxShadow: `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
@@ -151,11 +151,11 @@ export function Glass({
   const rim = flat
     ? lifted.borderColor
     : strong
-    ? dark ? 'rgba(255,255,255,0.26)' : 'rgba(255,255,255,0.92)'
+    ? dark ? 'rgba(255,255,255,0.26)' : 'rgba(35,62,79,0.19)'
     : outline
-    ? dark ? 'rgba(255,255,255,0.22)' : 'rgba(255,255,255,0.85)'
-    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.7)';
-  const edge = dark ? 'rgba(0,0,0,0.25)' : 'rgba(40,90,110,0.06)';
+    ? dark ? 'rgba(255,255,255,0.22)' : 'rgba(35,62,79,0.16)'
+    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(35,62,79,0.12)';
+  const edge = dark ? 'rgba(0,0,0,0.25)' : 'rgba(40,70,85,0.10)';
   const highlight = flat
     ? dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
@@ -244,7 +244,7 @@ export function Glass({
     <View
       pointerEvents={pointerEvents}
       onLayout={onLayout}
-      style={[{ borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }], boxShadow: tint ? undefined : dark ? '0px 4px 14px rgba(0,0,0,0.28)' : '0px 4px 14px rgba(60,120,140,0.10)' }, style]}
+      style={[{ borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }], boxShadow: tint ? undefined : dark ? '0px 4px 14px rgba(0,0,0,0.28)' : '0px 6px 18px rgba(35,57,73,0.16)' }, style]}
     >
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
         {decoration}
@@ -254,30 +254,11 @@ export function Glass({
   );
 }
 
-// Soft radial glow faked with stacked translucent discs (no live blur).
-function Glow({ color, size, style }) {
-  const rings = 14;
-  return (
-    <View pointerEvents="none" style={[{ position: 'absolute', width: size, height: size, alignItems: 'center', justifyContent: 'center' }, style]}>
-      {Array.from({ length: rings }).map((_, i) => {
-        const d = size * (1 - i / rings);
-        return <View key={i} style={{ position: 'absolute', width: d, height: d, borderRadius: d / 2, backgroundColor: color, opacity: 0.075 }} />;
-      })}
-    </View>
-  );
-}
-
-/** Pastel cyan / coral / mint field the glass sits on. */
+/** Solid backdrop behind the app's translucent glass controls. */
 export function Backdrop({ style }) {
   const t = useTheme();
-  const c = backdropColors(t.dark);
   return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { overflow: 'hidden' }, style]}>
-      <LinearGradient colors={c.base} locations={[0, 0.5, 1]} start={{ x: 0.1, y: 0 }} end={{ x: 0.6, y: 1 }} style={StyleSheet.absoluteFill} />
-      <Glow color={c.cyan} size={560} style={{ top: -220, left: -200 }} />
-      <Glow color={c.coral} size={520} style={{ top: '22%', right: -260 }} />
-      <Glow color={c.mint} size={620} style={{ bottom: -260, left: -120 }} />
-    </View>
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: t.dark ? '#0B1418' : '#FFFFFF' }, style]} />
   );
 }
 

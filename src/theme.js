@@ -1,7 +1,7 @@
 import { createContext, useContext, useMemo } from 'react';
 import { useColorScheme } from 'react-native';
 
-// True when the soft pastel glass backdrop is painted behind the screens.
+// True when the solid backdrop is painted behind the screens.
 // Screens fill with t.bg, so in that mode bg turns transparent and the
 // solid colour moves to t.solidBg.
 export const GlassBackdropContext = createContext(false);
@@ -65,13 +65,6 @@ export function useTheme() {
   const isDark = useColorScheme() === 'dark';
   const glass = useContext(GlassBackdropContext);
   return useMemo(() => (glass ? (isDark ? darkGlass : lightGlass) : isDark ? dark : light), [glass, isDark]);
-}
-
-// Pastel field behind the glass: cyan sky, coral drift, mint floor.
-export function backdropColors(isDark) {
-  return isDark
-    ? { base: ['#0E2430', '#0D1A20', '#0F2621'], cyan: '#2B7FA3', coral: '#9A4E48', mint: '#2E7A5C' }
-    : { base: ['#B9E6F7', '#E6F2F5', '#C9EEDB'], cyan: '#8FD8F5', coral: '#F6B9A8', mint: '#A6E8C2' };
 }
 
 export const TAB_BAR_SPACE = 96;
