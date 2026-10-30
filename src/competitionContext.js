@@ -17,8 +17,12 @@ const LEAGUES = [
   ['Portugal', /^(liga portugal|primeira liga|por\.1)$/i, 1, 0.81],
 ];
 export function leagueProfile(league, name, country) {
-  const label = String(name || '').replace(/^.*?:\s*/, '').trim();
-  const c = String(country || '').toLowerCase();
+  const rawLabel = String(name || '').trim();
+  const parts = rawLabel.split(/:\s*/);
+  const providerCountry = parts.length > 1 ? parts[0].toLowerCase() : '';
+  const knownCountry = LEAGUES.find(([nation]) => nation.toLowerCase() === providerCountry)?.[0];
+  const label = parts.length > 1 ? parts.slice(1).join(': ') : rawLabel;
+  const c = String(country || knownCountry || '').toLowerCase();
   // Only exact provider slugs or country-qualified names identify a competition.
   const item = LEAGUES.find(([nation, re]) =>
     re.test(String(league || '')) || (c === nation.toLowerCase() && re.test(label)));

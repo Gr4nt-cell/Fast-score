@@ -6,6 +6,8 @@ test('unknown and ambiguous league names are not guessed', () => {
   assert.equal(leagueProfile('unknown', 'Premier League', ''), null);
   assert.equal(leagueProfile('unknown', 'Serie A', 'Brazil'), null);
   assert.equal(leagueProfile('eng.1', '', '').division, 1);
+  assert.equal(leagueProfile('fs:team', 'England: Premier League').division, 1);
+  assert.equal(leagueProfile('fs:team', 'England: League One').division, 3);
 });
 test('cup match resolves separate domestic divisions from recent fixtures', () => {
   const m = { home: {}, away: {}, league: 'cup', leagueName: 'FA Cup', country: 'England' };
