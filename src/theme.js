@@ -8,14 +8,14 @@ export const GlassBackdropContext = createContext(false);
 
 const light = {
   dark: false,
-  bg: '#F6FAFB',
-  grouped: '#EEF4F6',
-  card: '#FDFEFE',
+  bg: '#FFFFFF',
+  grouped: '#F4F7F8',
+  card: '#FFFFFF',
   text: '#14232B',
   secondary: '#5F737C',
   tertiary: '#A9BAC1',
   separator: 'rgba(20,50,60,0.10)',
-  fill: '#E7F0F2',
+  fill: '#EDF3F5',
   blue: '#2F6BD8',
   green: '#34C759',
   red: '#FF3B30',

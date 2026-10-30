@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../components/Text';
-import MSportLiveAction from '../components/MSportLiveAction';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
 import { useTheme } from '../theme';
@@ -80,10 +79,10 @@ function ScoreHeader({ m, sport }) {
             <View key={side} style={{ flex: 1, alignItems: side === 'home' ? 'flex-start' : 'flex-end', paddingHorizontal: 6 }}>
               {goals(side).map((g, i) => (
                 <Text key={i} style={{ color: t.secondary, fontSize: 12.5 }} numberOfLines={1}>
-                  {side === 'home' ? '⚽ ' : ''}
+                  {side === 'home' ? <MaterialCommunityIcons name="soccer" size={13} color={t.secondary} /> : null}
                   {g.player} {g.clock}
                   {g.pen ? ' (P)' : g.own ? ' (OG)' : ''}
-                  {side === 'away' ? ' ⚽' : ''}
+                  {side === 'away' ? <MaterialCommunityIcons name="soccer" size={13} color={t.secondary} /> : null}
                 </Text>
               ))}
             </View>
@@ -436,7 +435,7 @@ function MomentumGraph({ m, mom, compact }) {
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: awayC, marginRight: 4 }} />
         <Text style={{ color: t.secondary, fontSize: 12 }}>{m.away.short}</Text>
       </View>
-      <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: H * 2 + 20 }}>
+      <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: H * 2 + 20, borderRadius: 14, borderWidth: StyleSheet.hairlineWidth, borderColor: t.dark ? 'rgba(255,255,255,0.08)' : 'rgba(38,67,82,0.07)', backgroundColor: t.dark ? 'rgba(255,255,255,0.025)' : 'rgba(232,241,244,0.24)' }}>
         {w ? (
           <>
             <View style={{ position: 'absolute', left: 0, right: 0, top: 10 + H, height: StyleSheet.hairlineWidth, backgroundColor: t.separator }} />
@@ -612,7 +611,10 @@ function PlayerDot({ p, color, onPress }) {
         <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>{p.jersey || ''}</Text>
         {p.goals ? (
           <View style={{ position: 'absolute', top: -6, right: -8, backgroundColor: '#fff', borderRadius: 8, paddingHorizontal: 2 }}>
-            <Text style={{ fontSize: 10 }}>⚽{p.goals > 1 ? p.goals : ''}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <MaterialCommunityIcons name="soccer" size={10} color="#14232B" />
+              {p.goals > 1 ? <Text style={{ fontSize: 9, fontWeight: '700' }}>{p.goals}</Text> : null}
+            </View>
           </View>
         ) : null}
         {p.red || p.yellow ? <View style={{ position: 'absolute', top: -5, left: -6, width: 8, height: 11, borderRadius: 1.5, backgroundColor: p.red ? '#FF3B30' : '#FFCC00' }} /> : null}
@@ -1172,7 +1174,6 @@ export default function MatchScreen({ route }) {
           <View>
             {m.kind === 'field' ? <Leaderboard m={m} /> : null}
             {sport === 'tennis' ? <TennisSets m={m} /> : null}
-            <MSportLiveAction match={m} />
             <LiveAction m={m} sum={sum} />
             <Timeline m={m} events={events} />
             <MomentumGraph m={m} mom={sum.momentum} />

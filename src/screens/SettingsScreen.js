@@ -91,7 +91,7 @@ export default function SettingsScreen() {
           />
         </View>
         <Card>
-          <Toggle label="Liquid Glass" sub="Glass panels with a specular rim. Off uses plain cards." value={settings.glass !== false} onChange={(v) => setSetting('glass', v)} last />
+          <Toggle label="Liquid Glass" sub="Soft refracted panels with a polished edge. Off uses plain cards." value={settings.glass !== false} onChange={(v) => setSetting('glass', v)} last />
         </Card>
 
         <SectionTitle>Start on</SectionTitle>

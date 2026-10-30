@@ -44,8 +44,10 @@ class FastLiveModule : Module() {
     /** Play an alert tone: goal, kickoff, halftime, fulltime, redcard, lineups. */
     Function("playTone") { kind: String -> Live.playTone(ctx, kind) }
 
-    /** Keys of matches the tracker is handling (the app's own 15-minute check skips these). */
-    Function("trackedKeys") { Live.items(ctx).map { it.key } }
+    /** Only matches the running live service is polling; others need the background fallback. */
+    Function("trackedKeys") {
+      if (LiveService.running) Live.due(ctx).map { it.key } else emptyList<String>()
+    }
 
     /** The match of a tapped alert that opened the app, once. */
     Function("consumeTap") {

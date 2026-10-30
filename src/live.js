@@ -5,6 +5,7 @@ import FastLive from '../modules/fast-live';
 import { favMatch } from './components/match';
 import { FS_SPORT } from './api/flashscore';
 import { dayBoard, addDays } from './api/espn';
+import { activeTrackedKeys } from './trackedKeys';
 
 export const liveAvailable = () => !!FastLive;
 
@@ -74,7 +75,7 @@ export async function syncLive(favs, enabled = true) {
 /** Matches the live service is handling (the app's own checks don't alert for these). */
 export function trackedKeys() {
   try {
-    return FastLive ? new Set(FastLive.trackedKeys()) : new Set();
+    return FastLive ? activeTrackedKeys(FastLive.isRunning(), FastLive.trackedKeys()) : new Set();
   } catch {
     return new Set();
   }

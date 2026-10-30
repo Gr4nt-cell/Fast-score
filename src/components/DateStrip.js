@@ -92,8 +92,9 @@ export default function DateStrip({ value, onChange, marked, live, dimPast = fal
                   alignItems: 'center',
                   justifyContent: 'center',
                   backgroundColor: selected ? t.blue : 'transparent',
-                  borderWidth: isToday && !selected ? 1.5 : 0,
-                  borderColor: t.blue,
+                  borderWidth: isToday && !selected ? 1.5 : selected ? 1 : 0,
+                  borderColor: selected ? 'rgba(255,255,255,0.72)' : t.blue,
+                  boxShadow: selected ? `0px 2px 5px ${t.dark ? 'rgba(0,0,0,0.28)' : 'rgba(35,75,120,0.2)'}` : undefined,
                 }}
               >
                 <Text

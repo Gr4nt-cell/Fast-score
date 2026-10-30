@@ -44,11 +44,11 @@ function lift(dark, soft) {
   // polygonal approximation of the view's outline, which turned the round keys
   // into decagons. boxShadow follows the border radius exactly, so a circle
   // casts a circle. (React Native 0.76+ on Android.)
-  const a = soft ? (dark ? 0.21 : 0.08) : dark ? 0.385 : 0.16;
+  const a = soft ? (dark ? 0.18 : 0.055) : dark ? 0.32 : 0.12;
   const y = soft ? 2 : 4;
   const blur = soft ? 6 : 12;
   return {
-    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(32,57,73,0.17)',
+    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(38,67,82,0.18)',
     boxShadow: `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
@@ -147,15 +147,15 @@ export function Glass({
     : flat
     ? dark ? '#1C1C1E' : '#FFFFFF'
     : dark ? `rgba(36,54,62,${a})` : `rgba(255,255,255,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.30)' : 'rgba(255,255,255,0.95)';
+  const rimTop = dark ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.96)';
   const rim = flat
     ? lifted.borderColor
     : strong
-    ? dark ? 'rgba(255,255,255,0.26)' : 'rgba(35,62,79,0.19)'
+    ? dark ? 'rgba(255,255,255,0.26)' : 'rgba(35,62,79,0.18)'
     : outline
     ? dark ? 'rgba(255,255,255,0.22)' : 'rgba(35,62,79,0.16)'
-    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(35,62,79,0.12)';
-  const edge = dark ? 'rgba(0,0,0,0.25)' : 'rgba(40,70,85,0.10)';
+    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(35,62,79,0.13)';
+  const edge = dark ? 'rgba(0,0,0,0.22)' : 'rgba(40,70,85,0.075)';
   const highlight = flat
     ? dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
@@ -188,8 +188,8 @@ export function Glass({
           pointerEvents="none"
           colors={
             dark
-              ? ['rgba(109,190,255,0.025)', 'rgba(129,177,255,0.09)', 'rgba(202,159,255,0.075)', 'rgba(255,255,255,0.025)']
-              : ['rgba(85,185,255,0.035)', 'rgba(123,191,255,0.09)', 'rgba(187,160,255,0.075)', 'rgba(255,203,163,0.035)']
+              ? ['rgba(130,190,220,0.018)', 'rgba(125,183,210,0.07)', 'rgba(175,195,220,0.045)', 'rgba(255,255,255,0.015)']
+              : ['rgba(114,183,210,0.025)', 'rgba(139,194,215,0.065)', 'rgba(187,205,224,0.04)', 'rgba(255,255,255,0.02)']
           }
           locations={[0, 0.34, 0.68, 1]}
           start={{ x: 0, y: 0.08 }}
@@ -259,7 +259,7 @@ export function Glass({
     <View
       pointerEvents={pointerEvents}
       onLayout={onLayout}
-      style={[{ borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }], boxShadow: tint ? undefined : dark ? '0px 4px 14px rgba(0,0,0,0.28)' : '0px 6px 18px rgba(35,57,73,0.16)' }, style]}
+      style={[{ borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }], boxShadow: tint ? undefined : dark ? '0px 4px 14px rgba(0,0,0,0.25)' : '0px 5px 16px rgba(35,57,73,0.12)' }, style]}
     >
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
         {decoration}
@@ -286,9 +286,9 @@ export function GlassShadow({ children, style, radius = 999 }) {
         {
           borderRadius: radius,
           shadowColor: '#000',
-          shadowOpacity: t.dark ? 0.5 : 0.14,
-          shadowRadius: 20,
-          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: t.dark ? 0.46 : 0.12,
+          shadowRadius: 17,
+          shadowOffset: { width: 0, height: 7 },
         },
         style,
       ]}
