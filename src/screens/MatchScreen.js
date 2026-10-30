@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { Animated, Easing, Linking, ScrollView, StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { Linking, ScrollView, StyleSheet, View } from 'react-native';
 import { Text } from '../components/Text';
 import MSportLiveAction from '../components/MSportLiveAction';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -482,210 +482,22 @@ function MomentumGraph({ m, mom, compact }) {
   );
 }
 
-/** Which side a commentary line is about, from the team names it mentions (null = can't tell). */
-function sideOfLine(text, m) {
-  const low = ' ' + String(text || '').toLowerCase() + ' ';
-  const hit = (team) =>
-    [team.name, team.short, team.abbr]
-      .filter((n) => n && n.length >= 3)
-      .some((n) => low.includes(String(n).toLowerCase()));
-  const h = hit(m.home);
-  const a = hit(m.away);
-  return h && !a ? 1 : a && !h ? -1 : null;
-}
-
-const DANGER = /goal|soccer-ball|corner|penalty|shot|attempt|var/i;
-const POP = { 'soccer-ball': 'GOAL!', goal: 'GOAL!', 'y-card': 'Yellow card', 'r-card': 'Red card', 'yr-card': 'Red card', corner: 'Corner', substitution: 'Substitution', var: 'VAR', 'penalty-missed': 'Penalty missed' };
-
-/** Live in-game action: a pitch with a moving ball showing who's attacking now, a pop-up for each new event, and the latest plays. */
+/** Real event commentary only; no simulated pitch, ball movement, or attack indicator. */
 function LiveAction({ m, sum }) {
   const t = useTheme();
-  const [w, setW] = useState(0);
   const items = sum && sum.commentary ? [...sum.commentary].reverse() : [];
-  const mom = sum && sum.momentum && sum.momentum.points;
-  const soccer = m.sport === 'soccer';
-
-  // who's on top: recent momentum when we have it, blended with what the latest plays say
-  let press = 0;
-  let weight = 0;
-  if (mom && mom.length) {
-    const last = mom.slice(-4);
-    press = last.reduce((acc, p, i) => acc + p.v * (i + 1), 0) / last.reduce((acc, _, i) => acc + i + 1, 0);
-    weight = 1;
-  }
-  items.slice(0, 4).forEach((c, i) => {
-    let side = sideOfLine(c.text, m);
-    if (side == null) return;
-    // a booked or penalised team is usually the one defending
-    if (/card/.test(c.kind) || /foul|penalised|booked|yellow card|red card|offside/i.test(c.text)) side = -side;
-    const wgt = (DANGER.test(c.kind + ' ' + c.text) ? 0.9 : 0.5) / (i + 1);
-    press = (press * weight + side * wgt) / (weight + wgt);
-    weight += wgt;
-  });
-  press = Math.max(-1, Math.min(1, press));
   const latest = items[0];
-  const danger = latest && DANGER.test(latest.kind + ' ' + latest.text) && Math.abs(press) >= 0.15;
-  const attacker = press > 0 ? m.home : m.away;
-  const label = Math.abs(press) < 0.15 ? 'Even contest' : `${attacker.short || attacker.name} ${danger ? 'dangerous attack' : Math.abs(press) > 0.55 ? 'dominating' : 'attacking'}`;
-  const showPitch = soccer && (!!mom || items.length > 0);
-
-  // ---- animation: the ball drifts around the zone of play, the attacked end pulses ----
-  const PH = 104; // pitch height
-  const ballX = useRef(new Animated.Value(0)).current;
-  const ballY = useRef(new Animated.Value(PH / 2 - 9)).current;
-  const glow = useRef(new Animated.Value(0)).current;
-  const pop = useRef(new Animated.Value(0)).current;
-  const [popText, setPopText] = useState(null);
-  const pressRef = useRef(press);
-  pressRef.current = press;
-
-  useEffect(() => {
-    if (!w || !showPitch) return undefined;
-    let alive = true;
-    let timer = null;
-    const step = () => {
-      if (!alive) return;
-      const p = pressRef.current;
-      // centre of play: towards the goal being attacked, a little random so it keeps moving
-      const centre = w / 2 + (w / 2) * p * 0.78;
-      const spread = Math.abs(p) < 0.15 ? w * 0.22 : w * 0.12;
-      const x = Math.max(12, Math.min(w - 30, centre + (Math.random() * 2 - 1) * spread - 9));
-      const y = Math.max(8, Math.min(PH - 26, PH / 2 - 9 + (Math.random() * 2 - 1) * (PH * 0.32)));
-      const d = 900 + Math.random() * 900;
-      Animated.parallel([
-        Animated.timing(ballX, { toValue: x, duration: d, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-        Animated.timing(ballY, { toValue: y, duration: d, easing: Easing.inOut(Easing.quad), useNativeDriver: true }),
-      ]).start(() => {
-        timer = setTimeout(step, 150 + Math.random() * 500);
-      });
-    };
-    ballX.setValue(w / 2 - 9);
-    step();
-    const loop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glow, { toValue: 1, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-        Animated.timing(glow, { toValue: 0, duration: 900, easing: Easing.inOut(Easing.sin), useNativeDriver: true }),
-      ]),
-    );
-    loop.start();
-    return () => {
-      alive = false;
-      clearTimeout(timer);
-      loop.stop();
-      ballX.stopAnimation();
-      ballY.stopAnimation();
-    };
-  }, [w, showPitch]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // a pop-up on the pitch for each new event (not for the one already there when the page opened)
-  const seen = useRef(null);
-  const latestKey = latest ? `${latest.time.displayValue}|${latest.kind}|${latest.text}` : null;
-  useEffect(() => {
-    if (!latestKey) return undefined;
-    if (seen.current == null) {
-      seen.current = latestKey;
-      return undefined;
-    }
-    if (seen.current === latestKey) return undefined;
-    seen.current = latestKey;
-    const txt = POP[latest.kind] || (latest.important ? KIND_LABEL[latest.kind] || null : null);
-    if (!txt) return undefined;
-    setPopText(txt);
-    pop.setValue(0);
-    Animated.sequence([
-      Animated.spring(pop, { toValue: 1, friction: 5, tension: 120, useNativeDriver: true }),
-      Animated.delay(3200),
-      Animated.timing(pop, { toValue: 0, duration: 350, useNativeDriver: true }),
-    ]).start(() => setPopText(null));
-    return undefined;
-  }, [latestKey]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  if (m.state !== 'in' || (!items.length && !mom)) return null;
+  if (m.state !== 'in' || !items.length) return null;
   const ic = latest && kindIcon(latest.kind);
-  const line = 'rgba(255,255,255,0.55)';
-  const zoneColor = press > 0 ? 'rgba(10,132,255,0.38)' : 'rgba(255,149,0,0.4)';
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 10 }}>
         <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: t.live, marginRight: 7 }} />
-        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>Match momentum · illustrative</Text>
+        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>Live updates</Text>
         <Text style={{ color: t.live, fontWeight: '800', fontSize: 13 }}>{m.short}</Text>
       </View>
-      {showPitch ? (
-        <>
-          <View onLayout={(e) => setW(e.nativeEvent.layout.width)} style={{ height: PH, borderRadius: 14, backgroundColor: t.dark ? '#1E5A2E' : '#2E8B47', overflow: 'hidden' }}>
-            {/* mown stripes */}
-            {[0, 1, 2, 3, 4, 5, 6, 7].map((i) => (
-              <View key={i} style={{ position: 'absolute', top: 0, bottom: 0, left: `${i * 12.5}%`, width: '12.5%', backgroundColor: i % 2 ? 'rgba(255,255,255,0.045)' : 'transparent' }} />
-            ))}
-            {/* the attacked end pulses */}
-            {Math.abs(press) >= 0.15 ? (
-              <Animated.View
-                style={{
-                  position: 'absolute',
-                  top: 0,
-                  bottom: 0,
-                  width: '42%',
-                  [press > 0 ? 'right' : 'left']: 0,
-                  backgroundColor: zoneColor,
-                  opacity: glow.interpolate({ inputRange: [0, 1], outputRange: [danger ? 0.45 : 0.3, danger ? 1 : 0.75] }),
-                }}
-              />
-            ) : null}
-            {/* pitch markings */}
-            <View style={{ position: 'absolute', left: 6, right: 6, top: 6, bottom: 6, borderWidth: 1.5, borderColor: line, borderRadius: 3 }} />
-            <View style={{ position: 'absolute', left: '50%', top: 6, bottom: 6, width: 1.5, marginLeft: -0.75, backgroundColor: line }} />
-            <View style={{ position: 'absolute', left: '50%', top: PH / 2 - 18, width: 36, height: 36, marginLeft: -18, borderRadius: 18, borderWidth: 1.5, borderColor: line }} />
-            <View style={{ position: 'absolute', left: 6, top: PH / 2 - 28, width: 34, height: 56, borderWidth: 1.5, borderLeftWidth: 0, borderColor: line }} />
-            <View style={{ position: 'absolute', right: 6, top: PH / 2 - 28, width: 34, height: 56, borderWidth: 1.5, borderRightWidth: 0, borderColor: line }} />
-            <View style={{ position: 'absolute', left: 6, top: PH / 2 - 13, width: 13, height: 26, borderWidth: 1.5, borderLeftWidth: 0, borderColor: line }} />
-            <View style={{ position: 'absolute', right: 6, top: PH / 2 - 13, width: 13, height: 26, borderWidth: 1.5, borderRightWidth: 0, borderColor: line }} />
-            <Text style={{ position: 'absolute', left: 12, top: 9, color: 'rgba(255,255,255,0.92)', fontSize: 11, fontWeight: '800' }}>{m.home.abbr || m.home.short}</Text>
-            <Text style={{ position: 'absolute', right: 12, top: 9, color: 'rgba(255,255,255,0.92)', fontSize: 11, fontWeight: '800' }}>{m.away.abbr || m.away.short}</Text>
-            {w ? (
-              <Animated.View
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  top: 0,
-                  width: 18,
-                  height: 18,
-                  borderRadius: 9,
-                  backgroundColor: '#fff',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  boxShadow: '0px 2px 6px rgba(0,0,0,0.4)',
-                  transform: [{ translateX: ballX }, { translateY: ballY }],
-                }}
-              >
-                <Ionicons name="football" size={16} color="#111" />
-              </Animated.View>
-            ) : null}
-            {popText ? (
-              <Animated.View
-                pointerEvents="none"
-                style={{
-                  position: 'absolute',
-                  left: 0,
-                  right: 0,
-                  top: PH / 2 - 17,
-                  alignItems: 'center',
-                  opacity: pop,
-                  transform: [{ scale: pop.interpolate({ inputRange: [0, 1], outputRange: [0.6, 1] }) }],
-                }}
-              >
-                <View style={{ paddingHorizontal: 14, height: 34, borderRadius: 17, backgroundColor: 'rgba(0,0,0,0.72)', flexDirection: 'row', alignItems: 'center' }}>
-                  {ic ? <Ionicons name={ic[0]} size={15} color={ic[1] || '#fff'} style={{ marginRight: 6 }} /> : null}
-                  <Text style={{ color: '#fff', fontSize: 15, fontWeight: '900' }}>{popText}</Text>
-                </View>
-              </Animated.View>
-            ) : null}
-          </View>
-          <Text style={{ color: danger ? t.live : t.secondary, fontSize: 12.5, fontWeight: '800', textAlign: 'center', marginTop: 6 }}>{label}</Text>
-        </>
-      ) : null}
       {latest ? (
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginTop: showPitch ? 10 : 0, padding: 12, borderRadius: 14, backgroundColor: t.track }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', padding: 12, borderRadius: 14, backgroundColor: t.track }}>
           <View style={{ width: 34, height: 34, borderRadius: 11, backgroundColor: t.bg, alignItems: 'center', justifyContent: 'center', marginRight: 10 }}>
             <Ionicons name={(ic && ic[0]) || 'radio-outline'} size={18} color={(ic && ic[1]) || t.text} />
           </View>
