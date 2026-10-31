@@ -19,7 +19,7 @@ export default function ArticleScreen({ route }) {
   const nav = useNav();
   const insets = useSafeAreaInsets();
   const web = useRef(null);
-  const [url, setUrl] = useState(route.url);
+  const [url, setUrl] = useState(route.url || '');
   const [canBack, setCanBack] = useState(false);
   const [progress, setProgress] = useState(0);
   const [failed, setFailed] = useState(false);
@@ -57,7 +57,7 @@ export default function ArticleScreen({ route }) {
       ) : null}
       <WebView
         ref={web}
-        source={{ uri: route.url }}
+        source={route.html ? { html: route.html, baseUrl: 'https://fastscore.local/' } : { uri: route.url }}
         style={{ flex: failed ? 0 : 1, backgroundColor: t.bg }}
         startInLoadingState
         renderLoading={() => (

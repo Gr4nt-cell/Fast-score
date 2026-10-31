@@ -4,13 +4,9 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - 'server/**'
-      - 'wrangler.toml'
       - '.github/workflows/odds.yml'
       - '.github/workflows/leagues-index.yml'
       - '.github/workflows/plugin-mirror.yml'
-      - '.github/workflows/deploy-server.yml'
-      - '.github/workflows/check-server.yml'
   workflow_dispatch:
 
 permissions:

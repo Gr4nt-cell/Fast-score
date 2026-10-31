@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Switch, View } from 'react-native';
+import { ActivityIndicator, Platform, Switch, View } from 'react-native';
 import { Text } from '../components/Text';
 import { ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import Constants from 'expo-constants';
@@ -8,13 +8,13 @@ import { useStore } from '../store';
 import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { fixtureBoardCache } from '../api/fixtureBoardStore';
-import { serverStatus } from '../api/server';
 import { ensurePermission, openNotificationSettings, permissionStatus, sendTestNotification } from '../notify';
 import { ALERT_KINDS, alertOn, askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable, playTone } from '../live';
 import { AppState, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LANGUAGES } from '../i18n';
 import { useNav } from '../nav';
+import { PRIVACY, CHILD_SAFETY } from '../legalPages';
 import { LanguageWheel } from '../components/LanguageWheel';
 import { Card, PushHeader, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { Pressable } from '../components/Touch';
@@ -36,7 +36,6 @@ export default function SettingsScreen() {
   const t = useTheme();
   const { settings, setSetting } = useStore();
   const [cleared, setCleared] = useState(false);
-  const [server, setServer] = useState(null);
   const [notif, setNotif] = useState(null);
   const [testNotificationStatus, setTestNotificationStatus] = useState('');
   const [testingNotification, setTestingNotification] = useState(false);
@@ -51,9 +50,6 @@ export default function SettingsScreen() {
       permissionStatus().then(setNotif);
     });
     return () => sub.remove();
-  }, []);
-  useEffect(() => {
-    serverStatus().then(setServer);
   }, []);
   const [langOpen, setLangOpen] = useState(false);
   const nav = useNav();
@@ -144,11 +140,11 @@ export default function SettingsScreen() {
               setSetting('goalAlerts', v);
               if (v) setNotif((await ensurePermission(true)) ? 'granted' : await permissionStatus());
             }}
-            last={!settings.goalAlerts || (notif === 'granted' && ((battery && alarms) || !liveAvailable()))}
+            last={Platform.OS !== 'android' && (!settings.goalAlerts || (notif === 'granted' && ((battery && alarms) || !liveAvailable())))}
           />
           {settings.goalAlerts && notif && notif !== 'granted' ? (
             <Row
-              last
+              last={Platform.OS !== 'android'}
               onPress={async () => {
                 if (notif === 'denied') openNotificationSettings();
                 else setNotif((await ensurePermission(true)) ? 'granted' : await permissionStatus());
@@ -161,7 +157,7 @@ export default function SettingsScreen() {
             </Row>
           ) : null}
           {settings.goalAlerts && notif === 'granted' && liveAvailable() && !alarms ? (
-            <Row last={battery} onPress={() => askExactAlarms()}>
+            <Row last={Platform.OS !== 'android' && battery} onPress={() => askExactAlarms()}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: t.orange, fontSize: 15, fontWeight: '600' }}>Allow alarms for kick-off</Text>
                 <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Turn on "Alarms & reminders" for Fast Score so live alerts start right at kick-off.</Text>
@@ -169,10 +165,18 @@ export default function SettingsScreen() {
             </Row>
           ) : null}
           {settings.goalAlerts && notif === 'granted' && liveAvailable() && !battery ? (
-            <Row last onPress={() => askBatteryUnrestricted()}>
+            <Row last={Platform.OS !== 'android'} onPress={() => askBatteryUnrestricted()}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: t.orange, fontSize: 15, fontWeight: '600' }}>Let live alerts run in the background</Text>
                 <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Tap, find Fast Score and choose "Don't optimise" / "Allow", so the battery saver doesn't pause alerts during a match. On OPPO / realme also set its battery use to "Allow background activity".</Text>
+              </View>
+            </Row>
+          ) : null}
+          {Platform.OS === 'android' ? (
+            <Row last onPress={() => Linking.openSettings().catch(() => {})}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>Allow background data use</Text>
+                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Open Android app settings and allow background data so score updates and live alerts can continue when Fast Score is closed.</Text>
               </View>
             </Row>
           ) : null}
@@ -262,20 +266,6 @@ export default function SettingsScreen() {
           </>
         ) : null}
 
-        <SectionTitle>Fast Score server</SectionTitle>
-        <Card>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <View style={{ width: 10, height: 10, borderRadius: 5, marginRight: 10, backgroundColor: !server ? t.tertiary : server.connected ? t.green : t.orange }} />
-            <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '600', flex: 1 }}>{!server ? 'Checking…' : server.connected ? 'Connected' : 'Not connected'}</Text>
-          </View>
-          <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 6, lineHeight: 18 }}>
-            {!server
-              ? ''
-              : server.connected
-              ? `${(server.events || 0).toLocaleString()} games stored${server.history_since ? ` since ${new Date(server.history_since).toLocaleDateString()}` : ''} · ${server.live_now || 0} live now · last sync ${server.last_sync ? new Date(server.last_sync).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}`
-              : 'The app is fetching from ESPN directly. Everything still works; the server adds a shared cache and match history.'}
-          </Text>
-        </Card>
         <SectionTitle>Data</SectionTitle>
         <Card>
           <Row
@@ -292,10 +282,10 @@ export default function SettingsScreen() {
         </Card>
         <SectionTitle>About</SectionTitle>
         <Card>
-          <Row onPress={() => nav.push({ name: 'article', url: 'https://fast-score.gstephen116.workers.dev/privacy', title: 'Privacy policy' })}>
+          <Row onPress={() => nav.push({ name: 'article', html: PRIVACY, title: 'Privacy policy' })}>
             <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Privacy policy</Text>
           </Row>
-          <Row last onPress={() => nav.push({ name: 'article', url: 'https://fast-score.gstephen116.workers.dev/child-safety', title: 'Child safety standards' })}>
+          <Row last onPress={() => nav.push({ name: 'article', html: CHILD_SAFETY, title: 'Child safety standards' })}>
             <Text style={{ color: t.blue, fontSize: 15.5, fontWeight: '600', flex: 1 }}>Child safety standards</Text>
           </Row>
         </Card>

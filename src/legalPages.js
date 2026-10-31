@@ -1,7 +1,6 @@
 // Public pages for the store listing: privacy policy and child safety standards.
-// Served by the Worker at /privacy and /child-safety.
 
-const UPDATED = '29 October 2026';
+const UPDATED = '31 October 2026';
 const CONTACT = 'gstephen116@gmail.com';
 const DEV = 'Gr4nt';
 
@@ -19,7 +18,6 @@ p,li{color:var(--text)}.muted{color:var(--muted);font-size:14px}ul{padding-left:
 a{color:var(--accent)}nav{display:flex;gap:16px;font-size:14px}
 table{width:100%;border-collapse:collapse;font-size:14.5px}td,th{text-align:left;padding:8px 6px;border-bottom:1px solid var(--line);vertical-align:top}th{color:var(--muted);font-weight:600}
 </style></head><body><main>
-<nav><a href="/privacy">Privacy policy</a><a href="/child-safety">Child safety</a></nav>
 <h1>${title}</h1><p class="muted">Fast Score · by ${DEV} · Last updated ${UPDATED}</p>
 ${body}
 </main></body></html>`;
@@ -53,7 +51,6 @@ export const PRIVACY = page(
 <tr><td>ESPN public APIs, TheSportsDB</td><td>Back-up sports data and news</td></tr>
 <tr><td>SofaScore (only if chosen as a data source)</td><td>Sports data, opened in a hidden in-app browser page, which may store that site's cookies on your device</td></tr>
 <tr><td>GitHub (raw.githubusercontent.com)</td><td>The app's lists of competitions and odds</td></tr>
-<tr><td>Fast Score server (Cloudflare Workers)</td><td>A shared cache of sports data. Cloudflare processes IP addresses to deliver and protect the service; we keep no logs that identify you</td></tr>
 </table></div>
 
 <div class="card"><h2>Notifications</h2>
@@ -72,7 +69,7 @@ export const PRIVACY = page(
 <p>Bookmaker odds are shown for information only. Fast Score does not take bets, process payments or link your betting accounts. AI Picks are statistical estimates made on your phone, not betting advice. Gambling is for adults (18+) only; please bet responsibly.</p></div>
 
 <div class="card"><h2>Children</h2>
-<p>Fast Score is intended for users aged 18 and over because it shows betting odds. We do not knowingly collect any personal information from anyone, including children. See our <a href="/child-safety">child safety standards</a>.</p></div>
+<p>Fast Score is intended for users aged 18 and over because it shows betting odds. We do not knowingly collect any personal information from anyone, including children. See our child safety standards.</p></div>
 
 <div class="card"><h2>Your choices and rights</h2>
 <p>Because we hold no personal data about you, there is nothing for us to access, correct or delete on our side. You can delete everything the app stores at any time with <em>Settings → Clear cached data</em>, by clearing the app's storage in your phone's settings, or by uninstalling the app. For any question or request, contact <a href="mailto:${CONTACT}">${CONTACT}</a>. This applies wherever you live, including under the GDPR, the UK GDPR, Ghana's Data Protection Act 2012 (Act 843) and US state privacy laws.</p></div>

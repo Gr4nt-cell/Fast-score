@@ -98,12 +98,13 @@ export default function MatchesScreen({ liveMode = false }) {
     load(false);
   }, [load]);
 
-  // Refresh only when a match can change soon; don't poll an idle day's fixture list.
+  // Keep today's board updating, with faster polling around live matches.
   const refreshPlan = useMemo(() => fixtureRefreshPlan(groups), [groups]);
   useEffect(() => {
     const refresh = () => load(true, true);
-    if (refreshPlan.pollIntervalMs) {
-      const iv = setInterval(refresh, refreshPlan.pollIntervalMs);
+    const pollIntervalMs = refreshPlan.pollIntervalMs || ((live || sameDay(date, new Date())) ? 60_000 : null);
+    if (pollIntervalMs) {
+      const iv = setInterval(refresh, pollIntervalMs);
       return () => clearInterval(iv);
     }
     if (refreshPlan.refreshAt != null) {
@@ -111,7 +112,7 @@ export default function MatchesScreen({ liveMode = false }) {
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [refreshPlan, load]);
+  }, [refreshPlan, load, live, date]);
 
   const sp = sportByKey(sport);
   const shown = useMemo(() => {
