@@ -5,7 +5,7 @@ import { favMatch } from './components/match';
 import { tr } from './i18n';
 
 // Android retains channel settings between app upgrades; version channel IDs when repairing them.
-const CHANNEL = 'scores_v2';
+const CHANNEL = 'scores_v3';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
@@ -81,7 +81,7 @@ const KIND_CHANNELS = {
 };
 const kindReady = {};
 function kindChannel(kind) {
-  const id = `ev_${kind}_v2`;
+  const id = `ev_${kind}_v3`;
   if (Platform.OS !== 'android') return Promise.resolve(id);
   if (!kindReady[kind]) {
     kindReady[kind] = Notifications.setNotificationChannelAsync(id, {
