@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { ScrollGlowFlatList as FlatList } from '../components/Glass';
 import { RefreshControl, View } from 'react-native';
 import { Text } from '../components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -12,6 +11,9 @@ import { attachOdds } from '../api/msport';
 import { LeagueBlock, SportPill } from '../components/match';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { Empty, GlassCircle, LiveDot, Loading } from '../components/ui';
+import { ScrollGlowFlatList as FlatList } from '../components/Glass';
+import { fixtureBoardKey, savedOnLocalDay } from '../api/fixtureBoardCache';
+import { fixtureBoardCache } from '../api/fixtureBoardStore';
 
 /**
  * Matches tab and Live tab. Layout from the sketch: a fixed top bar (filter circle · sport
@@ -25,22 +27,38 @@ export default function MatchesScreen({ liveMode = false }) {
   // the Live tab starts on every sport at once
   const [sport, setSport] = useState(liveMode ? 'all' : settings.sport || 'soccer');
   const [date, setDate] = useState(startOfDay(new Date()));
-  const [groups, setGroups] = useState(null);
+  const [board, setBoard] = useState({ key: null, groups: null });
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const [view, setView] = useState('all'); // all | odds
   const reqId = useRef(0);
   const live = liveMode;
+  const dayStamp = live ? startOfDay(new Date()).getTime() : startOfDay(date).getTime();
+  const day = new Date(dayStamp);
+  const boardKey = fixtureBoardKey(sport, day);
+  const groups = board.key === boardKey ? board.groups : null;
 
   const load = useCallback(
-    async (quiet) => {
+    async (quiet, force = false) => {
       const id = ++reqId.current;
-      if (!quiet) setGroups(null);
+      const isToday = sameDay(day, new Date());
+      if (!quiet) {
+        setBoard((current) => (current.key === boardKey && current.groups ? current : { key: boardKey, groups: null }));
+        const snapshot = await fixtureBoardCache.get(boardKey);
+        if (id !== reqId.current) return;
+        if (snapshot) {
+          const cachedGroups = Array.from(snapshot.groups);
+          if (snapshot.source) cachedGroups.source = snapshot.source;
+          setBoard({ key: boardKey, groups: cachedGroups });
+          if (isToday && savedOnLocalDay(snapshot, day)) {
+            setError(null);
+            return;
+          }
+        }
+      }
       setError(null);
       try {
-        const isToday = sameDay(date, new Date());
-        const day = live ? new Date() : date;
-        const ttl = isToday || live ? 20000 : 5 * 60 * 1000;
+        const ttl = force ? 0 : isToday || live ? 20000 : 5 * 60 * 1000;
         let res;
         if (sport === 'all') {
           const per = await pool(SPORTS, 4, async (s) => (await dayBoard(s.key, day, { ttl })).map((g) => ({ ...g, sport: s.key })));
@@ -51,7 +69,8 @@ export default function MatchesScreen({ liveMode = false }) {
           res.source = b.source;
         }
         if (id !== reqId.current) return;
-        setGroups(res);
+        setBoard({ key: boardKey, groups: res });
+        fixtureBoardCache.set(boardKey, res);
         // today: note MSport's prices in the background, so finished matches can show closing odds
         // (any day in view, so opening a match shows its odds straight away)
         if (view !== 'odds' && !live && sport !== 'all') attachOdds(res, sport).catch(() => {});
@@ -62,15 +81,15 @@ export default function MatchesScreen({ liveMode = false }) {
           if (id !== reqId.current) return;
           const copy = res.map((g) => ({ ...g, items: [...g.items] }));
           copy.source = res.source;
-          setGroups(copy);
+          setBoard({ key: boardKey, groups: copy });
         }
       } catch (e) {
         if (id !== reqId.current) return;
         setError(e.message || 'Could not load matches');
-        setGroups([]);
+        setBoard((current) => (current.key === boardKey && current.groups ? current : { key: boardKey, groups: [] }));
       }
     },
-    [sport, date, live, settings.source, view] // eslint-disable-line react-hooks/exhaustive-deps
+    [sport, date, dayStamp, live, boardKey, settings.source, view] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
@@ -107,10 +126,14 @@ export default function MatchesScreen({ liveMode = false }) {
   // days holding a match you follow get a dot, like days with calls in the dialer
   const marked = useMemo(() => new Set(favs.matches.filter((m) => sport === 'all' || m.sport === sport).map((m) => new Date(m.date).toDateString())), [favs.matches, sport]);
   const sportName = sport === 'all' ? 'All sports' : sp.name;
+  const renderLeague = useCallback(
+    ({ item }) => <LeagueBlock group={item} sport={item.sport || sport} showOdds={view === 'odds'} />,
+    [sport, view],
+  );
 
   const summary = live
     ? `${liveCount} live now`
-    : `${sameDay(date, new Date()) ? 'Today' : date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}${groups ? ` · ${total} events` : ''}`;
+    : `${sameDay(date, new Date()) ? 'Today' : date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' })}${groups ? ` · ${total} events` : ''}${error && groups ? ' · saved fixtures' : ''}`;
 
   // ---- fixed part: top bar (+ calendar on Matches) ----
   const fixed = (
@@ -146,7 +169,7 @@ export default function MatchesScreen({ liveMode = false }) {
         style={{ flex: 1 }}
         data={groups ? shown : []}
         keyExtractor={(g) => `${g.sport}/${g.league.slug}`}
-        renderItem={({ item }) => <LeagueBlock group={item} sport={item.sport || sport} showOdds={view === 'odds'} />}
+        renderItem={renderLeague}
         ListEmptyComponent={
           !groups ? (
             <Loading label={`Loading ${sportName.toLowerCase()}…`} />
@@ -172,13 +195,15 @@ export default function MatchesScreen({ liveMode = false }) {
             tintColor={t.secondary}
             onRefresh={async () => {
               setRefreshing(true);
-              await load(true);
+              await load(true, true);
               setRefreshing(false);
             }}
           />
         }
-        initialNumToRender={4}
-        windowSize={7}
+        initialNumToRender={3}
+        maxToRenderPerBatch={3}
+        updateCellsBatchingPeriod={40}
+        windowSize={5}
       />
     </View>
   );

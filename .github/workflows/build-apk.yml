@@ -48,7 +48,7 @@ jobs:
       - name: Install dependencies
         run: npm ci --no-audit --no-fund
       - name: Check context model
-        run: node --experimental-default-type=module --test tests/competition-context.test.js tests/tracked-keys.test.js tests/notification-sound-config.test.js
+        run: node --experimental-default-type=module --test tests/competition-context.test.js tests/tracked-keys.test.js tests/notification-sound-config.test.js tests/fixture-board-cache.test.js
       - name: Set version code
         run: |
           export VERSION_CODE=$((100 + $(git rev-list --count HEAD)))

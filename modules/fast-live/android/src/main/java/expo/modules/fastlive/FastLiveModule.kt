@@ -44,6 +44,31 @@ class FastLiveModule : Module() {
     /** Play an alert tone: goal, kickoff, halftime, fulltime, redcard, lineups. */
     Function("playTone") { kind: String -> Live.playTone(ctx, kind) }
 
+    /** Post a notification directly through Android and report the active channel settings. */
+    Function("testNotification") { Live.testNotification(ctx) }
+
+    /** Open the exact Android channel used by the test and goal alerts. */
+    Function("openGoalNotificationSettings") {
+      try {
+        val intent = Intent(Settings.ACTION_CHANNEL_NOTIFICATION_SETTINGS).apply {
+          putExtra(Settings.EXTRA_APP_PACKAGE, ctx.packageName)
+          putExtra(Settings.EXTRA_CHANNEL_ID, Live.channelOf("goal"))
+          addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        }
+        ctx.startActivity(intent)
+        true
+      } catch (e: Exception) {
+        try {
+          val intent = Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))
+          intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+          ctx.startActivity(intent)
+          true
+        } catch (e2: Exception) {
+          false
+        }
+      }
+    }
+
     /** Only matches the running live service is polling; others need the background fallback. */
     Function("trackedKeys") {
       if (LiveService.running) Live.due(ctx).map { it.key } else emptyList<String>()

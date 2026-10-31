@@ -12,6 +12,7 @@ import android.content.Intent
 import android.media.AudioAttributes
 import android.net.Uri
 import android.os.Build
+import android.provider.Settings
 import org.json.JSONArray
 import org.json.JSONObject
 import java.net.HttpURLConnection
@@ -53,7 +54,7 @@ data class Snap(
 
 object Live {
   private const val PREFS = "fastlive"
-  const val CH_SCORES = "scores_v4"
+  const val CH_SCORES = "scores_v5"
   const val CH_LIVE = "live-tracker"
   const val EXTRA_TAP = "fastlive_match"
   const val LEAD_MS = 10 * 60 * 1000L       // wake this long before kick-off
@@ -64,7 +65,7 @@ object Live {
   private val KIND_NAMES = mapOf(
     "goal" to "Goals", "kickoff" to "Kick-off", "halftime" to "Half-time", "fulltime" to "Full-time", "redcard" to "Red cards", "lineups" to "Line-ups",
   )
-  fun channelOf(kind: String) = "ev_${kind}_v4"
+  fun channelOf(kind: String) = "ev_${kind}_v5"
 
   /** Which kinds of alert the user wants (Settings -> Alert tones); all on by default. */
   fun kindOn(ctx: Context, kind: String): Boolean {
@@ -167,7 +168,7 @@ object Live {
       nm.createNotificationChannel(NotificationChannel(channelOf(k), KIND_NAMES[k] ?: k, if (k == "lineups") NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH).apply {
         description = "Alerts for matches and teams you follow"
         enableVibration(true)
-        toneUri(ctx, k)?.let { setSound(it, attrs) }
+        setSound(toneUri(ctx, k) ?: Settings.System.DEFAULT_NOTIFICATION_URI, attrs)
       })
     }
     if (nm.getNotificationChannel(CH_LIVE) == null) {
@@ -176,6 +177,58 @@ object Live {
         setShowBadge(false)
       })
     }
+  }
+
+  /** Android-native test bypassing JS scheduling so channel and OS behavior can be diagnosed. */
+  fun testNotification(ctx: Context): String {
+    channels(ctx)
+    val channelId = channelOf("goal")
+    val nm = ctx.getSystemService(NotificationManager::class.java)
+    val channel = if (Build.VERSION.SDK_INT >= 26) nm.getNotificationChannel(channelId) else null
+    val notificationsEnabled = nm.areNotificationsEnabled()
+    val importance = channel?.importance ?: NotificationManager.IMPORTANCE_HIGH
+    val soundEnabled = Build.VERSION.SDK_INT < 26 || channel?.sound != null
+    var posted = false
+    var error = ""
+
+    if (!notificationsEnabled) {
+      error = "notifications_disabled"
+    } else if (Build.VERSION.SDK_INT >= 26 && importance == NotificationManager.IMPORTANCE_NONE) {
+      error = "channel_blocked"
+    } else {
+      try {
+        @Suppress("DEPRECATION")
+        val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(ctx, channelId) else Notification.Builder(ctx)
+        builder.setSmallIcon(smallIcon(ctx))
+          .setContentTitle("Fast Score test notification")
+          .setContentText("This is an Android-native sound and pop-up check.")
+          .setCategory(Notification.CATEGORY_EVENT)
+          .setPriority(Notification.PRIORITY_HIGH)
+          .setAutoCancel(true)
+          .setWhen(System.currentTimeMillis())
+          .setContentIntent(openApp(ctx, null, 7102))
+        if (Build.VERSION.SDK_INT < 26) {
+          @Suppress("DEPRECATION")
+          builder.setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
+          toneUri(ctx, "goal")?.let { builder.setSound(it) }
+        }
+        nm.notify(7102, builder.build())
+        posted = true
+      } catch (e: SecurityException) {
+        error = "permission"
+      } catch (e: Exception) {
+        error = e.javaClass.simpleName
+      }
+    }
+
+    return JSONObject()
+      .put("posted", posted)
+      .put("notificationsEnabled", notificationsEnabled)
+      .put("channelId", channelId)
+      .put("channelImportance", importance)
+      .put("channelSoundEnabled", soundEnabled)
+      .put("error", error)
+      .toString()
   }
 
   fun smallIcon(ctx: Context): Int {

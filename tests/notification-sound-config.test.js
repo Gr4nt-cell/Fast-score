@@ -17,15 +17,24 @@ test('Android notification channels use fresh, matching IDs', async () => {
     path.join(root, 'modules/fast-live/android/src/main/java/expo/modules/fastlive/Live.kt'),
     'utf8',
   );
+  const nativeModule = await readFile(
+    path.join(root, 'modules/fast-live/android/src/main/java/expo/modules/fastlive/FastLiveModule.kt'),
+    'utf8',
+  );
 
-  assert.equal(notifications.defaultChannel, 'scores_v4');
-  assert.match(jsNotifications, /const CHANNEL = 'scores_v4'/);
-  assert.match(nativeLive, /const val CH_SCORES = "scores_v4"/);
-  assert.match(jsNotifications, /`ev_\$\{kind\}_v4`/);
-  assert.match(nativeLive, /"ev_\$\{kind\}_v4"/);
+  assert.equal(notifications.defaultChannel, 'scores_v5');
+  assert.match(jsNotifications, /const CHANNEL = 'scores_v5'/);
+  assert.match(nativeLive, /const val CH_SCORES = "scores_v5"/);
+  assert.match(jsNotifications, /`ev_\$\{kind\}_v5`/);
+  assert.match(nativeLive, /"ev_\$\{kind\}_v5"/);
   assert.match(jsNotifications, /shouldShowAlert: true/);
   assert.match(jsNotifications, /getNotificationChannelAsync\(channelId\)/);
   assert.match(jsNotifications, /AndroidNotificationPriority\.HIGH/);
+  assert.match(jsNotifications, /SchedulableTriggerInputTypes\.TIME_INTERVAL/);
+  assert.match(jsNotifications, /FastLive\?\.testNotification/);
+  assert.match(nativeLive, /fun testNotification\(ctx: Context\): String/);
+  assert.match(nativeModule, /Function\("testNotification"\)/);
+  assert.match(nativeLive, /Settings\.System\.DEFAULT_NOTIFICATION_URI/);
 });
 
 test('all notification sounds are declared and packaged as app assets', async () => {

@@ -1,12 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { Switch, View } from 'react-native';
-import { ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Text } from '../components/Text';
+import { ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import Constants from 'expo-constants';
 import { useTheme } from '../theme';
 import { useStore } from '../store';
 import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
+import { fixtureBoardCache } from '../api/fixtureBoardStore';
 import { serverStatus } from '../api/server';
 import { ensurePermission, openNotificationSettings, permissionStatus, sendTestNotification } from '../notify';
 import { ALERT_KINDS, alertOn, askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable, playTone } from '../live';
@@ -204,31 +205,28 @@ export default function SettingsScreen() {
                 );
               })}
               <Row
-                last={!testNotificationStatus}
+                last
                 onPress={async () => {
                   setTestNotificationStatus('Scheduling test notification…');
-                    const result = await sendTestNotification();
-                    const health = result.channelHealth;
-                    let message = 'Could not schedule the test. Check notification settings and retry.';
-                    if (result.ok) {
-                      message = 'Test scheduled. Check your notification shade and sound.';
-                      if (health?.soundEnabled === false) {
-                        message = 'Test sent, but Android has muted this channel. Open phone settings and enable sound and pop-up alerts.';
-                      } else if (health?.highImportance === false) {
-                        message = 'Test sent, but Android is not set to show a pop-up. Change this channel to High in phone settings.';
-                      } else if (health?.soundEnabled === true && health?.highImportance === true) {
-                        message = 'Test sent. Android reports sound and pop-up enabled; check Do Not Disturb and phone volume if still silent.';
-                      }
-                    } else if (result.reason === 'permission') {
-                      message = 'Allow notifications for Fast Score, then try again.';
-                    }
-                    setTestNotificationStatus(message);
+                  const result = await sendTestNotification();
+                  const channelHealth = result.channelHealth;
+                  const diagnostics = result.diagnostics;
                   setTestNotificationStatus(
-                    result.ok
-                      ? 'Test scheduled. Check your notification shade and sound.'
-                      : result.reason === 'permission'
-                      ? 'Allow notifications for Fast Score, then try again.'
-                      : 'Could not schedule the test. Check notification settings and retry.'
+                    diagnostics?.notificationsEnabled === false
+                      ? 'Android has notifications disabled for Fast Score. Open the goal alert channel settings and enable notifications.'
+                      : diagnostics?.channelImportance === 0
+                        ? 'Android has blocked the goal alert channel. Set it to High in the channel settings.'
+                        : diagnostics?.channelSoundEnabled === false
+                          ? 'Android has muted the goal alert channel. Enable sound in the channel settings.'
+                          : diagnostics?.channelImportance > 0 && diagnostics.channelImportance < 4
+                            ? 'Android has lowered the goal alert channel. Set it to High to show pop-ups.'
+                            : result.ok && channelHealth?.soundEnabled === true && channelHealth?.highImportance === true
+                              ? 'Android posted the test on the High channel. If no sound or pop-up appeared, check Do Not Disturb and phone volume.'
+                              : result.ok
+                                ? 'Android posted the test. Check the notification shade and channel settings.'
+                                : result.reason === 'permission'
+                                  ? 'Allow notifications for Fast Score, then try again.'
+                                  : `Android could not post the test (${diagnostics?.error || result.reason || 'unknown error'}). Open channel settings and retry.`
                   );
                 }}
               >
@@ -241,14 +239,13 @@ export default function SettingsScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
               </Row>
-
               {testNotificationStatus ? (
-                  <Row last onPress={openNotificationSettings}>
-                    <Ionicons name="settings-outline" size={20} color={t.blue} style={{ marginRight: 12 }} />
-                    <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500', flex: 1 }}>Open phone notification settings</Text>
-                    <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
-                  </Row>
-                ) : null}
+                <Row last onPress={openNotificationSettings}>
+                  <Ionicons name="settings-outline" size={20} color={t.blue} style={{ marginRight: 12 }} />
+                  <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500', flex: 1 }}>Open phone notification settings</Text>
+                  <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
+                </Row>
+              ) : null}
             </Card>
             <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 20, marginTop: -6, marginBottom: 14, lineHeight: 17 }}>
               Tap ▶ to hear a tone. Line-up alerts come about an hour before kick-off for followed football matches. You can also change each sound in your phone's notification settings.
@@ -276,6 +273,7 @@ export default function SettingsScreen() {
             last
             onPress={async () => {
               await clearCache();
+              await fixtureBoardCache.clear();
               setCleared(true);
             }}
           >

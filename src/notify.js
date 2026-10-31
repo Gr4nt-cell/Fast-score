@@ -3,10 +3,11 @@ import { Linking, Platform } from 'react-native';
 import * as Notifications from 'expo-notifications';
 import { favMatch } from './components/match';
 import { tr } from './i18n';
+import FastLive from '../modules/fast-live';
 
 // Android keeps a channel's sound settings across app upgrades, even if the app
 // changes its configuration. Bump this when repairing channel behavior.
-const CHANNEL = 'scores_v4';
+const CHANNEL = 'scores_v5';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -61,7 +62,20 @@ export async function ensurePermission(ask = true) {
   }
 }
 
-export const openNotificationSettings = () => Linking.openSettings().catch(() => {});
+export const openNotificationSettings = () => {
+  try {
+    if (Platform.OS === 'android' && FastLive?.openGoalNotificationSettings) {
+      return FastLive.openGoalNotificationSettings();
+    }
+  } catch {}
+  return Linking.openSettings().catch(() => {});
+};
+
+const channelTrigger = (channelId) => ({
+  type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+  seconds: 1,
+  channelId,
+});
 
 function text(ev) {
   const r = rawText(ev);
@@ -88,7 +102,7 @@ const KIND_CHANNELS = {
 };
 const kindReady = {};
 function kindChannel(kind) {
-  const id = `ev_${kind}_v4`;
+  const id = `ev_${kind}_v5`;
   if (Platform.OS !== 'android') return Promise.resolve(id);
   if (!kindReady[kind]) {
     kindReady[kind] = Notifications.setNotificationChannelAsync(id, {
@@ -144,7 +158,7 @@ export async function notifyEvent(ev, kind) {
             : Notifications.AndroidNotificationPriority.HIGH,
         data: { match: favMatch(ev.match) },
       },
-      trigger: Platform.OS === 'android' ? { channelId } : null,
+      trigger: Platform.OS === 'android' ? channelTrigger(channelId) : null,
     });
     return true;
   } catch (error) {
@@ -158,8 +172,31 @@ export async function sendTestNotification() {
   if (!(await ensurePermission(true))) return { ok: false, reason: 'permission' };
   const kind = 'goal';
   const channelId = await kindChannel(kind);
-  const defaultSoundFallback = Platform.OS === 'android' && channelId === CHANNEL;
   const channelHealth = await getChannelHealth(channelId);
+  if (Platform.OS === 'android' && FastLive?.testNotification) {
+    try {
+      const raw = FastLive.testNotification();
+      const diagnostics = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      return {
+        ok: !!diagnostics?.posted,
+        reason: diagnostics?.error || (diagnostics?.posted ? null : 'native'),
+        channelHealth: {
+          ...channelHealth,
+          soundEnabled: diagnostics?.channelSoundEnabled ?? channelHealth?.soundEnabled,
+          highImportance:
+            typeof diagnostics?.channelImportance === 'number'
+              ? diagnostics.channelImportance >= Notifications.AndroidImportance.HIGH
+              : channelHealth?.highImportance,
+        },
+        diagnostics,
+      };
+    } catch (error) {
+      console.warn('[Fast Score] Could not post a native test notification', error);
+      return { ok: false, reason: 'native', channelHealth };
+    }
+  }
+
+  const defaultSoundFallback = Platform.OS === 'android' && channelId === CHANNEL;
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
@@ -168,9 +205,9 @@ export async function sendTestNotification() {
         sound: defaultSoundFallback ? 'default' : 'fs_goal.wav',
         priority: Notifications.AndroidNotificationPriority.HIGH,
       },
-      trigger: Platform.OS === 'android' ? { channelId } : null,
+      trigger: Platform.OS === 'android' ? channelTrigger(channelId) : null,
     });
-    return { ok: true, channelHealth };
+    return { ok: true, channelHealth, diagnostics: null };
   } catch (error) {
     console.warn('[Fast Score] Could not schedule a test notification', error);
     return { ok: false, reason: 'schedule' };
