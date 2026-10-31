@@ -9,7 +9,7 @@ import { useTheme } from '../theme';
 import { useNav } from '../nav';
 import { useStore, formatOdds } from '../store';
 import { SPORTS } from '../sports';
-import { sameDay } from '../api/espn';
+import { sameDay } from '../api/sportsData';
 import { tap } from '../haptics';
 
 export function favMatch(m) {
