@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, ScrollView, View } from 'react-native';
+import { Linking, View } from 'react-native';
 import { Text } from '../components/Text';
 import { Image } from 'expo-image';
 import { useTheme } from '../theme';
@@ -8,7 +8,7 @@ import { useStore } from '../store';
 import { leagueMeta } from '../sports';
 import { news as fetchNews, scoreboard, standings as fetchStandings, teams as fetchTeams } from '../api/espn';
 import { leagueLogo } from '../api/flashscore';
-import { Glass } from '../components/Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import Standings from '../components/Standings';

@@ -1,9 +1,9 @@
 import React from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from './Text';
 import { Ionicons } from '@expo/vector-icons';
 import { Pressable } from './Touch';
-import { Glass } from './Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from './Glass';
 import { Chevron, LiveDot, Logo, SportIcon, Star } from './ui';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';

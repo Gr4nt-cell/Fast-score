@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from 'react';
-import { Keyboard, ScrollView, View } from 'react-native';
+import { Keyboard, View } from 'react-native';
 import { tr } from '../i18n';
 import { Text, TextInput } from '../components/Text';
 import { Ionicons } from '@expo/vector-icons';
@@ -8,7 +8,7 @@ import { useNav } from '../nav';
 import { load, save } from '../store';
 import { SPORTS, sportByKey } from '../sports';
 import { pool, search as espnSearch, teams as fetchTeams } from '../api/espn';
-import { Glass } from '../components/Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Card, Chevron, Empty, LargeHeader, Loading, Logo, Row, SectionTitle, SportIcon } from '../components/ui';
 
 // teams of the main competitions, loaded once and kept for a day

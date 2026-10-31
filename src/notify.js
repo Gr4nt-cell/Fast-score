@@ -4,11 +4,18 @@ import * as Notifications from 'expo-notifications';
 import { favMatch } from './components/match';
 import { tr } from './i18n';
 
-// Android retains channel settings between app upgrades; version channel IDs when repairing them.
-const CHANNEL = 'scores_v3';
+// Android keeps a channel's sound settings across app upgrades, even if the app
+// changes its configuration. Bump this when repairing channel behavior.
+const CHANNEL = 'scores_v4';
 
 Notifications.setNotificationHandler({
-  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
+  handleNotification: async () => ({
+    shouldShowAlert: true,
+    shouldShowBanner: true,
+    shouldShowList: true,
+    shouldPlaySound: true,
+    shouldSetBadge: false,
+  }),
 });
 
 let channelReady = null;
@@ -81,7 +88,7 @@ const KIND_CHANNELS = {
 };
 const kindReady = {};
 function kindChannel(kind) {
-  const id = `ev_${kind}_v3`;
+  const id = `ev_${kind}_v4`;
   if (Platform.OS !== 'android') return Promise.resolve(id);
   if (!kindReady[kind]) {
     kindReady[kind] = Notifications.setNotificationChannelAsync(id, {
@@ -102,6 +109,23 @@ function kindChannel(kind) {
   return kindReady[kind];
 }
 
+async function getChannelHealth(channelId) {
+  if (Platform.OS !== 'android') return null;
+  try {
+    const channel = await Notifications.getNotificationChannelAsync(channelId);
+    if (!channel) return null;
+    return {
+      soundEnabled: channel.sound != null,
+      highImportance:
+        typeof channel.importance === 'number'
+          ? channel.importance >= Notifications.AndroidImportance.HIGH
+          : null,
+    };
+  } catch {
+    return null;
+  }
+}
+
 export async function notifyEvent(ev, kind) {
   if (!(await ensurePermission(false))) return false;
   const alertKind = kind && KIND_CHANNELS[kind] ? kind : null;
@@ -114,6 +138,10 @@ export async function notifyEvent(ev, kind) {
         title,
         body,
         sound: alertKind && !defaultSoundFallback ? `fs_${alertKind}.wav` : 'default',
+        priority:
+          alertKind === 'lineups'
+            ? Notifications.AndroidNotificationPriority.DEFAULT
+            : Notifications.AndroidNotificationPriority.HIGH,
         data: { match: favMatch(ev.match) },
       },
       trigger: Platform.OS === 'android' ? { channelId } : null,
@@ -131,21 +159,24 @@ export async function sendTestNotification() {
   const kind = 'goal';
   const channelId = await kindChannel(kind);
   const defaultSoundFallback = Platform.OS === 'android' && channelId === CHANNEL;
+  const channelHealth = await getChannelHealth(channelId);
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Fast Score test notification',
         body: 'Notifications are enabled. This tests the goal alert sound.',
         sound: defaultSoundFallback ? 'default' : 'fs_goal.wav',
+        priority: Notifications.AndroidNotificationPriority.HIGH,
       },
       trigger: Platform.OS === 'android' ? { channelId } : null,
     });
-    return { ok: true };
+    return { ok: true, channelHealth };
   } catch (error) {
     console.warn('[Fast Score] Could not schedule a test notification', error);
     return { ok: false, reason: 'schedule' };
   }
 }
+
 /** Calls onOpen(match) when a score notification is tapped (also for the one that opened the app). */
 export function onNotificationTap(onOpen) {
   const handle = (resp) => {

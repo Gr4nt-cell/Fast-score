@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, Switch, View } from 'react-native';
+import { Switch, View } from 'react-native';
+import { ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Text } from '../components/Text';
 import Constants from 'expo-constants';
 import { useTheme } from '../theme';
@@ -203,10 +204,25 @@ export default function SettingsScreen() {
                 );
               })}
               <Row
-                last
+                last={!testNotificationStatus}
                 onPress={async () => {
                   setTestNotificationStatus('Scheduling test notification…');
-                  const result = await sendTestNotification();
+                    const result = await sendTestNotification();
+                    const health = result.channelHealth;
+                    let message = 'Could not schedule the test. Check notification settings and retry.';
+                    if (result.ok) {
+                      message = 'Test scheduled. Check your notification shade and sound.';
+                      if (health?.soundEnabled === false) {
+                        message = 'Test sent, but Android has muted this channel. Open phone settings and enable sound and pop-up alerts.';
+                      } else if (health?.highImportance === false) {
+                        message = 'Test sent, but Android is not set to show a pop-up. Change this channel to High in phone settings.';
+                      } else if (health?.soundEnabled === true && health?.highImportance === true) {
+                        message = 'Test sent. Android reports sound and pop-up enabled; check Do Not Disturb and phone volume if still silent.';
+                      }
+                    } else if (result.reason === 'permission') {
+                      message = 'Allow notifications for Fast Score, then try again.';
+                    }
+                    setTestNotificationStatus(message);
                   setTestNotificationStatus(
                     result.ok
                       ? 'Test scheduled. Check your notification shade and sound.'
@@ -225,6 +241,14 @@ export default function SettingsScreen() {
                 </View>
                 <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
               </Row>
+
+              {testNotificationStatus ? (
+                  <Row last onPress={openNotificationSettings}>
+                    <Ionicons name="settings-outline" size={20} color={t.blue} style={{ marginRight: 12 }} />
+                    <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500', flex: 1 }}>Open phone notification settings</Text>
+                    <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
+                  </Row>
+                ) : null}
             </Card>
             <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 20, marginTop: -6, marginBottom: 14, lineHeight: 17 }}>
               Tap ▶ to hear a tone. Line-up alerts come about an hour before kick-off for followed football matches. You can also change each sound in your phone's notification settings.

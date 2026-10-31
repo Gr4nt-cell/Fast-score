@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, View } from 'react-native';
+import { RefreshControl, View } from 'react-native';
 import { Text } from '../components/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -8,7 +8,7 @@ import { useNav } from '../nav';
 import { useStore } from '../store';
 import { leagueMeta, sportByKey } from '../sports';
 import { pool, scoreboard, teamSchedule } from '../api/espn';
-import { Glass } from '../components/Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { MatchRow } from '../components/match';
 import { Card, Chevron, Empty, GlassCircle, Loading, Logo, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
 import { pickToMatch } from './PicksScreen';

@@ -1,5 +1,6 @@
-import React, { createContext, useContext } from 'react';
-import { Platform, StyleSheet, View } from 'react-native';
+import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
+import { Animated, FlatList as NativeFlatList, Platform, ScrollView as NativeScrollView, StyleSheet, View } from 'react-native';
+import { Image as ExpoImage } from 'expo-image';
 import * as ExpoBlur from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
@@ -27,10 +28,95 @@ export const EXTENDED_BLUR = false;
 
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
+export const ScrollGlowContext = createContext(null);
 // True when the app background is Plain. Glass relies on the colour field
 // behind it to show its shape; over flat white or flat black there is nothing
 // to refract, so panels need a crisp edge and a shadow to read at all.
 export const FlatBackdropContext = createContext(false);
+
+const GLOW_NATIVE_DRIVER = Platform.OS !== 'web';
+
+export function ScrollGlowProvider({ children }) {
+  const phase = useRef(new Animated.Value(0)).current;
+  const strength = useRef(new Animated.Value(0)).current;
+  const loop = useRef(null);
+  const stopTimer = useRef(null);
+  const active = useRef(false);
+
+  const pulse = useCallback(() => {
+    if (stopTimer.current) clearTimeout(stopTimer.current);
+
+    if (!active.current) {
+      active.current = true;
+      phase.setValue(0);
+      loop.current = Animated.loop(
+        Animated.sequence([
+          Animated.timing(phase, {
+            toValue: 1,
+            duration: 1250,
+            useNativeDriver: GLOW_NATIVE_DRIVER,
+          }),
+          Animated.timing(phase, {
+            toValue: 0,
+            duration: 1250,
+            useNativeDriver: GLOW_NATIVE_DRIVER,
+          }),
+        ]),
+      );
+      loop.current.start();
+      Animated.timing(strength, {
+        toValue: 1,
+        duration: 180,
+        useNativeDriver: GLOW_NATIVE_DRIVER,
+      }).start();
+    }
+
+    stopTimer.current = setTimeout(() => {
+      active.current = false;
+      loop.current?.stop();
+      loop.current = null;
+      Animated.timing(strength, {
+        toValue: 0,
+        duration: 420,
+        useNativeDriver: GLOW_NATIVE_DRIVER,
+      }).start(({ finished }) => {
+        if (finished && !active.current) phase.setValue(0);
+      });
+    }, 320);
+  }, [phase, strength]);
+
+  useEffect(
+    () => () => {
+      if (stopTimer.current) clearTimeout(stopTimer.current);
+      loop.current?.stop();
+    },
+    [],
+  );
+
+  const value = useMemo(() => ({ phase, strength, pulse }), [phase, strength, pulse]);
+  return <ScrollGlowContext.Provider value={value}>{children}</ScrollGlowContext.Provider>;
+}
+
+function useScrollGlowHandler(onScroll) {
+  const scrollGlow = useContext(ScrollGlowContext);
+  return useCallback(
+    (event) => {
+      scrollGlow?.pulse();
+      onScroll?.(event);
+    },
+    [onScroll, scrollGlow],
+  );
+}
+
+export function ScrollGlowScrollView({ onScroll, scrollEventThrottle = 16, ...props }) {
+  const handleScroll = useScrollGlowHandler(onScroll);
+  return <NativeScrollView {...props} onScroll={handleScroll} scrollEventThrottle={scrollEventThrottle} />;
+}
+
+export function ScrollGlowFlatList({ onScroll, scrollEventThrottle = 16, ...props }) {
+  const handleScroll = useScrollGlowHandler(onScroll);
+  return <NativeFlatList {...props} onScroll={handleScroll} scrollEventThrottle={scrollEventThrottle} />;
+}
 
 /**
  * Edge and shadow that lift a panel off a flat background.
@@ -81,9 +167,11 @@ export function Glass({
   const t = useTheme();
   const mode = useContext(GlassModeContext);
   const target = useContext(GlassTargetContext);
+  const scrollGlow = useContext(ScrollGlowContext);
   const flat = useContext(FlatBackdropContext);
   const dark = forceDark ?? t.dark;
   const plain = mode === 'plain';
+  const surfaceOpacityScale = 0.64;
   // Android draws a shadow only for a view that has its own background, so a
   // lifted panel is opaque — over a flat backdrop there is nothing to see
   // through to anyway.
@@ -105,7 +193,7 @@ export function Glass({
             borderRadius: radius,
             // no overflow clip here either, for the same outline reason
             backgroundColor: tint || (dark ? t.card : selected ? t.fill : t.card),
-            opacity: tint ? tintOpacity : 1,
+            opacity: tint ? tintOpacity * surfaceOpacityScale : 1,
             borderWidth: flat ? 1 : StyleSheet.hairlineWidth,
             borderColor: t.separator,
             transform: [{ scale: pressed ? 1.02 : 1 }],
@@ -135,13 +223,13 @@ export function Glass({
   const alpha = vivid
     ? realBlur
       ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
-      : dark ? (tinted ? 0.66 : 0.38) : tinted ? 0.58 : 0.2
+      : dark ? (tinted ? 0.66 : 0.38) : tinted ? 0.54 : 0.12
     : dark
     ? realBlur ? (tinted ? 0.62 : 0.3) : tinted ? 0.8 : 0.5
-    : realBlur ? (tinted ? 0.55 : 0.22) : tinted ? 0.7 : 0.44;
+      : realBlur ? (tinted ? 0.48 : 0.16) : tinted ? 0.62 : strong ? 0.30 : 0.24;
   // Over a flat backdrop a translucent fill just shows more of the same white
   // or black, so the panel is given its own solid surface instead.
-  const a = alpha * fillScale;
+  const a = alpha * fillScale * surfaceOpacityScale;
   const fill = tint
     ? tint
     : flat
@@ -181,7 +269,7 @@ export function Glass({
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? tintOpacity : 1 }]} />
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? tintOpacity * surfaceOpacityScale : 1 }]} />
       {/* A low-contrast spectral band gives the clear surface a refracted-glass look. */}
       {!flat ? (
         <LinearGradient
@@ -196,6 +284,48 @@ export function Glass({
           end={{ x: 1, y: 0.92 }}
           style={[StyleSheet.absoluteFill, { borderRadius: radius, opacity: vivid ? 0.75 : 0.52 }]}
         />
+      ) : null}
+      {!flat && scrollGlow && (strong || vivid || tint) ? (
+        <Animated.View
+          pointerEvents="none"
+          style={[
+            StyleSheet.absoluteFill,
+            {
+              opacity: scrollGlow.strength.interpolate({
+                inputRange: [0, 1],
+                outputRange: [0, vivid ? 0.2 : 0.15],
+              }),
+              transform: [
+                {
+                  translateX: scrollGlow.phase.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [-88, 88],
+                  }),
+                },
+                {
+                  translateY: scrollGlow.phase.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [8, -8],
+                  }),
+                },
+              ],
+            },
+          ]}
+        >
+          <LinearGradient
+            colors={[
+              'rgba(255,255,255,0)',
+              'rgba(255,255,255,0.06)',
+              dark ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.3)',
+              'rgba(255,255,255,0.06)',
+              'rgba(255,255,255,0)',
+            ]}
+            locations={[0, 0.32, 0.5, 0.68, 1]}
+            start={{ x: 0, y: 0.5 }}
+            end={{ x: 1, y: 0.5 }}
+            style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
+          />
+        </Animated.View>
       ) : null}
       {/* specular highlight */}
       <LinearGradient
@@ -269,11 +399,58 @@ export function Glass({
   );
 }
 
-/** Solid backdrop behind the app's translucent glass controls. */
+function BloomField({ style }) {
+  return (
+    <ExpoImage
+      source={require('../../assets/liquid-glass-background.png')}
+      contentFit="cover"
+      cachePolicy="memory-disk"
+      transition={0}
+      style={[StyleSheet.absoluteFill, style]}
+    />
+  );
+}
+
+/** Soft color field behind the app's translucent glass controls. */
 export function Backdrop({ style }) {
   const t = useTheme();
+  const backdrop = t.liquidBackground;
+  const scrollGlow = useContext(ScrollGlowContext);
+  const scrollGlowStyle = scrollGlow
+    ? {
+        opacity: scrollGlow.strength.interpolate({ inputRange: [0, 1], outputRange: [0, 0.48] }),
+        transform: [
+          {
+            translateX: scrollGlow.phase.interpolate({
+              inputRange: [0, 1],
+              outputRange: [-18, 18],
+            }),
+          },
+          {
+            translateY: scrollGlow.phase.interpolate({
+              inputRange: [0, 1],
+              outputRange: [12, -12],
+            }),
+          },
+          {
+            scale: scrollGlow.strength.interpolate({
+              inputRange: [0, 1],
+              outputRange: [1, 1.06],
+            }),
+          },
+        ],
+      }
+    : null;
+
   return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: t.dark ? '#0B1418' : '#FFFFFF' }, style]} />
+    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: backdrop.base }, style]}>
+      {!t.dark ? <BloomField /> : null}
+      {!t.dark && scrollGlow ? (
+        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, scrollGlowStyle]}>
+          <BloomField />
+        </Animated.View>
+      ) : null}
+    </View>
   );
 }
 

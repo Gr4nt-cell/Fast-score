@@ -1,5 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { FlatList, RefreshControl, View } from 'react-native';
+import { ScrollGlowFlatList as FlatList } from '../components/Glass';
+import { RefreshControl, View } from 'react-native';
 import { Text } from '../components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, TAB_BAR_SPACE } from '../theme';

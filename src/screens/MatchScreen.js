@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Linking, ScrollView, StyleSheet, View } from 'react-native';
+import { Linking, StyleSheet, View } from 'react-native';
 import { Text } from '../components/Text';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Image } from 'expo-image';
@@ -10,7 +10,7 @@ import { sportByKey } from '../sports';
 import { normalizeEvent, scoreboard, standings as fetchStandings, summary as fetchSummary } from '../api/espn';
 import { predictMatch } from '../predict';
 import { cachedOdds, matchOdds as msportOdds, oddsStatus } from '../api/msport';
-import { Glass } from '../components/Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import Standings from '../components/Standings';
 import { favMatch } from '../components/match';

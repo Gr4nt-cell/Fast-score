@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react';
-import { ScrollView, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '../components/Text';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import { athlete as fetchAthlete } from '../api/espn';
-import { Glass } from '../components/Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Card, Empty, GlassCircle, Loading, Logo, PushHeader, Row } from '../components/ui';
 
 function StatTable({ title, labels, rows }) {

@@ -18,11 +18,14 @@ test('Android notification channels use fresh, matching IDs', async () => {
     'utf8',
   );
 
-  assert.equal(notifications.defaultChannel, 'scores_v3');
-  assert.match(jsNotifications, /const CHANNEL = 'scores_v3'/);
-  assert.match(nativeLive, /const val CH_SCORES = "scores_v3"/);
-  assert.match(jsNotifications, /`ev_\$\{kind\}_v3`/);
-  assert.match(nativeLive, /"ev_\$\{kind\}_v3"/);
+  assert.equal(notifications.defaultChannel, 'scores_v4');
+  assert.match(jsNotifications, /const CHANNEL = 'scores_v4'/);
+  assert.match(nativeLive, /const val CH_SCORES = "scores_v4"/);
+  assert.match(jsNotifications, /`ev_\$\{kind\}_v4`/);
+  assert.match(nativeLive, /"ev_\$\{kind\}_v4"/);
+  assert.match(jsNotifications, /shouldShowAlert: true/);
+  assert.match(jsNotifications, /getNotificationChannelAsync\(channelId\)/);
+  assert.match(jsNotifications, /AndroidNotificationPriority\.HIGH/);
 });
 
 test('all notification sounds are declared and packaged as app assets', async () => {

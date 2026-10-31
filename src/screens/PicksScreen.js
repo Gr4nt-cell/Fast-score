@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from 'react';
-import { RefreshControl, ScrollView, StyleSheet, View } from 'react-native';
+import { RefreshControl, StyleSheet, View } from 'react-native';
 import { Text } from '../components/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -8,7 +8,7 @@ import { useNav } from '../nav';
 import { pickHistory, picksForDate } from '../predict';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { load } from '../store';
-import { Glass } from '../components/Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import { Card, Empty, FormPills, GlassCircle, Loading, Logo, SectionTitle, SportIcon } from '../components/ui';
 import { sportByKey } from '../sports';

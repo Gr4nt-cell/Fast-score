@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { Text, TextInput } from '../components/Text';
 import { Ionicons } from '@expo/vector-icons';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
@@ -14,7 +14,7 @@ import { leagueInfo, sportLeagues } from '../api/leaguesIndex';
 import { leagueNames } from '../api/flashscore';
 import { tr } from '../i18n';
 import { NewsList } from './LeagueScreen';
-import { Glass } from '../components/Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const norm = (x) => String(x || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();

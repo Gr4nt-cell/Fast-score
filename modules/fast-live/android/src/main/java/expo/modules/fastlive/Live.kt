@@ -53,7 +53,7 @@ data class Snap(
 
 object Live {
   private const val PREFS = "fastlive"
-  const val CH_SCORES = "scores_v3"
+  const val CH_SCORES = "scores_v4"
   const val CH_LIVE = "live-tracker"
   const val EXTRA_TAP = "fastlive_match"
   const val LEAD_MS = 10 * 60 * 1000L       // wake this long before kick-off
@@ -64,7 +64,7 @@ object Live {
   private val KIND_NAMES = mapOf(
     "goal" to "Goals", "kickoff" to "Kick-off", "halftime" to "Half-time", "fulltime" to "Full-time", "redcard" to "Red cards", "lineups" to "Line-ups",
   )
-  fun channelOf(kind: String) = "ev_${kind}_v3"
+  fun channelOf(kind: String) = "ev_${kind}_v4"
 
   /** Which kinds of alert the user wants (Settings -> Alert tones); all on by default. */
   fun kindOn(ctx: Context, kind: String): Boolean {

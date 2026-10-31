@@ -20,7 +20,7 @@ import { warmOdds } from './src/api/msport';
 import { setLanguage } from './src/i18n';
 import { pickToMatch } from './src/screens/PicksScreen';
 import TabBar, { TABS } from './src/components/TabBar';
-import { Backdrop, BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext } from './src/components/Glass';
+import { Backdrop, BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext, ScrollGlowProvider } from './src/components/Glass';
 import { Pressable } from './src/components/Touch';
 import { Logo } from './src/components/ui';
 import Boundary from './src/components/Boundary';
@@ -365,11 +365,13 @@ function LanguageGate({ children }) {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <StoreProvider>
-        <LanguageGate>
-          <Main />
-        </LanguageGate>
-      </StoreProvider>
+      <ScrollGlowProvider>
+        <StoreProvider>
+          <LanguageGate>
+            <Main />
+          </LanguageGate>
+        </StoreProvider>
+      </ScrollGlowProvider>
     </SafeAreaProvider>
   );
 }

@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo, useState } from 'react';
-import { ScrollView, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '../components/Text';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import { roster as fetchRoster, standings as fetchStandings, team as fetchTeam, teamSchedule } from '../api/espn';
-import { Glass } from '../components/Glass';
+import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import Standings from '../components/Standings';
 import { MatchRow } from '../components/match';
 import { Card, Empty, FormPills, GlassCircle, Loading, Logo, PushHeader, Row, SectionTitle, TabStrip } from '../components/ui';
