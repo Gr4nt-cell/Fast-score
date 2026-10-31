@@ -6,8 +6,7 @@ import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useStore } from '../store';
 import { useNav } from '../nav';
 import { SPORTS, sportByKey } from '../sports';
-import { dayBoard, pool, sameDay } from '../api/espn';
-import { attachOdds } from '../api/msport';
+import { dayBoard, pool, sameDay } from '../api/sportsData';
 import { LeagueBlock, SportPill } from '../components/match';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { Empty, GlassCircle, LiveDot, Loading } from '../components/ui';
@@ -31,7 +30,6 @@ export default function MatchesScreen({ liveMode = false }) {
   const [board, setBoard] = useState({ key: null, groups: null });
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
-  const [view, setView] = useState('all'); // all | odds
   const reqId = useRef(0);
   const live = liveMode;
   const dayStamp = live ? startOfDay(new Date()).getTime() : startOfDay(date).getTime();
@@ -73,25 +71,13 @@ export default function MatchesScreen({ liveMode = false }) {
         await fixtureBoardCache.set(boardKey, res);
         if (id !== reqId.current) return;
         setBoard({ key: boardKey, groups: res });
-        // today: note MSport's prices in the background, so finished matches can show closing odds
-        // (any day in view, so opening a match shows its odds straight away)
-        if (view !== 'odds' && !live && sport !== 'all') attachOdds(res, sport).catch(() => {});
-        // odds view: MSport prices for every match it lists
-        if (view === 'odds') {
-          const sports = sport === 'all' ? SPORTS.map((x) => x.key) : [sport];
-          await Promise.all(sports.map((k) => attachOdds(res.filter((g) => (g.sport || sport) === k), k)));
-          if (id !== reqId.current) return;
-          const copy = res.map((g) => ({ ...g, items: [...g.items] }));
-          copy.source = res.source;
-          setBoard({ key: boardKey, groups: copy });
-        }
       } catch (e) {
         if (id !== reqId.current) return;
         setError(e.message || 'Could not load matches');
         setBoard((current) => (current.key === boardKey && current.groups ? current : { key: boardKey, groups: [] }));
       }
     },
-    [sport, date, dayStamp, live, boardKey, settings.source, view] // eslint-disable-line react-hooks/exhaustive-deps
+    [sport, date, dayStamp, live, boardKey] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
@@ -119,13 +105,12 @@ export default function MatchesScreen({ liveMode = false }) {
     let gs = (groups || []).map((g) => ({ ...g, items: live ? g.items.filter((m) => m.state === 'in') : g.items })).filter((g) => g.items.length);
     const pinTpl = new Set(favs.leagues.filter((k) => k.includes('/fs:t:')).map((k) => k.split(':')[3]));
     const pinned = (g) => favs.leagues.includes(`${g.sport}/${g.league.slug}`) || (g.items[0] && pinTpl.has(g.items[0].tpl));
-    const meta = (g) => sportByKey(g.sport).leagues.find((l) => l.slug === g.league.slug) || {};
     const sIdx = (g) => SPORTS.findIndex((x) => x.key === g.sport);
-    const idx = (g) => sportByKey(g.sport).leagues.findIndex((l) => l.slug === g.league.slug);
+    const priority = (g) => Number(g.league?.priority || 0);
     gs = gs.sort((a, b) => {
-      const pa = pinned(a) ? 0 : meta(a).top ? 1 : 2;
-      const pb = pinned(b) ? 0 : meta(b).top ? 1 : 2;
-      return pa - pb || sIdx(a) - sIdx(b) || idx(a) - idx(b);
+      const pa = pinned(a) ? 0 : 1;
+      const pb = pinned(b) ? 0 : 1;
+      return pa - pb || sIdx(a) - sIdx(b) || priority(b) - priority(a);
     });
     return gs;
   }, [groups, live, favs.leagues]);
@@ -137,8 +122,8 @@ export default function MatchesScreen({ liveMode = false }) {
   const marked = useMemo(() => new Set(favs.matches.filter((m) => sport === 'all' || m.sport === sport).map((m) => new Date(m.date).toDateString())), [favs.matches, sport]);
   const sportName = sport === 'all' ? 'All sports' : sp.name;
   const renderLeague = useCallback(
-    ({ item }) => <LeagueBlock group={item} sport={item.sport || sport} showOdds={view === 'odds'} />,
-    [sport, view],
+    ({ item }) => <LeagueBlock group={item} sport={item.sport || sport} />,
+    [sport],
   );
 
   const summary = live
@@ -149,7 +134,6 @@ export default function MatchesScreen({ liveMode = false }) {
   const fixed = (
     <View style={{ paddingTop: insets.top + 8, backgroundColor: t.bg }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, marginBottom: 14 }}>
-        <GlassCircle icon={view === 'odds' ? 'stats-chart' : 'options-outline'} active={view === 'odds'} onPress={() => setView(view === 'odds' ? 'all' : 'odds')} />
         <SportPill
           value={sport}
           withAll={live}
@@ -166,7 +150,7 @@ export default function MatchesScreen({ liveMode = false }) {
         {live ? <LiveDot /> : null}
         <Text style={{ color: live ? t.live : t.secondary, fontSize: 13, fontWeight: '700', flex: 1 }} numberOfLines={1}>
           {live ? `Live · ${sportName}` : sportName} · {summary}
-          {groups && groups.source === 'tsdb' ? ' · via TheSportsDB' : ''}
+          {groups ? ' · Flashscore' : ''}
         </Text>
       </View>
     </View>

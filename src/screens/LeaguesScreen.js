@@ -5,15 +5,13 @@ import { Ionicons } from '@expo/vector-icons';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
-import { SPORTS, leagueMeta, sportByKey } from '../sports';
-import { news as fetchNews } from '../api/espn';
+import { leagueMeta, sportByKey } from '../sports';
 import { SportBar } from '../components/match';
 import { Pressable } from '../components/Touch';
-import { Card, Chevron, Empty, GlassCircle, Loading, Logo, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';
+import { Card, Chevron, Empty, GlassCircle, Loading, Logo, Row, SectionTitle, SportIcon } from '../components/ui';
 import { leagueInfo, sportLeagues } from '../api/leaguesIndex';
 import { leagueNames } from '../api/flashscore';
 import { tr } from '../i18n';
-import { NewsList } from './LeagueScreen';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -24,23 +22,11 @@ export default function LeaguesScreen() {
   const nav = useNav();
   const { settings, favs, toggle } = useStore();
   const [sport, setSport] = useState(settings.sport || 'soccer');
-  const [mode, setMode] = useState('leagues');
-  const [newsItems, setNews] = useState(null);
   const [idx, setIdx] = useState(null); // { countries, top, total } | 'error'
   const [open, setOpen] = useState({}); // expanded countries
   const [q, setQ] = useState('');
   const [pinnedInfo, setPinnedInfo] = useState({});
-  const sp = sportByKey(sport);
   const insets = useSafeAreaInsets();
-
-  useEffect(() => {
-    if (mode !== 'news') return;
-    setNews(null);
-    const lg = sp.leagues.find((l) => l.top) || sp.leagues[0];
-    fetchNews(sport, lg.slug)
-      .then(setNews)
-      .catch(() => setNews([]));
-  }, [mode, sport]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     setIdx(null);
@@ -76,13 +62,6 @@ export default function LeaguesScreen() {
   });
 
   const ready = idx && idx !== 'error';
-  const fallback = idx === 'error';
-  const byCountry = useMemo(() => {
-    const out = {};
-    sp.leagues.forEach((l) => (out[l.country] = out[l.country] || []).push(l));
-    return Object.entries(out);
-  }, [sp]);
-
   const open_ = (s, l) => nav.push({ name: 'league', sport: s, league: l.slug, title: l.name, country: l.country });
   const openIdx = (l) => nav.push({ name: 'league', sport, league: l.key, title: l.name, country: l.country });
 
@@ -122,21 +101,13 @@ export default function LeaguesScreen() {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      {/* fixed top bar from the sketch: [trophy | news] · title pill · settings, then the sport bar */}
       <View style={{ paddingTop: insets.top + 8, paddingHorizontal: 16, flexDirection: 'row', alignItems: 'center' }}>
-        <Segmented
-          options={[
-            { key: 'leagues', icon: 'trophy-outline' },
-            { key: 'news', icon: 'newspaper-outline' },
-          ]}
-          value={mode}
-          onChange={setMode}
-        />
+        <GlassCircle icon="trophy-outline" color={t.blue} />
         <Glass radius={23} strong style={{ flex: 1, height: 46, justifyContent: 'center', paddingHorizontal: 14, marginHorizontal: 10 }}>
           <View style={{ flexDirection: 'row', alignItems: 'baseline', justifyContent: 'center' }}>
-            <Text style={{ color: t.text, fontSize: 17, fontWeight: '800' }}>{mode === 'news' ? 'News' : 'Leagues'}</Text>
+            <Text style={{ color: t.text, fontSize: 17, fontWeight: '800' }}>Leagues</Text>
             <Text numberOfLines={1} style={{ color: t.secondary, fontSize: 12.5, fontWeight: '600', marginLeft: 6, flexShrink: 1 }}>
-              {mode === 'news' ? sp.name : `${(ready ? idx.total : sp.leagues.length).toLocaleString()} competitions`}
+              {ready ? `${idx.total.toLocaleString()} competitions` : idx === 'error' ? 'Unavailable' : 'Loading'}
             </Text>
           </View>
         </Glass>
@@ -145,10 +116,7 @@ export default function LeaguesScreen() {
       <View style={{ height: 14 }} />
       <SportBar value={sport} onChange={setSport} />
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }} keyboardShouldPersistTaps="handled">
-        {mode === 'news' ? (
-          <NewsList items={newsItems} />
-        ) : (
-          <>
+        <>
             {ready ? (
               <View style={{ paddingHorizontal: 16, marginTop: 4, marginBottom: 6 }}>
                 <Glass radius={23} strong style={{ height: 46, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16 }}>
@@ -227,32 +195,10 @@ export default function LeaguesScreen() {
                     </Card>
                   </>
                 ) : null}
-                {fallback
-                  ? byCountry.map(([country, ls]) => (
-                      <View key={country}>
-                        <SectionTitle>{country}</SectionTitle>
-                        <Card>
-                          {ls.map((l, i) => {
-                            const on = favs.leagues.includes(`${sport}/${l.slug}`);
-                            return (
-                              <Row key={l.slug} last={i === ls.length - 1} onPress={() => open_(sport, l)}>
-                                <Logo uri={null} name={l.name} size={30} />
-                                <Text style={{ flex: 1, marginLeft: 10, color: t.text, fontSize: 15, fontWeight: '600' }}>{l.name}</Text>
-                                <Pressable hitSlop={10} onPress={() => toggle('leagues', `${sport}/${l.slug}`)} style={{ marginRight: 10 }}>
-                                  <Ionicons name={on ? 'pin' : 'pin-outline'} size={18} color={on ? t.blue : t.tertiary} />
-                                </Pressable>
-                                <Chevron />
-                              </Row>
-                            );
-                          })}
-                        </Card>
-                      </View>
-                    ))
-                  : null}
+                {idx === 'error' ? <Empty icon="cloud-offline-outline" title="Flashscore competitions unavailable" /> : null}
               </>
             )}
           </>
-        )}
       </ScrollView>
     </View>
   );

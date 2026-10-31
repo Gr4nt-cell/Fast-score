@@ -7,7 +7,7 @@ import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useNav } from '../nav';
 import { load, save } from '../store';
 import { SPORTS, sportByKey } from '../sports';
-import { pool, search as espnSearch, teams as fetchTeams } from '../api/espn';
+import { pool, search as flashscoreSearch, teams as fetchTeams } from '../api/sportsData';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Card, Chevron, Empty, LargeHeader, Loading, Logo, Row, SectionTitle, SportIcon } from '../components/ui';
 
@@ -62,7 +62,7 @@ export default function SearchScreen() {
     }
     timer.current = setTimeout(async () => {
       setBusy(true);
-      const r = await espnSearch(q.trim());
+      const r = await flashscoreSearch(q.trim());
       setRemote(r);
       setBusy(false);
     }, 350);

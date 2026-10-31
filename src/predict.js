@@ -4,20 +4,17 @@
 //    games (recent games count a little more, games at the same venue as this one a little more),
 //    plus home advantage;
 //  - other team sports: win rate and points difference over the last 10 (log5), plus home advantage.
-// Bookmaker odds (MSport, or ESPN's where it has them) are blended in at 25% as a sanity check.
 // Every day the five most confident calls become the "AI Picks" and are saved, so the next day the
 // app can show how they did.
-import { americanToProb, load, readPickArchiveDates, saveAndWait } from './store';
+import { load, readPickArchiveDates, saveAndWait } from './store';
 import { SPORTS, sportByKey } from './sports';
-import { addDays, dayBoard, pool, recentGames, scoreboard, standings, teamSchedule, ymd } from './api/espn';
-import { attachOdds } from './api/msport';
+import { addDays, dayBoard, pool, recentGames, scoreboard, standings, teamSchedule, ymd } from './api/sportsData';
 import { domesticProfile, tableContext, contextAdjustment } from './competitionContext';
 import { datesForPickHistory, getOrCreatePickDay } from './pickArchive';
 
 export const LAST_N = 10;
 export const PICK_THRESHOLD = 0.9; // calls at or above this are marked 90%+ and listed first
 export const PICKS_PER_DAY = 5;
-const MARKET_WEIGHT = 0.25;
 const RECENCY = 0.92; // each older game counts 8% less than the one after it
 const HOME_ADV = { soccer: [1.12, 0.9], rugby: 0.06, basketball: 0.06, football: 0.05, hockey: 0.04, baseball: 0.03, volleyball: 0.04 };
 const PD_SCALE = { basketball: 11, football: 13, hockey: 1.4, baseball: 2.2, rugby: 12, volleyball: 0.6 };
@@ -128,16 +125,6 @@ function genericModel(m, H, A, sport) {
   return { home: p, away: 1 - p, draw: 0 };
 }
 
-function marketProbs(odds, draws) {
-  if (!odds) return null;
-  const h = americanToProb(odds.home);
-  const a = americanToProb(odds.away);
-  const d = draws ? americanToProb(odds.draw) : 0;
-  if (h == null || a == null || (draws && d == null)) return null;
-  const sum = h + a + (d || 0);
-  return { home: h / sum, away: a / sum, draw: (d || 0) / sum };
-}
-
 const pct = (p) => `${Math.round(p * 100)}%`;
 const recText = (r) => `${r.W}W ${r.D}D ${r.L}L`;
 
@@ -182,12 +169,10 @@ export async function predictMatch(m) {
   const H = summarise(hg, true);
   const A = summarise(ag, false);
   const context = await competitionContext(m, hg, ag);
-  const market = marketProbs(m.odds, sp.draws);
   // need at least 3 recent games for each side
   const model = H.n >= 3 && A.n >= 3 ? (m.sport === 'soccer' ? soccerModel(m, H, A, context.adjustment) : genericModel(m, H, A, m.sport)) : null;
   if (!model) return null;
-  const blend = (k) => (market ? (1 - MARKET_WEIGHT) * model[k] + MARKET_WEIGHT * market[k] : model[k]);
-  const probs = { home: blend('home'), draw: sp.draws ? blend('draw') : 0, away: blend('away') };
+  const probs = { home: model.home, draw: sp.draws ? model.draw : 0, away: model.away };
   const n = probs.home + probs.draw + probs.away;
   probs.home /= n;
   probs.draw /= n;
@@ -235,12 +220,8 @@ export async function predictMatch(m) {
     if (away.length >= 2) reasons.push(`${an} away in that run: ${recText(summarise(away, null).rec)}`);
   }
   if (model.xg) reasons.push(`Expected goals ${model.xg.home.toFixed(1)} – ${model.xg.away.toFixed(1)}`);
-  if (market) {
-    const mk = tip.side === 'home' || tip.side === 'away' || tip.side === 'draw' ? market[tip.side] : null;
-    if (mk != null) reasons.push(`Bookmakers imply ${pct(mk)} for this outcome (counted at 25%)`);
-  }
-
-  const quality = H.n >= 8 && A.n >= 8 ? (market && (m.sport !== 'soccer' || context.complete) ? 'high' : 'medium') : 'low';
+  const quality =
+    H.n < 8 || A.n < 8 ? 'low' : m.sport === 'soccer' && !context.complete ? 'medium' : 'high';
   return {
     context,
     modelVersion: 2,
@@ -251,7 +232,6 @@ export async function predictMatch(m) {
     over: model.over,
     btts: model.btts,
     quality,
-    market,
     safe,
     last: { home: hg, away: ag, homeForm: H.form, awayForm: A.form },
   };
@@ -261,10 +241,10 @@ export async function predictMatch(m) {
 
 const PICK_SPORTS = [
   { sport: 'soccer' },
-  { sport: 'basketball', leagues: ['nba'] },
-  { sport: 'hockey', leagues: ['nhl'] },
-  { sport: 'football', leagues: ['nfl', 'college-football'] },
-  { sport: 'baseball', leagues: ['mlb'] },
+  { sport: 'basketball' },
+  { sport: 'hockey' },
+  { sport: 'football' },
+  { sport: 'baseball' },
   { sport: 'rugby' },
 ];
 
@@ -294,12 +274,9 @@ async function upcoming(date, onProgress, past = false) {
   const boards = [];
   for (const ps of PICK_SPORTS) {
     const sp = sportByKey(ps.sport);
-    const leagues = ps.leagues ? sp.leagues.filter((l) => ps.leagues.includes(l.slug)) : sp.leagues;
     onProgress && onProgress(`Scanning ${sp.name.toLowerCase()}…`);
     try {
-      const gs = await dayBoard(ps.sport, date, { leagues, ttl: 120000 });
-      // bookmaker prices (MSport) feed the 25% market blend; finished days keep the model honest
-      if (!past) await attachOdds(gs, ps.sport);
+      const gs = await dayBoard(ps.sport, date, { leagues: [], ttl: 120000 });
       gs.forEach((g) =>
         g.items.forEach((m) => {
           if (m.postponed) return;
@@ -318,11 +295,6 @@ export async function generatePicks(date = new Date(), onProgress, { past = fals
     const more = await upcoming(addDays(date, 1), onProgress);
     more.forEach((m) => !boards.find((b) => b.key === m.key) && boards.push(m));
   }
-  // TheSportsDB allows ~30 calls a minute, so model its 12 busiest competitions only
-  const tsdbCounts = {};
-  boards.forEach((m) => m.source === 'tsdb' && (tsdbCounts[m.league] = (tsdbCounts[m.league] || 0) + 1));
-  const keepTsdb = new Set(Object.keys(tsdbCounts).sort((a, b) => tsdbCounts[b] - tsdbCounts[a]).slice(0, 12));
-  for (let i = boards.length - 1; i >= 0; i--) if (boards[i].source === 'tsdb' && !keepTsdb.has(boards[i].league)) boards.splice(i, 1);
   onProgress && onProgress(`Modelling ${boards.length} matches…`);
   const preds = await pool(boards, 6, async (m) => {
     const p = await predictMatch(m);

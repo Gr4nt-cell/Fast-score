@@ -1,15 +1,13 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { Linking, StyleSheet, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
 import { Text } from '../components/Text';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
-import { Image } from 'expo-image';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';
-import { useStore, formatOdds, americanToProb } from '../store';
+import { useStore } from '../store';
 import { sportByKey } from '../sports';
-import { normalizeEvent, scoreboard, standings as fetchStandings, summary as fetchSummary } from '../api/espn';
+import { scoreboard, standings as fetchStandings, summary as fetchSummary } from '../api/sportsData';
 import { predictMatch } from '../predict';
-import { cachedOdds, matchOdds as msportOdds, oddsStatus } from '../api/msport';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Pressable } from '../components/Touch';
 import Standings from '../components/Standings';
@@ -227,47 +225,6 @@ function Timeline({ m, events }) {
   );
 }
 
-function OddsCard({ m, pick }) {
-  const t = useTheme();
-  const { settings } = useStore();
-  const o = m.odds && m.odds.home != null ? m.odds : null;
-  const pc = pick && pick[0];
-  const home = o ? o.home : pc && pc.homeTeamOdds && pc.homeTeamOdds.moneyLine;
-  const away = o ? o.away : pc && pc.awayTeamOdds && pc.awayTeamOdds.moneyLine;
-  const draw = o ? o.draw : pc && pc.drawOdds && pc.drawOdds.moneyLine;
-  if (home == null || !settings.showOdds) return null;
-  const sp = sportByKey(m.sport);
-  const items = [
-    ['1', home, m.home.short],
-    ...(sp.draws && draw != null ? [['X', draw, 'Draw']] : []),
-    ['2', away, m.away.short],
-  ];
-  return (
-    <Card>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 10 }}>
-        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16 }}>Odds</Text>
-        <Text style={{ color: t.secondary, fontSize: 12 }}>{(o && o.provider) || (pc && pc.provider && pc.provider.name) || ''}</Text>
-      </View>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {items.map(([k, v, l]) => (
-          <View key={k} style={{ flex: 1, padding: 10, borderRadius: 14, backgroundColor: t.track, alignItems: 'center' }}>
-            <Text style={{ color: t.secondary, fontSize: 12, fontWeight: '700' }}>{k}</Text>
-            <Text style={{ color: t.text, fontSize: 17, fontWeight: '800', marginTop: 2 }}>{formatOdds(Number(v), settings.oddsFormat)}</Text>
-            <Text style={{ color: t.secondary, fontSize: 11 }} numberOfLines={1}>
-              {Math.round((americanToProb(Number(v)) || 0) * 100)}% · {l}
-            </Text>
-          </View>
-        ))}
-      </View>
-      {(o && (o.details || o.overUnder)) || (pc && (pc.details || pc.overUnder)) ? (
-        <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 10 }}>
-          {[(o && o.details) || (pc && pc.details), (o && o.overUnder) || (pc && pc.overUnder) ? `O/U ${(o && o.overUnder) || pc.overUnder}` : null].filter(Boolean).join('  ·  ')}
-        </Text>
-      ) : null}
-    </Card>
-  );
-}
-
 function InfoCard({ m, sum }) {
   const t = useTheme();
   const gi = (sum && sum.gameInfo) || {};
@@ -297,30 +254,6 @@ function InfoCard({ m, sum }) {
   );
 }
 
-function WinProb({ m, sum }) {
-  const wp = sum && sum.winprobability && sum.winprobability.length ? sum.winprobability[sum.winprobability.length - 1] : null;
-  const pr = sum && sum.predictor;
-  let probs = null;
-  let label = '';
-  if (wp && wp.homeWinPercentage != null) {
-    const tie = wp.tiePercentage || 0;
-    probs = { home: wp.homeWinPercentage, draw: tie, away: Math.max(0, 1 - wp.homeWinPercentage - tie) };
-    label = m.state === 'in' ? 'Live win probability (ESPN)' : 'Win probability (ESPN)';
-  } else if (pr && pr.homeTeam && pr.homeTeam.gameProjection) {
-    const h = Number(pr.homeTeam.gameProjection) / 100;
-    const a = Number(pr.awayTeam.gameProjection) / 100;
-    probs = { home: h, away: a, draw: Math.max(0, 1 - h - a) };
-    label = 'ESPN Matchup Predictor';
-  }
-  if (!probs) return null;
-  return (
-    <Card>
-      <Probability probs={probs} label={label} home={m.home.short} away={m.away.short} draws={probs.draw > 0.005} />
-    </Card>
-  );
-}
-
-
 // ---------- fixed top part ----------
 
 function MatchTopBar({ m, fav, onFav }) {
@@ -337,56 +270,6 @@ function MatchTopBar({ m, fav, onFav }) {
         </Text>
       </Glass>
       <GlassCircle icon={fav ? 'star' : 'star-outline'} color={fav ? t.yellow : undefined} onPress={onFav} />
-    </View>
-  );
-}
-
-/** One-line 1 · X · 2 prices under the tabs (MSport, or the provider the match came with). */
-function OddsBar({ m, checked }) {
-  const t = useTheme();
-  const { settings } = useStore();
-  if (!settings.showOdds) return null;
-  const o = m.odds && m.odds.home != null ? m.odds : null;
-  const sp = sportByKey(m.sport);
-  const fmtDec = (d) => (settings.oddsFormat === 'decimal' ? Number(d).toFixed(2) : formatOdds(d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1)), settings.oddsFormat));
-  const val = (k) => (o.dec && o.dec[k] ? fmtDec(o.dec[k]) : formatOdds(Number(o[k]), settings.oddsFormat));
-  const items = [['1', 'home'], ...(sp.draws && (!o || o.draw != null) ? [['X', 'draw']] : []), ['2', 'away']];
-  // which side the prices said would win (for finished matches: did the favourite win?)
-  const fav = o ? items.reduce((b, [, k]) => (o.dec && o.dec[k] && (!b || o.dec[k] < o.dec[b]) ? k : b), null) : null;
-  const result = m.state === 'post' && m.home.score != null ? (Number(m.home.score) > Number(m.away.score) ? 'home' : Number(m.home.score) < Number(m.away.score) ? 'away' : 'draw') : null;
-  return (
-    <View style={{ paddingHorizontal: 16, marginBottom: 10 }}>
-      <Glass radius={20} strong style={{ height: 44, flexDirection: 'row', alignItems: 'center', paddingHorizontal: 6 }}>
-        <View style={{ marginHorizontal: 8 }}>
-          <Text style={{ color: t.secondary, fontSize: 11.5, fontWeight: '800' }} numberOfLines={1}>
-            {o ? o.provider || 'Odds' : 'Odds'}
-          </Text>
-          {o && (o.live || o.closing) ? <Text style={{ color: o.live ? t.live : t.tertiary, fontSize: 9.5, fontWeight: '800' }}>{o.live ? 'LIVE' : 'CLOSING'}</Text> : null}
-        </View>
-        {o ? (
-          items.map(([lbl, k]) => {
-            const won = result === k;
-            return (
-              <View key={k} style={{ flex: 1, height: 34, marginHorizontal: 3, borderRadius: 14, backgroundColor: won ? (t.dark ? 'rgba(48,209,88,0.25)' : 'rgba(52,199,89,0.16)') : t.track, flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ color: won ? t.green : t.secondary, fontSize: 12, fontWeight: '700', marginRight: 6 }}>{lbl}</Text>
-                <Text style={{ color: won ? t.green : t.text, fontSize: 15, fontWeight: '800' }}>{val(k)}</Text>
-              </View>
-            );
-          })
-        ) : (
-          <Text style={{ flex: 1, color: t.secondary, fontSize: 13 }} numberOfLines={1}>
-            {!checked
-              ? 'Checking MSport…'
-              : m.state === 'post'
-              ? 'Match over · no saved prices'
-              : (() => {
-                  const st = oddsStatus(m.sport);
-                  if (!st.loaded) return st.error ? `Couldn't load MSport prices (${st.error})` : 'Loading MSport prices…';
-                  return `Not on MSport yet · ${st.count.toLocaleString()} matches checked`;
-                })()}
-          </Text>
-        )}
-      </Glass>
     </View>
   );
 }
@@ -521,42 +404,6 @@ function LiveAction({ m, sum }) {
           </View>
         );
       })}
-    </Card>
-  );
-}
-
-/** Every MSport market for the match, in the chosen odds format. */
-function MSportMarkets({ m }) {
-  const t = useTheme();
-  const { settings } = useStore();
-  const o = m.odds;
-  if (!o || o.provider !== 'MSport' || !o.markets || !o.markets.length || !settings.showOdds) return null;
-  const fmt = (d) => {
-    const ml = d >= 2 ? Math.round((d - 1) * 100) : Math.round(-100 / (d - 1));
-    return settings.oddsFormat === 'decimal' ? d.toFixed(2) : formatOdds(ml, settings.oddsFormat);
-  };
-  return (
-    <Card>
-      <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 6 }}>
-        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>MSport odds</Text>
-        {o.live ? <Text style={{ color: t.live, fontWeight: '800', fontSize: 12 }}>LIVE</Text> : null}
-      </View>
-      {o.markets.map((mk, i) => (
-        <View key={mk.id} style={{ paddingVertical: 9, borderBottomWidth: i === o.markets.length - 1 ? 0 : StyleSheet.hairlineWidth, borderBottomColor: t.separator }}>
-          <Text style={{ color: t.secondary, fontSize: 12.5, fontWeight: '700', marginBottom: 6 }}>{mk.name}</Text>
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            {mk.outcomes.map((oc, k) => (
-              <View key={k} style={{ flex: 1, paddingVertical: 7, borderRadius: 11, backgroundColor: t.track, alignItems: 'center' }}>
-                <Text style={{ color: t.secondary, fontSize: 11 }} numberOfLines={1}>
-                  {oc.label}
-                </Text>
-                <Text style={{ color: t.text, fontSize: 15, fontWeight: '800', marginTop: 1 }}>{fmt(oc.odds)}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-      ))}
-      <Text style={{ color: t.tertiary, fontSize: 11, marginTop: 8 }}>Prices change quickly. 18+, bet responsibly.</Text>
     </Card>
   );
 }
@@ -998,22 +845,6 @@ function Leaderboard({ m }) {
   );
 }
 
-function News({ sum }) {
-  const t = useTheme();
-  const nav = useNav();
-  const arts = (sum.news && sum.news.articles) || [];
-  if (!arts.length) return <Empty icon="newspaper-outline" title="No news for this match" />;
-  return arts.map((a, i) => (
-    <Pressable key={i} onPress={() => a.links && a.links.web && nav.push({ name: 'article', url: a.links.web.href, title: a.headline || a.title })}>
-      <Card>
-        {a.images && a.images[0] ? <Image source={{ uri: a.images[0].url }} style={{ height: 160, borderRadius: 14, marginBottom: 10 }} contentFit="cover" /> : null}
-        <Text style={{ color: t.text, fontWeight: '800', fontSize: 15.5 }}>{a.headline}</Text>
-        {a.description ? <Text style={{ color: t.secondary, fontSize: 13.5, marginTop: 4 }}>{a.description}</Text> : null}
-      </Card>
-    </Pressable>
-  ));
-}
-
 // ---------- screen ----------
 
 export default function MatchScreen({ route }) {
@@ -1021,11 +852,7 @@ export default function MatchScreen({ route }) {
   const { isFav, toggle } = useStore();
   const sport = route.match.sport;
   const sp = sportByKey(sport);
-  // odds known already (from the list, this session or saved closing prices) show straight away
-  const [m, setM] = useState(() => {
-    const o = route.match.odds && route.match.odds.home != null ? route.match.odds : cachedOdds(route.match);
-    return o ? { ...route.match, odds: o } : route.match;
-  });
+  const [m, setM] = useState(route.match);
   const [sum, setSum] = useState(null);
   const [table, setTable] = useState(null);
   const [pred, setPred] = useState(null);
@@ -1040,9 +867,6 @@ export default function MatchScreen({ route }) {
         if (s && s.__match) {
           const n = s.__match;
           setM((old) => ({ ...old, ...n, home: { ...old.home, ...n.home, logo: n.home.logo || old.home.logo }, away: { ...old.away, ...n.away, logo: n.away.logo || old.away.logo } }));
-        } else if (s && s.header && s.header.competitions) {
-          const n = normalizeEvent({ id: s.header.id, date: s.header.competitions[0].date, competitions: s.header.competitions }, sport, m.league, m.leagueName)[0];
-          if (n) setM((old) => ({ ...old, ...n, odds: old.odds || n.odds, venue: n.venue || old.venue, details: n.details.length ? n.details : old.details, home: { ...old.home, ...n.home, form: n.home.form || old.home.form }, away: { ...old.away, ...n.away, form: n.away.form || old.away.form } }));
         }
       } else {
         setSum({});
@@ -1064,28 +888,6 @@ export default function MatchScreen({ route }) {
     const iv = setInterval(refresh, 20000);
     return () => clearInterval(iv);
   }, [m.state, refresh]);
-
-  // MSport prices: on open, then every minute while the match is on
-  const [oddsChecked, setOddsChecked] = useState(!!(m.odds && m.odds.home != null));
-  useEffect(() => {
-    if (!teamGame) return undefined;
-    let alive = true;
-    const get = () =>
-      msportOdds(m).then((o) => {
-        if (!alive) return;
-        setOddsChecked(true);
-        if (o) setM((old) => ({ ...old, odds: o }));
-      });
-    get();
-    // soon again (the price list may still be downloading), then every minute
-    const quick = [setTimeout(get, 4000), setTimeout(get, 12000)];
-    const iv = m.state === 'post' ? null : setInterval(get, 60000);
-    return () => {
-      alive = false;
-      quick.forEach(clearTimeout);
-      iv && clearInterval(iv);
-    };
-  }, [m.state === 'post']); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (!teamGame) return;
@@ -1137,7 +939,6 @@ export default function MatchScreen({ route }) {
     if (sum && ((sum.commentary && sum.commentary.length) || (sum.plays && sum.plays.length))) tabs.push({ key: 'commentary', label: sum.commentary ? 'Commentary' : 'Plays' });
     tabs.push({ key: 'standings', label: 'Standings' });
     tabs.push({ key: 'h2h', label: 'H2H' });
-    if (sum && sum.news && sum.news.articles && sum.news.articles.length) tabs.push({ key: 'news', label: 'News' });
   }
 
   const fav = isFav('matches', m.key);
@@ -1167,8 +968,6 @@ export default function MatchScreen({ route }) {
         );
       case 'h2h':
         return <H2H m={m} sum={sum} />;
-      case 'news':
-        return <News sum={sum} />;
       default:
         return (
           <View>
@@ -1178,9 +977,6 @@ export default function MatchScreen({ route }) {
             <Timeline m={m} events={events} />
             <MomentumGraph m={m} mom={sum.momentum} />
             {m.state !== 'post' ? <AIPrediction m={m} pred={pred} /> : null}
-            <WinProb m={m} sum={sum} />
-            {m.odds && m.odds.provider === 'MSport' ? null : <OddsCard m={m} pick={sum.pickcenter} />}
-            <MSportMarkets m={m} />
             {m.state === 'post' && pred ? <AIPrediction m={m} pred={pred} /> : null}
             <InfoCard m={m} sum={sum} />
           </View>
@@ -1190,11 +986,10 @@ export default function MatchScreen({ route }) {
 
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
-      {/* fixed (from the sketch): back · "Home vs Away" pill · star, the score card, the tabs, the odds */}
+      {/* Fixed match header, score card, and available match tabs. */}
       <MatchTopBar m={m} fav={fav} onFav={() => toggle('matches', favMatch(m))} />
       {m.kind === 'match' ? <ScoreHeader m={m} sport={sport} /> : null}
       {tabs.length > 1 ? <TabStrip tabs={tabs} value={tab} onChange={setTab} /> : null}
-      {teamGame ? <OddsBar m={m} checked={oddsChecked} /> : null}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40, paddingTop: 2 }}>
         {body()}
       </ScrollView>

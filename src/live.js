@@ -4,7 +4,7 @@
 import FastLive from '../modules/fast-live';
 import { favMatch } from './components/match';
 import { FS_SPORT } from './api/flashscore';
-import { dayBoard, addDays } from './api/espn';
+import { dayBoard, addDays } from './api/sportsData';
 import { activeTrackedKeys } from './trackedKeys';
 
 export const liveAvailable = () => !!FastLive;

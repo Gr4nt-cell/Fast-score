@@ -1,10 +1,11 @@
 // Flashscore's own data feeds (what flashscore.com loads), read straight from the phone. No key,
 // no sign-up: every request just carries the site's public "x-fsign" value.
 // The feeds are plain text: records separated by "~", fields by "¬", key and value by "÷".
-// Everything is converted into the same shapes the ESPN layer produces, so screens don't change.
+// Everything is converted into the shared sports-data shapes consumed by the app.
 // League slugs look like "fs:<tournamentId>_<stageId>"; team ids are Flashscore participant ids.
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { Platform } from 'react-native';
 
 const HOSTS = ['https://global.flashscore.ninja/2/x/feed', 'https://2.flashscore.ninja/2/x/feed', 'https://d.flashscore.com/x/feed'];
 const SIGN = 'SW9D1eZo';
@@ -20,7 +21,8 @@ const INDIVIDUAL = new Set(['tennis']);
 
 let preferred = 0;
 let downUntil = 0;
-export const fsDown = () => Date.now() < downUntil;
+const directFeedUnavailable = Platform.OS === 'web';
+export const fsDown = () => directFeedUnavailable || Date.now() < downUntil;
 const mem = new Map();
 const inflight = new Map();
 // team id -> one of its matches, so its recent games can come from that match's H2H feed
@@ -46,6 +48,7 @@ function rememberSlug(id, slug) {
 }
 
 async function fetchText(url, timeout = 12000, headers = HEADERS) {
+  if (directFeedUnavailable) throw new Error('Flashscore feeds are unavailable in browser builds');
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
@@ -58,15 +61,19 @@ async function fetchText(url, timeout = 12000, headers = HEADERS) {
 }
 
 /** GET a feed ("f_1_0_0_en_1"); tries each host. Empty answers are fine (no data). */
-async function feed(name, ttl = 30000) {
+async function feed(name, ttl = 30000, timeout = 12000) {
+  if (directFeedUnavailable) throw new Error('Flashscore feeds are unavailable in browser builds');
   const hit = mem.get(name);
   if (hit && Date.now() - hit.t < ttl) return hit.data;
   if (inflight.has(name)) return inflight.get(name);
   const pr = (async () => {
     let last = 'no answer';
+    const deadline = Date.now() + timeout;
     for (const i of [preferred, ...HOSTS.map((_, k) => k).filter((k) => k !== preferred)]) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
       try {
-        const r = await fetchText(`${HOSTS[i]}/${name}`);
+        const r = await fetchText(`${HOSTS[i]}/${name}`, remaining);
         if (r.status === 200) {
           preferred = i;
           mem.set(name, { t: Date.now(), data: r.body });
@@ -319,7 +326,7 @@ function group(items) {
 export async function dayBoard(sport, date, ttl = 30000) {
   const off = dayOffset(date);
   if (off < -7 || off > 7) throw new Error('Flashscore only covers a week either side');
-  const text = await feed(`f_${FS_SPORT[sport]}_${off}_${tzHours()}_en_1`, Math.max(ttl, off === 0 ? 25000 : 5 * 60000));
+      const text = await feed(`f_${FS_SPORT[sport]}_${off}_${tzHours()}_en_1`, Math.max(ttl, off === 0 ? 5000 : 5 * 60000), 8000);
   const items = matchesOf(text, sport).filter((m) => m.state === 'in' || sameLocalDay(new Date(m.date).getTime(), date));
   if (!items.length && sport === 'soccer') {
     // football always has games somewhere: an empty day means the feed isn't answering properly
@@ -343,8 +350,8 @@ function tplParts(slug) {
 }
 const SPORT_PATH = { soccer: 'football', tennis: 'tennis', basketball: 'basketball', hockey: 'hockey', football: 'american-football', baseball: 'baseball', rugby: 'rugby-union', volleyball: 'volleyball' };
 
-export async function leagueDay(sport, slug, date) {
-  const all = await dayBoard(sport, date).catch(() => []);
+export async function leagueDay(sport, slug, date, ttl = 30000) {
+  const all = await dayBoard(sport, date, ttl).catch(() => []);
   if (isTpl(slug)) {
     const { tpl } = tplParts(slug);
     const groups = all.filter((g) => g.items.some((m) => m.tpl === tpl));
@@ -497,7 +504,7 @@ const KEY_TYPES = {
   'Missed Penalty': ['Penalty - Missed', 'penalty-missed'],
 };
 
-/** Match details in the shape the match screen reads from ESPN's summary. */
+/** Match details in the shape used by the match screen. */
 export async function summary(sport, eventId) {
   const s = FS_SPORT[sport] || 1;
   const [core, sui, st, li, hh, sur, lc, momentum] = await Promise.all([
@@ -651,7 +658,7 @@ export async function summary(sport, eventId) {
   });
   if (match && info.VEN) match.venue = [info.VEN, info.TWN].filter(Boolean).join(', ');
 
-  // live commentary -> ESPN-style commentary (oldest first), with the event kind kept
+  // Convert live commentary into the app's shared shape (oldest first).
   const commentary = parse(lc)
     .filter((r) => r.MD)
     .reverse()
@@ -916,5 +923,23 @@ export async function diagnose() {
     return { ok: true, events: b.reduce((n, g) => n + g.items.length, 0), ms: Date.now() - t0 };
   } catch (e) {
     return { ok: false, error: String(e.message || e), ms: Date.now() - t0 };
+  }
+}
+
+/** Clear Flashscore-only provider caches and reset transient failures. */
+export async function clearCache() {
+  mem.clear();
+  inflight.clear();
+  teamEvent.clear();
+  seasonCache.clear();
+  leagueNames.clear();
+  slugs = {};
+  preferred = 0;
+  downUntil = 0;
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    await AsyncStorage.multiRemove(keys.filter((key) => key.startsWith('fs:')));
+  } catch (error) {
+    console.warn('[Fast Score] Could not clear Flashscore cache', error);
   }
 }

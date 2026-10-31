@@ -16,7 +16,6 @@ import { checkFollowed } from './src/watch';
 import { ensurePermission, notifyEvent, onNotificationTap } from './src/notify';
 import { setBackgroundChecks } from './src/background';
 import { onLiveTap, syncLive, trackedKeys, alertOn, playTone, setAlertKinds, toneKind } from './src/live';
-import { warmOdds } from './src/api/msport';
 import { setLanguage } from './src/i18n';
 import { pickToMatch } from './src/screens/PicksScreen';
 import TabBar, { TABS } from './src/components/TabBar';
@@ -24,7 +23,6 @@ import { Backdrop, BlurTargetView, FlatBackdropContext, Glass, GlassModeContext,
 import { Pressable } from './src/components/Touch';
 import { Logo } from './src/components/ui';
 import Boundary from './src/components/Boundary';
-import { SofaBridge } from './src/api/browserBridge';
 import MatchesScreen from './src/screens/MatchesScreen';
 import LeaguesScreen from './src/screens/LeaguesScreen';
 import PicksScreen from './src/screens/PicksScreen';
@@ -216,8 +214,6 @@ function Main() {
 
   useEffect(() => {
     load('lastTab', 'matches').then((v) => TABS.find((x) => x.key === v) && setTabState(v));
-    // MSport lists + saved prices, so odds are there the moment a match opens
-    warmOdds('soccer');
   }, []);
 
   const setTab = useCallback((k) => {
@@ -317,7 +313,6 @@ function Main() {
                   </View>
                 ) : null}
               </BlurTargetView>
-              <SofaBridge />
               <View pointerEvents="box-none" style={wide ? { position: 'absolute', bottom: 0, left: 0, width: Math.round(Math.min(520, Math.max(380, winW * 0.4))), height: 140 } : { position: 'absolute', bottom: 0, left: 0, right: 0, height: 140 }}>
                 <TabBar tabs={TABS} active={tab} onChange={setTab} />
               </View>

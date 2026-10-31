@@ -4,7 +4,7 @@ import { Text } from '../components/Text';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
-import { roster as fetchRoster, standings as fetchStandings, team as fetchTeam, teamSchedule } from '../api/espn';
+import { roster as fetchRoster, standings as fetchStandings, team as fetchTeam, teamSchedule } from '../api/sportsData';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import Standings from '../components/Standings';
 import { MatchRow } from '../components/match';

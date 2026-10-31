@@ -7,7 +7,7 @@ import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import { leagueMeta, sportByKey } from '../sports';
-import { pool, scoreboard, teamSchedule } from '../api/espn';
+import { pool, scoreboard, teamSchedule } from '../api/sportsData';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { MatchRow } from '../components/match';
 import { Card, Chevron, Empty, GlassCircle, Loading, Logo, Row, SectionTitle, Segmented, SportIcon } from '../components/ui';

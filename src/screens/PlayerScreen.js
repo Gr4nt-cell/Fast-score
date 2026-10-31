@@ -4,7 +4,7 @@ import { Text } from '../components/Text';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
-import { athlete as fetchAthlete } from '../api/espn';
+import { athlete as fetchAthlete } from '../api/sportsData';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Card, Empty, GlassCircle, Loading, Logo, PushHeader, Row } from '../components/ui';
 

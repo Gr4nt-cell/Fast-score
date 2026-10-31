@@ -1,40 +1,17 @@
 import React, { useEffect, useState } from 'react';
-import { Linking, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from '../components/Text';
-import { Image } from 'expo-image';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
 import { leagueMeta } from '../sports';
-import { news as fetchNews, scoreboard, standings as fetchStandings, teams as fetchTeams } from '../api/espn';
+import { scoreboard, standings as fetchStandings, teams as fetchTeams } from '../api/sportsData';
 import { leagueLogo } from '../api/flashscore';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
-import { Pressable } from '../components/Touch';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import Standings from '../components/Standings';
 import { MatchRow } from '../components/match';
 import { Card, Chevron, Empty, GlassCircle, Loading, Logo, PushHeader, Row, TabStrip } from '../components/ui';
-
-export function NewsList({ items }) {
-  const t = useTheme();
-  const nav = useNav();
-  if (!items) return <Loading />;
-  if (!items.length) return <Empty icon="newspaper-outline" title="No news right now" />;
-  return items.map((a) => (
-    <Pressable key={a.id} onPress={() => a.url && nav.push({ name: 'article', url: a.url, title: a.title })}>
-      <Card>
-        {a.image ? <Image source={{ uri: a.image }} style={{ height: 170, borderRadius: 14, marginBottom: 10 }} contentFit="cover" transition={150} /> : null}
-        <Text style={{ color: t.text, fontWeight: '800', fontSize: 16 }}>{a.title}</Text>
-        {a.body ? (
-          <Text style={{ color: t.secondary, fontSize: 13.5, marginTop: 4, lineHeight: 19 }} numberOfLines={3}>
-            {a.body}
-          </Text>
-        ) : null}
-        {a.date ? <Text style={{ color: t.tertiary, fontSize: 12, marginTop: 6 }}>{new Date(a.date).toLocaleString([], { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}</Text> : null}
-      </Card>
-    </Pressable>
-  ));
-}
 
 /** Tables of a competition with several stages (e.g. Euro: final tournament / qualifying). */
 function StageTables({ table, stage, setStage, sport, league }) {
@@ -77,7 +54,6 @@ export default function LeagueScreen({ route }) {
   const [board, setBoard] = useState(null);
   const [logo, setLogo] = useState(route.logo);
   const [table, setTable] = useState(null);
-  const [newsItems, setNews] = useState(null);
   const [teamList, setTeams] = useState(null);
   const [stage, setStage] = useState(null);
 
@@ -93,7 +69,6 @@ export default function LeagueScreen({ route }) {
 
   useEffect(() => {
     if (tab === 'standings' && table == null) fetchStandings(sport, league).then(setTable).catch(() => setTable([]));
-    if (tab === 'news' && newsItems == null) fetchNews(sport, league).then(setNews).catch(() => setNews([]));
     if (tab === 'teams' && teamList == null) fetchTeams(sport, league).then(setTeams).catch(() => setTeams([]));
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
@@ -118,7 +93,6 @@ export default function LeagueScreen({ route }) {
           tabs={[
             { key: 'matches', label: 'Matches' },
             { key: 'standings', label: 'Standings' },
-            { key: 'news', label: 'News' },
             { key: 'teams', label: 'Teams' },
           ]}
           value={tab}
@@ -133,7 +107,7 @@ export default function LeagueScreen({ route }) {
             ) : board.length ? (
               <Glass radius={24} strong style={{ marginHorizontal: 16, paddingHorizontal: 6 }}>
                 {board.map((m, i) => (
-                  <MatchRow key={m.key} m={m} last={i === board.length - 1} showOdds />
+                  <MatchRow key={m.key} m={m} last={i === board.length - 1} />
                 ))}
               </Glass>
             ) : (
@@ -150,7 +124,6 @@ export default function LeagueScreen({ route }) {
             <Empty icon="list-outline" title="No table for this competition" />
           )
         ) : null}
-        {tab === 'news' ? <NewsList items={newsItems} /> : null}
         {tab === 'teams' ? (
           teamList == null ? (
             <Loading />

@@ -3,7 +3,7 @@
 // the last-seen score of each match is kept on disk so the two never announce the same event twice.
 import { load, save } from './store';
 import { sportByKey } from './sports';
-import { pool, scoreboard } from './api/espn';
+import { pool, scoreboard } from './api/sportsData';
 
 const KEY = 'watch:sigs';
 

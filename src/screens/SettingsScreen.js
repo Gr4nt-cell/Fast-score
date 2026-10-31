@@ -6,7 +6,7 @@ import Constants from 'expo-constants';
 import { useTheme } from '../theme';
 import { useStore } from '../store';
 import { SPORTS } from '../sports';
-import { clearCache } from '../api/espn';
+import { clearCache } from '../api/sportsData';
 import { fixtureBoardCache } from '../api/fixtureBoardStore';
 import { ensurePermission, openNotificationSettings, permissionStatus, sendTestNotification } from '../notify';
 import { ALERT_KINDS, alertOn, askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable, playTone } from '../live';
@@ -111,40 +111,21 @@ export default function SettingsScreen() {
           </View>
         </Card>
 
-        <SectionTitle>Odds</SectionTitle>
-        <Card>
-          <Toggle label="Show odds" sub="Bookmaker prices where ESPN carries them" value={settings.showOdds} onChange={(v) => setSetting('showOdds', v)} last={!settings.showOdds} />
-          {settings.showOdds ? (
-            <View style={{ paddingTop: 12 }}>
-              <Segmented
-                height={40}
-                options={[
-                  { key: 'decimal', label: '1.85' },
-                  { key: 'fractional', label: '17/20' },
-                  { key: 'american', label: '-118' },
-                ]}
-                value={settings.oddsFormat}
-                onChange={(v) => setSetting('oddsFormat', v)}
-              />
-            </View>
-          ) : null}
-        </Card>
-
         <SectionTitle>Notifications</SectionTitle>
         <Card>
           <Toggle
             label="Score notifications"
-            sub="Kick-off, goals, half-time and full time for matches and teams you follow, within about 30 seconds, even with the app closed. While a followed match is on, its live score sits in your notifications."
+            sub="Kick-off, goals, half-time and full-time alerts for followed matches. Fast Score checks active games frequently and uses its own bundled alert sounds."
             value={settings.goalAlerts}
             onChange={async (v) => {
               setSetting('goalAlerts', v);
               if (v) setNotif((await ensurePermission(true)) ? 'granted' : await permissionStatus());
             }}
-            last={Platform.OS !== 'android' && (!settings.goalAlerts || (notif === 'granted' && ((battery && alarms) || !liveAvailable())))}
+            last={!settings.goalAlerts || (notif === 'granted' && ((battery && alarms) || !liveAvailable()))}
           />
           {settings.goalAlerts && notif && notif !== 'granted' ? (
             <Row
-              last={Platform.OS !== 'android'}
+              last
               onPress={async () => {
                 if (notif === 'denied') openNotificationSettings();
                 else setNotif((await ensurePermission(true)) ? 'granted' : await permissionStatus());
@@ -176,7 +157,9 @@ export default function SettingsScreen() {
             <Row last onPress={() => Linking.openSettings().catch(() => {})}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: t.text, fontSize: 15, fontWeight: '600' }}>Allow background data use</Text>
-                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Open Android app settings and allow background data so score updates and live alerts can continue when Fast Score is closed.</Text>
+                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>
+                  Open Android app settings and allow background data so score updates and live alerts can continue when Fast Score is closed.
+                </Text>
               </View>
             </Row>
           ) : null}
@@ -261,7 +244,7 @@ export default function SettingsScreen() {
               ) : null}
             </Card>
             <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 20, marginTop: -6, marginBottom: 14, lineHeight: 17 }}>
-              Tap ▶ to hear a tone. Line-up alerts come about an hour before kick-off for followed football matches. You can also change each sound in your phone's notification settings.
+              Tap ▶ to hear each Fast Score tone. Line-up alerts are available for followed football matches.
             </Text>
           </>
         ) : null}
