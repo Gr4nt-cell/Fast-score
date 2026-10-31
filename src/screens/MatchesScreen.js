@@ -13,6 +13,7 @@ import DateStrip, { startOfDay } from '../components/DateStrip';
 import { Empty, GlassCircle, LiveDot, Loading } from '../components/ui';
 import { ScrollGlowFlatList as FlatList } from '../components/Glass';
 import { fixtureBoardKey, savedOnLocalDay } from '../api/fixtureBoardCache';
+import { fixtureRefreshPlan } from '../api/fixtureRefreshPlan';
 import { fixtureBoardCache } from '../api/fixtureBoardStore';
 
 /**
@@ -97,13 +98,20 @@ export default function MatchesScreen({ liveMode = false }) {
     load(false);
   }, [load]);
 
-  // keep live scores moving while something is in play
-  const anyLive = useMemo(() => (groups || []).some((g) => g.items.some((m) => m.state === 'in')), [groups]);
+  // Refresh only when a match can change soon; don't poll an idle day's fixture list.
+  const refreshPlan = useMemo(() => fixtureRefreshPlan(groups), [groups]);
   useEffect(() => {
-    if (!anyLive && !live) return undefined;
-    const iv = setInterval(() => load(true), 25000);
-    return () => clearInterval(iv);
-  }, [anyLive, live, load]);
+    const refresh = () => load(true, true);
+    if (refreshPlan.pollIntervalMs) {
+      const iv = setInterval(refresh, refreshPlan.pollIntervalMs);
+      return () => clearInterval(iv);
+    }
+    if (refreshPlan.refreshAt != null) {
+      const timer = setTimeout(refresh, Math.max(0, refreshPlan.refreshAt - Date.now()));
+      return () => clearTimeout(timer);
+    }
+    return undefined;
+  }, [refreshPlan, load]);
 
   const sp = sportByKey(sport);
   const shown = useMemo(() => {

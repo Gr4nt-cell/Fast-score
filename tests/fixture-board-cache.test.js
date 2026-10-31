@@ -2,6 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import { createFixtureBoardCache, fixtureBoardKey, savedOnLocalDay } from '../src/api/fixtureBoardCache.js';
+import { fixtureRefreshPlan } from '../src/api/fixtureRefreshPlan.js';
 
 function fakeStorage(initial = {}) {
   const values = new Map(Object.entries(initial));
@@ -76,4 +77,16 @@ test('clearing fixture snapshots clears both memory and persistent storage', asy
 test('the matches screen waits for fixture persistence before finishing its load', async () => {
   const source = await readFile(new URL('../src/screens/MatchesScreen.js', import.meta.url), 'utf8');
   assert.match(source, /await fixtureBoardCache\.set\(boardKey, res\)/);
+});
+
+test('fixture refreshes are scheduled only for active or imminent matches', () => {
+  const now = new Date(2026, 9, 31, 12).getTime();
+  const idleGroups = [{ items: [{ state: 'pre', date: now + 60 * 60 * 1000 }] }];
+  const soonGroups = [{ items: [{ state: 'pre', date: now + 5 * 60 * 1000 }] }];
+  const liveGroups = [{ items: [{ state: 'in', date: now - 30 * 60 * 1000 }] }];
+
+  assert.equal(fixtureRefreshPlan(idleGroups, now).pollIntervalMs, null);
+  assert.ok(fixtureRefreshPlan(idleGroups, now).refreshAt > now);
+  assert.equal(fixtureRefreshPlan(soonGroups, now).pollIntervalMs, 15000);
+  assert.equal(fixtureRefreshPlan(liveGroups, now).pollIntervalMs, 15000);
 });
