@@ -62,6 +62,26 @@ test('fixture cache keeps the newest snapshots within its storage limit', async 
   assert.equal(storage.values.has(fixtureBoardKey('soccer', date(31))), true);
 });
 
+test('fixture cache evicts an old snapshot before writing a new one at its limit', async () => {
+  const storage = fakeStorage();
+  const cache = createFixtureBoardCache(storage, 2);
+  const date = (day) => new Date(2026, 9, day);
+  await cache.set(fixtureBoardKey('soccer', date(29)), []);
+  await cache.set(fixtureBoardKey('soccer', date(30)), []);
+
+  let cacheCountAtWrite = null;
+  const originalSetItem = storage.setItem;
+  storage.setItem = async (key, value) => {
+    const cachePrefix = fixtureBoardKey('soccer', date(29)).replace(/soccer:\d{8}$/, '');
+    cacheCountAtWrite = [...storage.values.keys()].filter((entry) => entry.startsWith(cachePrefix)).length;
+    await originalSetItem(key, value);
+  };
+  await cache.set(fixtureBoardKey('soccer', date(31)), []);
+
+  assert.equal(cacheCountAtWrite, 1);
+  assert.equal(storage.values.size, 2);
+});
+
 test('clearing fixture snapshots clears both memory and persistent storage', async () => {
   const storage = fakeStorage();
   const cache = createFixtureBoardCache(storage);

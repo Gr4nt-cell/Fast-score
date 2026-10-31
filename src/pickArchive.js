@@ -35,7 +35,12 @@ export function getOrCreatePickDay(dateKey, { read, write, ensureIndexed, legacy
     if (!hasPicks(day)) return { day, origin: 'empty' };
 
     if (origin !== 'saved') await write(canonicalKey, day);
-    await ensureIndexed(dateKey);
+    try {
+      await ensureIndexed(dateKey);
+    } catch (error) {
+      // The dated archive is authoritative; a full index must not hide saved picks.
+      console.warn('[Fast Score] Could not update the pick-history index', error);
+    }
     return { day, origin };
   })();
 

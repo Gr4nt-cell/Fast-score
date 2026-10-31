@@ -1,3 +1,5 @@
+import { setItemWithRecovery } from '../storageRecovery.js';
+
 const PREFIX = 'fast-score:fixture-board:v1:';
 const DEFAULT_LIMIT = 18;
 
@@ -26,10 +28,10 @@ function validSnapshot(value) {
 export function createFixtureBoardCache(storage, limit = DEFAULT_LIMIT) {
   const memory = new Map();
 
-  async function trim() {
+  async function trim(maxEntries = limit) {
     if (!storage.getAllKeys || !storage.multiGet || !storage.multiRemove) return;
     const keys = (await storage.getAllKeys()).filter((key) => key.startsWith(PREFIX));
-    if (keys.length <= limit) return;
+    if (keys.length <= maxEntries) return;
 
     const entries = await storage.multiGet(keys);
     const oldest = entries
@@ -42,12 +44,22 @@ export function createFixtureBoardCache(storage, limit = DEFAULT_LIMIT) {
         }
       })
       .sort((a, b) => a.savedAt - b.savedAt)
-      .slice(0, keys.length - limit)
+      .slice(0, keys.length - maxEntries)
       .map((entry) => entry.key);
 
     if (oldest.length) {
       await storage.multiRemove(oldest);
       oldest.forEach((key) => memory.delete(key));
+    }
+  }
+
+  async function trimBeforeWrite(key) {
+    if (!storage.getAllKeys) return;
+    try {
+      const keys = (await storage.getAllKeys()).filter((entry) => entry.startsWith(PREFIX));
+      await trim(keys.includes(key) ? limit : Math.max(0, limit - 1));
+    } catch {
+      // Cache eviction is best-effort; the write recovery path handles SQLITE_FULL.
     }
   }
 
@@ -75,7 +87,8 @@ export function createFixtureBoardCache(storage, limit = DEFAULT_LIMIT) {
       };
       memory.set(key, snapshot);
       try {
-        await storage.setItem(key, JSON.stringify(snapshot));
+        await trimBeforeWrite(key);
+        await setItemWithRecovery(storage, key, JSON.stringify(snapshot));
         await trim();
       } catch (error) {
         console.warn('[Fast Score] Could not persist the daily fixture board', error);

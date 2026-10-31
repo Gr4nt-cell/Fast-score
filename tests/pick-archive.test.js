@@ -67,6 +67,24 @@ test('a legacy future preview is promoted without being regenerated', async () =
   assert.deepEqual(store.indexed, ['20261102']);
 });
 
+test('a failed derived history-index write does not hide a successfully saved pick day', async () => {
+  const store = fakeStorage();
+  const originalWarn = console.warn;
+  console.warn = () => {};
+  let result;
+  try {
+    result = await getOrCreatePickDay('20261102', {
+      ...store,
+      ensureIndexed: async () => { throw new Error('index write failed'); },
+      create: async () => ({ date: '20261102', picks: [{ key: 'saved-pick' }] }),
+    });
+  } finally {
+    console.warn = originalWarn;
+  }
+  assert.equal(result.day.picks[0].key, 'saved-pick');
+  assert.deepEqual(store.entries.get('picks5:20261102').picks, [{ key: 'saved-pick' }]);
+});
+
 test('empty scans are not archived so a later scan can discover fixtures', async () => {
   const store = fakeStorage();
   const empty = await getOrCreatePickDay('20261103', {

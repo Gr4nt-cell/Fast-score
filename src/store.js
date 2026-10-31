@@ -1,6 +1,7 @@
 import React, { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { Appearance } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import { setItemWithRecovery } from './storageRecovery.js';
 import { setSourceMode } from './api/espn';
 
 export async function load(key, fallback) {
@@ -12,7 +13,18 @@ export async function load(key, fallback) {
   }
 }
 export async function saveAndWait(key, value) {
-  await AsyncStorage.setItem(key, JSON.stringify(value));
+  await setItemWithRecovery(AsyncStorage, key, JSON.stringify(value));
+}
+export async function readPickArchiveDates() {
+  try {
+    const keys = await AsyncStorage.getAllKeys();
+    return keys.flatMap((key) => {
+      const match = /^picks5:(\d{8})$/.exec(key);
+      return match ? [match[1]] : [];
+    });
+  } catch {
+    return [];
+  }
 }
 export function save(key, value) {
   return saveAndWait(key, value).catch(() => {});

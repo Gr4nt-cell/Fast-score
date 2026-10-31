@@ -7,7 +7,7 @@
 // Bookmaker odds (MSport, or ESPN's where it has them) are blended in at 25% as a sanity check.
 // Every day the five most confident calls become the "AI Picks" and are saved, so the next day the
 // app can show how they did.
-import { americanToProb, load, saveAndWait } from './store';
+import { americanToProb, load, readPickArchiveDates, saveAndWait } from './store';
 import { SPORTS, sportByKey } from './sports';
 import { addDays, dayBoard, pool, recentGames, scoreboard, standings, teamSchedule, ymd } from './api/espn';
 import { attachOdds } from './api/msport';
@@ -448,11 +448,11 @@ const parseYmd = (d) => new Date(Number(d.slice(0, 4)), Number(d.slice(4, 6)) - 
 
 /** Fill in the results of past picks; returns [{ date, picks }] newest first */
 export async function pickHistory(days = 14) {
-  const idx = await load('picks5:index', []);
+  const [idx, archivedDates] = await Promise.all([load('picks5:index', []), readPickArchiveDates()]);
   const today = ymd(new Date());
   const earliest = ymd(addDays(parseYmd(today), -days));
   const out = [];
-  for (const d of datesForPickHistory(idx, today, earliest)) {
+  for (const d of datesForPickHistory([...(Array.isArray(idx) ? idx : []), ...archivedDates], today, earliest)) {
     const key = 'picks5:' + d;
     const day = await load(key, null);
     if (!day) continue;
