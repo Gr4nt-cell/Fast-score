@@ -150,7 +150,7 @@ class LiveService : Service() {
       getSystemService(NotificationManager::class.java).notify(ONGOING_ID, ongoing(title, text.ifEmpty { "Watching your matches" }))
     } catch (e: Exception) {}
     if (Live.due(this).isEmpty()) return finish()
-    handler?.postDelayed({ tick() }, if (anyLive) 30 * 1000L else 60 * 1000L)
+    handler?.postDelayed({ tick() }, if (anyLive) 15 * 1000L else 60 * 1000L)
   }
 
   companion object {

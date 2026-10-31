@@ -20,7 +20,7 @@ export async function checkFollowed(favs, onEvent) {
   if (!leagues.size) return [];
   const res = await pool([...leagues.keys()], 4, (k) => {
     const [s, l] = k.split('|');
-    return scoreboard(s, l, today, 20000);
+    return scoreboard(s, l, today, 8000);
   });
   const sigs = await load(KEY, {});
   const events = [];

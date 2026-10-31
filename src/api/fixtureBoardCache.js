@@ -77,8 +77,8 @@ export function createFixtureBoardCache(storage, limit = DEFAULT_LIMIT) {
       try {
         await storage.setItem(key, JSON.stringify(snapshot));
         await trim();
-      } catch {
-        // Fixture persistence is an optimization; the live request remains authoritative.
+      } catch (error) {
+        console.warn('[Fast Score] Could not persist the daily fixture board', error);
       }
     },
 

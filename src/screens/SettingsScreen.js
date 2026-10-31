@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Switch, View } from 'react-native';
+import { ActivityIndicator, Switch, View } from 'react-native';
 import { Text } from '../components/Text';
 import { ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import Constants from 'expo-constants';
@@ -39,6 +39,7 @@ export default function SettingsScreen() {
   const [server, setServer] = useState(null);
   const [notif, setNotif] = useState(null);
   const [testNotificationStatus, setTestNotificationStatus] = useState('');
+  const [testingNotification, setTestingNotification] = useState(false);
   const [battery, setBattery] = useState(batteryUnrestricted());
   const [alarms, setAlarms] = useState(exactAlarmsAllowed());
   useEffect(() => {
@@ -193,8 +194,8 @@ export default function SettingsScreen() {
                     <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500', flex: 1 }}>{k.label}</Text>
                     <Pressable
                       hitSlop={8}
-                      onPress={() => {
-                        if (!playTone(k.key)) setTestNotificationStatus('Sound preview is unavailable in this build. Try the test notification below.');
+                      onPress={async () => {
+                        if (!(await playTone(k.key))) setTestNotificationStatus('Sound preview is unavailable in this build. Try the test notification below.');
                       }}
                       style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}
                     >
@@ -207,37 +208,45 @@ export default function SettingsScreen() {
               <Row
                 last
                 onPress={async () => {
-                  setTestNotificationStatus('Scheduling test notification…');
-                  const result = await sendTestNotification();
-                  const channelHealth = result.channelHealth;
-                  const diagnostics = result.diagnostics;
-                  setTestNotificationStatus(
-                    diagnostics?.notificationsEnabled === false
-                      ? 'Android has notifications disabled for Fast Score. Open the goal alert channel settings and enable notifications.'
-                      : diagnostics?.channelImportance === 0
-                        ? 'Android has blocked the goal alert channel. Set it to High in the channel settings.'
-                        : diagnostics?.channelSoundEnabled === false
-                          ? 'Android has muted the goal alert channel. Enable sound in the channel settings.'
-                          : diagnostics?.channelImportance > 0 && diagnostics.channelImportance < 4
-                            ? 'Android has lowered the goal alert channel. Set it to High to show pop-ups.'
-                            : result.ok && channelHealth?.soundEnabled === true && channelHealth?.highImportance === true
-                              ? 'Android posted the test on the High channel. If no sound or pop-up appeared, check Do Not Disturb and phone volume.'
-                              : result.ok
-                                ? 'Android posted the test. Check the notification shade and channel settings.'
-                                : result.reason === 'permission'
-                                  ? 'Allow notifications for Fast Score, then try again.'
-                                  : `Android could not post the test (${diagnostics?.error || result.reason || 'unknown error'}). Open channel settings and retry.`
-                  );
+                  if (testingNotification) return;
+                  setTestingNotification(true);
+                  setTestNotificationStatus('Sending test notification…');
+                  try {
+                    const result = await sendTestNotification();
+                    const channelHealth = result.channelHealth;
+                    const diagnostics = result.diagnostics;
+                    setTestNotificationStatus(
+                      diagnostics?.notificationsEnabled === false
+                        ? 'Android has notifications disabled for Fast Score. Open the goal alert channel settings and enable notifications.'
+                        : diagnostics?.channelImportance === 0
+                          ? 'Android has blocked the goal alert channel. Set it to High in the channel settings.'
+                          : diagnostics?.channelSoundEnabled === false
+                            ? 'Android has muted the goal alert channel. Enable sound in the channel settings.'
+                            : diagnostics?.channelImportance > 0 && diagnostics.channelImportance < 4
+                              ? 'Android has lowered the goal alert channel. Set it to High to show pop-ups.'
+                              : result.ok && channelHealth?.soundEnabled === true && channelHealth?.highImportance === true
+                                ? 'Android posted the test on the High channel. If no sound or pop-up appeared, check Do Not Disturb and phone volume.'
+                                : result.ok
+                                  ? 'Android posted the test. Check the notification shade and channel settings.'
+                                  : result.reason === 'permission'
+                                    ? 'Allow notifications for Fast Score, then try again.'
+                                    : `Android could not post the test (${diagnostics?.error || result.reason || 'unknown error'}). Open channel settings and retry.`
+                    );
+                  } catch (error) {
+                    setTestNotificationStatus(`The test failed (${error?.message || 'unknown error'}). You can still use the app; open channel settings and retry.`);
+                  } finally {
+                    setTestingNotification(false);
+                  }
                 }}
               >
                 <Ionicons name="notifications-outline" size={20} color={t.blue} style={{ marginRight: 12 }} />
                 <View style={{ flex: 1 }}>
                   <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500' }}>Send test notification</Text>
                   <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>
-                    {testNotificationStatus || 'Check that notifications and the goal sound work.'}
+                    {testNotificationStatus || 'Check Android notification sound and pop-up delivery.'}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
+                {testingNotification ? <ActivityIndicator size="small" color={t.blue} /> : <Ionicons name="chevron-forward" size={18} color={t.tertiary} />}
               </Row>
               {testNotificationStatus ? (
                 <Row last onPress={openNotificationSettings}>

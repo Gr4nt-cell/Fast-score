@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import { createFixtureBoardCache, fixtureBoardKey, savedOnLocalDay } from '../src/api/fixtureBoardCache.js';
 
 function fakeStorage(initial = {}) {
@@ -70,4 +71,9 @@ test('clearing fixture snapshots clears both memory and persistent storage', asy
 
   assert.equal(await cache.get(key), null);
   assert.equal(storage.values.has(key), false);
+});
+
+test('the matches screen waits for fixture persistence before finishing its load', async () => {
+  const source = await readFile(new URL('../src/screens/MatchesScreen.js', import.meta.url), 'utf8');
+  assert.match(source, /await fixtureBoardCache\.set\(boardKey, res\)/);
 });

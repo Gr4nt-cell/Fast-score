@@ -7,7 +7,7 @@ import FastLive from '../modules/fast-live';
 
 // Android keeps a channel's sound settings across app upgrades, even if the app
 // changes its configuration. Bump this when repairing channel behavior.
-const CHANNEL = 'scores_v5';
+const CHANNEL = 'scores_v6';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -72,8 +72,6 @@ export const openNotificationSettings = () => {
 };
 
 const channelTrigger = (channelId) => ({
-  type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
-  seconds: 1,
   channelId,
 });
 
@@ -102,7 +100,7 @@ const KIND_CHANNELS = {
 };
 const kindReady = {};
 function kindChannel(kind) {
-  const id = `ev_${kind}_v5`;
+  const id = `ev_${kind}_v6`;
   if (Platform.OS !== 'android') return Promise.resolve(id);
   if (!kindReady[kind]) {
     kindReady[kind] = Notifications.setNotificationChannelAsync(id, {
@@ -111,7 +109,7 @@ function kindChannel(kind) {
       importance: kind === 'lineups' ? Notifications.AndroidImportance.DEFAULT : Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 150, 250],
       lightColor: '#0A84FF',
-      sound: `fs_${kind}.wav`,
+      sound: 'default',
     })
       .then(() => id)
       .catch((error) => {
@@ -140,18 +138,31 @@ async function getChannelHealth(channelId) {
   }
 }
 
+async function withTimeout(promise, ms) {
+  let timer;
+  try {
+    return await Promise.race([
+      promise,
+      new Promise((_, reject) => {
+        timer = setTimeout(() => reject(new Error('timeout')), ms);
+      }),
+    ]);
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
 export async function notifyEvent(ev, kind) {
   if (!(await ensurePermission(false))) return false;
   const alertKind = kind && KIND_CHANNELS[kind] ? kind : null;
   const channelId = alertKind ? await kindChannel(alertKind) : CHANNEL;
-  const defaultSoundFallback = Platform.OS === 'android' && alertKind && channelId === CHANNEL;
   const { title, body } = text(ev);
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
         title,
         body,
-        sound: alertKind && !defaultSoundFallback ? `fs_${alertKind}.wav` : 'default',
+        sound: Platform.OS === 'android' || !alertKind ? 'default' : `fs_${alertKind}.wav`,
         priority:
           alertKind === 'lineups'
             ? Notifications.AndroidNotificationPriority.DEFAULT
@@ -171,12 +182,12 @@ export async function notifyEvent(ev, kind) {
 export async function sendTestNotification() {
   if (!(await ensurePermission(true))) return { ok: false, reason: 'permission' };
   const kind = 'goal';
-  const channelId = await kindChannel(kind);
-  const channelHealth = await getChannelHealth(channelId);
   if (Platform.OS === 'android' && FastLive?.testNotification) {
     try {
-      const raw = FastLive.testNotification();
+      const raw = await withTimeout(FastLive.testNotification(), 8000);
       const diagnostics = typeof raw === 'string' ? JSON.parse(raw) : raw;
+      const channelId = diagnostics?.channelId || (await kindChannel(kind));
+      const channelHealth = await getChannelHealth(channelId);
       return {
         ok: !!diagnostics?.posted,
         reason: diagnostics?.error || (diagnostics?.posted ? null : 'native'),
@@ -192,17 +203,18 @@ export async function sendTestNotification() {
       };
     } catch (error) {
       console.warn('[Fast Score] Could not post a native test notification', error);
-      return { ok: false, reason: 'native', channelHealth };
+      return { ok: false, reason: error?.message === 'timeout' ? 'timeout' : 'native' };
     }
   }
 
-  const defaultSoundFallback = Platform.OS === 'android' && channelId === CHANNEL;
+  const channelId = await kindChannel(kind);
+  const channelHealth = await getChannelHealth(channelId);
   try {
     await Notifications.scheduleNotificationAsync({
       content: {
         title: 'Fast Score test notification',
-        body: 'Notifications are enabled. This tests the goal alert sound.',
-        sound: defaultSoundFallback ? 'default' : 'fs_goal.wav',
+        body: 'This checks notification delivery and sound.',
+        sound: Platform.OS === 'android' ? 'default' : 'fs_goal.wav',
         priority: Notifications.AndroidNotificationPriority.HIGH,
       },
       trigger: Platform.OS === 'android' ? channelTrigger(channelId) : null,

@@ -145,9 +145,9 @@ export function setAlertKinds(alerts) {
 }
 
 /** Play an alert tone (Settings preview and the in-app banner). */
-export function playTone(kind) {
+export async function playTone(kind) {
   try {
-    return !!(FastLive && FastLive.playTone && FastLive.playTone(kind));
+    return !!(FastLive && FastLive.playTone && (await FastLive.playTone(kind)));
   } catch {
     return false;
   }

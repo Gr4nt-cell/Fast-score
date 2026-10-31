@@ -69,8 +69,9 @@ export default function MatchesScreen({ liveMode = false }) {
           res.source = b.source;
         }
         if (id !== reqId.current) return;
+        await fixtureBoardCache.set(boardKey, res);
+        if (id !== reqId.current) return;
         setBoard({ key: boardKey, groups: res });
-        fixtureBoardCache.set(boardKey, res);
         // today: note MSport's prices in the background, so finished matches can show closing odds
         // (any day in view, so opening a match shows its odds straight away)
         if (view !== 'odds' && !live && sport !== 'all') attachOdds(res, sport).catch(() => {});

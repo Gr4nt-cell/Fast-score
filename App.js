@@ -97,19 +97,31 @@ function useScoreWatcher() {
 
   useEffect(() => {
     if (!settings.goalAlerts || !following) return undefined;
+    let checking = false;
     // in the background the live service alerts for the matches it tracks; don't double up
     const onEvent = (ev) => {
       const kind = toneKind(ev);
       if (kind && !alertOn(settings, kind)) return;
       if (AppState.currentState === 'active') {
         showToast(ev);
-        if (kind) playTone(kind);
+        if (kind) void playTone(kind);
       } else if (!trackedKeys().has(ev.match.key)) notifyEvent(ev, kind);
     };
-    const check = () => checkFollowed(favs, onEvent).catch(() => {});
+    const check = async () => {
+      if (checking) return;
+      checking = true;
+      try {
+        await checkFollowed(favs, onEvent);
+      } catch {}
+      checking = false;
+    };
     check();
-    const iv = setInterval(check, 30000);
-    return () => clearInterval(iv);
+    const iv = setInterval(check, 10000);
+    const sub = AppState.addEventListener('change', (state) => state === 'active' && check());
+    return () => {
+      clearInterval(iv);
+      sub.remove();
+    };
   }, [favs, settings.goalAlerts, settings.alerts, following, showToast]);
 
   // tell the live service which kinds of alert are on

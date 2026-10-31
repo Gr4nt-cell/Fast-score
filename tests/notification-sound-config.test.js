@@ -21,20 +21,35 @@ test('Android notification channels use fresh, matching IDs', async () => {
     path.join(root, 'modules/fast-live/android/src/main/java/expo/modules/fastlive/FastLiveModule.kt'),
     'utf8',
   );
+  const liveService = await readFile(
+    path.join(root, 'modules/fast-live/android/src/main/java/expo/modules/fastlive/LiveService.kt'),
+    'utf8',
+  );
+  const app = await readFile(path.join(root, 'App.js'), 'utf8');
+  const watcher = await readFile(path.join(root, 'src/watch.js'), 'utf8');
 
-  assert.equal(notifications.defaultChannel, 'scores_v5');
-  assert.match(jsNotifications, /const CHANNEL = 'scores_v5'/);
-  assert.match(nativeLive, /const val CH_SCORES = "scores_v5"/);
-  assert.match(jsNotifications, /`ev_\$\{kind\}_v5`/);
-  assert.match(nativeLive, /"ev_\$\{kind\}_v5"/);
+  assert.equal(notifications.defaultChannel, 'scores_v6');
+  assert.match(jsNotifications, /const CHANNEL = 'scores_v6'/);
+  assert.match(nativeLive, /const val CH_SCORES = "scores_v6"/);
+  assert.match(jsNotifications, /`ev_\$\{kind\}_v6`/);
+  assert.match(nativeLive, /"ev_\$\{kind\}_v6"/);
   assert.match(jsNotifications, /shouldShowAlert: true/);
   assert.match(jsNotifications, /getNotificationChannelAsync\(channelId\)/);
   assert.match(jsNotifications, /AndroidNotificationPriority\.HIGH/);
-  assert.match(jsNotifications, /SchedulableTriggerInputTypes\.TIME_INTERVAL/);
-  assert.match(jsNotifications, /FastLive\?\.testNotification/);
+  assert.match(jsNotifications, /const channelTrigger = \(channelId\) => \(\{\s*channelId,/);
+  assert.match(jsNotifications, /withTimeout\(FastLive\.testNotification\(\), 8000\)/);
   assert.match(nativeLive, /fun testNotification\(ctx: Context\): String/);
-  assert.match(nativeModule, /Function\("testNotification"\)/);
+  assert.match(nativeModule, /AsyncFunction\("testNotification"\)/);
+  assert.match(nativeModule, /AsyncFunction\("playTone"\)/);
   assert.match(nativeLive, /Settings\.System\.DEFAULT_NOTIFICATION_URI/);
+  assert.match(nativeLive, /prepareAsync\(\)/);
+  assert.match(jsNotifications, /sound: 'default'/);
+
+  const toneStart = nativeLive.indexOf('fun playTone(');
+  assert.ok(nativeLive.indexOf('setAudioAttributes(', toneStart) < nativeLive.indexOf('setDataSource(ctx, sound)', toneStart));
+  assert.match(app, /setInterval\(check, 10000\)/);
+  assert.match(watcher, /scoreboard\(s, l, today, 8000\)/);
+  assert.match(liveService, /if \(anyLive\) 15 \* 1000L/);
 });
 
 test('all notification sounds are declared and packaged as app assets', async () => {

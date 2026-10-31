@@ -42,10 +42,10 @@ class FastLiveModule : Module() {
     }
 
     /** Play an alert tone: goal, kickoff, halftime, fulltime, redcard, lineups. */
-    Function("playTone") { kind: String -> Live.playTone(ctx, kind) }
+    AsyncFunction("playTone") { kind: String -> Live.playTone(ctx, kind) }
 
     /** Post a notification directly through Android and report the active channel settings. */
-    Function("testNotification") { Live.testNotification(ctx) }
+    AsyncFunction("testNotification") { Live.testNotification(ctx) }
 
     /** Open the exact Android channel used by the test and goal alerts. */
     Function("openGoalNotificationSettings") {

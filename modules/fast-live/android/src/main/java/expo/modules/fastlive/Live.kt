@@ -54,7 +54,7 @@ data class Snap(
 
 object Live {
   private const val PREFS = "fastlive"
-  const val CH_SCORES = "scores_v5"
+  const val CH_SCORES = "scores_v6"
   const val CH_LIVE = "live-tracker"
   const val EXTRA_TAP = "fastlive_match"
   const val LEAD_MS = 10 * 60 * 1000L       // wake this long before kick-off
@@ -65,7 +65,7 @@ object Live {
   private val KIND_NAMES = mapOf(
     "goal" to "Goals", "kickoff" to "Kick-off", "halftime" to "Half-time", "fulltime" to "Full-time", "redcard" to "Red cards", "lineups" to "Line-ups",
   )
-  fun channelOf(kind: String) = "ev_${kind}_v5"
+  fun channelOf(kind: String) = "ev_${kind}_v6"
 
   /** Which kinds of alert the user wants (Settings -> Alert tones); all on by default. */
   fun kindOn(ctx: Context, kind: String): Boolean {
@@ -168,7 +168,7 @@ object Live {
       nm.createNotificationChannel(NotificationChannel(channelOf(k), KIND_NAMES[k] ?: k, if (k == "lineups") NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH).apply {
         description = "Alerts for matches and teams you follow"
         enableVibration(true)
-        setSound(toneUri(ctx, k) ?: Settings.System.DEFAULT_NOTIFICATION_URI, attrs)
+        setSound(Settings.System.DEFAULT_NOTIFICATION_URI, attrs)
       })
     }
     if (nm.getNotificationChannel(CH_LIVE) == null) {
@@ -201,7 +201,7 @@ object Live {
         val builder = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(ctx, channelId) else Notification.Builder(ctx)
         builder.setSmallIcon(smallIcon(ctx))
           .setContentTitle("Fast Score test notification")
-          .setContentText("This is an Android-native sound and pop-up check.")
+          .setContentText("This checks Android notification sound and pop-up delivery.")
           .setCategory(Notification.CATEGORY_EVENT)
           .setPriority(Notification.PRIORITY_HIGH)
           .setAutoCancel(true)
@@ -210,7 +210,7 @@ object Live {
         if (Build.VERSION.SDK_INT < 26) {
           @Suppress("DEPRECATION")
           builder.setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
-          toneUri(ctx, "goal")?.let { builder.setSound(it) }
+          builder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
         }
         nm.notify(7102, builder.build())
         posted = true
@@ -265,8 +265,7 @@ object Live {
       .setContentIntent(openApp(ctx, item.tap, item.key.hashCode()))
     if (Build.VERSION.SDK_INT < 26) {
       @Suppress("DEPRECATION")
-      b.setDefaults(Notification.DEFAULT_VIBRATE)
-      toneUri(ctx, kind)?.let { @Suppress("DEPRECATION") b.setSound(it) }
+      b.setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
     }
     try {
       ctx.getSystemService(NotificationManager::class.java).notify(item.key.hashCode() + (System.currentTimeMillis() / 1000 % 1000).toInt(), b.build())
@@ -284,29 +283,41 @@ object Live {
     }
   }
 
-  private var player: MediaPlayer? = null
+  @Volatile private var player: MediaPlayer? = null
 
   /** Play one alert tone (Settings preview, and the in-app banner). */
+  @Synchronized
   fun playTone(ctx: Context, kind: String): Boolean {
-    val id = ctx.resources.getIdentifier("fs_$kind", "raw", ctx.packageName)
-    if (id == 0) return false
+    val sound = toneUri(ctx, kind) ?: Settings.System.DEFAULT_NOTIFICATION_URI
     return try {
       player?.release()
-      player = MediaPlayer.create(ctx, id)?.apply {
+      val next = MediaPlayer().apply {
         setAudioAttributes(
           AudioAttributes.Builder()
             .setUsage(AudioAttributes.USAGE_NOTIFICATION)
             .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
             .build(),
         )
+        setDataSource(ctx, sound)
+        setOnPreparedListener { mp ->
+          if (player === mp) mp.start() else mp.release()
+        }
         setOnCompletionListener { mp ->
           mp.release()
           if (player === mp) player = null
         }
-        start()
+        setOnErrorListener { mp, _, _ ->
+          mp.release()
+          if (player === mp) player = null
+          true
+        }
       }
-      player != null
+      player = next
+      next.prepareAsync()
+      true
     } catch (e: Exception) {
+      player?.release()
+      player = null
       false
     }
   }
