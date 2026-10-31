@@ -53,7 +53,7 @@ data class Snap(
 
 object Live {
   private const val PREFS = "fastlive"
-  const val CH_SCORES = "scores"
+  const val CH_SCORES = "scores_v2"
   const val CH_LIVE = "live-tracker"
   const val EXTRA_TAP = "fastlive_match"
   const val LEAD_MS = 10 * 60 * 1000L       // wake this long before kick-off
@@ -64,7 +64,7 @@ object Live {
   private val KIND_NAMES = mapOf(
     "goal" to "Goals", "kickoff" to "Kick-off", "halftime" to "Half-time", "fulltime" to "Full-time", "redcard" to "Red cards", "lineups" to "Line-ups",
   )
-  fun channelOf(kind: String) = "ev_${kind}_v1"
+  fun channelOf(kind: String) = "ev_${kind}_v2"
 
   /** Which kinds of alert the user wants (Settings -> Alert tones); all on by default. */
   fun kindOn(ctx: Context, kind: String): Boolean {
@@ -161,7 +161,7 @@ object Live {
         enableVibration(true)
       })
     }
-    val attrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION_EVENT).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
+    val attrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
     for (k in KINDS) {
       if (nm.getNotificationChannel(channelOf(k)) != null) continue
       nm.createNotificationChannel(NotificationChannel(channelOf(k), KIND_NAMES[k] ?: k, if (k == "lineups") NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH).apply {
@@ -240,6 +240,12 @@ object Live {
     return try {
       player?.release()
       player = MediaPlayer.create(ctx, id)?.apply {
+        setAudioAttributes(
+          AudioAttributes.Builder()
+            .setUsage(AudioAttributes.USAGE_NOTIFICATION)
+            .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+            .build(),
+        )
         setOnCompletionListener { mp ->
           mp.release()
           if (player === mp) player = null

@@ -38,7 +38,7 @@
         "expo-notifications",
         {
           "color": "#0A84FF",
-          "defaultChannel": "scores",
+          "defaultChannel": "scores_v2",
           "icon": "./assets/notification-icon.png",
           "sounds": [
             "./assets/sounds/fs_goal.wav",

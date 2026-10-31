@@ -7,7 +7,7 @@ import { useStore } from '../store';
 import { SPORTS } from '../sports';
 import { clearCache } from '../api/espn';
 import { serverStatus } from '../api/server';
-import { ensurePermission, openNotificationSettings, permissionStatus } from '../notify';
+import { ensurePermission, openNotificationSettings, permissionStatus, sendTestNotification } from '../notify';
 import { ALERT_KINDS, alertOn, askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable, playTone } from '../live';
 import { AppState, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -36,6 +36,7 @@ export default function SettingsScreen() {
   const [cleared, setCleared] = useState(false);
   const [server, setServer] = useState(null);
   const [notif, setNotif] = useState(null);
+  const [testNotificationStatus, setTestNotificationStatus] = useState('');
   const [battery, setBattery] = useState(batteryUnrestricted());
   const [alarms, setAlarms] = useState(exactAlarmsAllowed());
   useEffect(() => {
@@ -178,10 +179,10 @@ export default function SettingsScreen() {
           <>
             <SectionTitle>Alert tones</SectionTitle>
             <Card>
-              {ALERT_KINDS.map((k, i) => {
+              {ALERT_KINDS.map((k) => {
                 const on = alertOn(settings, k.key);
                 return (
-                  <Row key={k.key} last={i === ALERT_KINDS.length - 1}>
+                  <Row key={k.key} last={false}>
                     {k.key === 'redcard' ? (
                       <View style={{ width: 14, height: 18, borderRadius: 3, backgroundColor: t.red, marginLeft: 3, marginRight: 15 }} />
                     ) : (
@@ -190,7 +191,9 @@ export default function SettingsScreen() {
                     <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500', flex: 1 }}>{k.label}</Text>
                     <Pressable
                       hitSlop={8}
-                      onPress={() => playTone(k.key)}
+                      onPress={() => {
+                        if (!playTone(k.key)) setTestNotificationStatus('Sound preview is unavailable in this build. Try the test notification below.');
+                      }}
                       style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: t.fill, alignItems: 'center', justifyContent: 'center', marginRight: 12 }}
                     >
                       <Ionicons name="play" size={15} color={t.blue} style={{ marginLeft: 2 }} />
@@ -199,6 +202,29 @@ export default function SettingsScreen() {
                   </Row>
                 );
               })}
+              <Row
+                last
+                onPress={async () => {
+                  setTestNotificationStatus('Scheduling test notification…');
+                  const result = await sendTestNotification();
+                  setTestNotificationStatus(
+                    result.ok
+                      ? 'Test scheduled. Check your notification shade and sound.'
+                      : result.reason === 'permission'
+                      ? 'Allow notifications for Fast Score, then try again.'
+                      : 'Could not schedule the test. Check notification settings and retry.'
+                  );
+                }}
+              >
+                <Ionicons name="notifications-outline" size={20} color={t.blue} style={{ marginRight: 12 }} />
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '500' }}>Send test notification</Text>
+                  <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>
+                    {testNotificationStatus || 'Check that notifications and the goal sound work.'}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={18} color={t.tertiary} />
+              </Row>
             </Card>
             <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 20, marginTop: -6, marginBottom: 14, lineHeight: 17 }}>
               Tap ▶ to hear a tone. Line-up alerts come about an hour before kick-off for followed football matches. You can also change each sound in your phone's notification settings.

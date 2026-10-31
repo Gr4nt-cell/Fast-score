@@ -4,7 +4,8 @@ import * as Notifications from 'expo-notifications';
 import { favMatch } from './components/match';
 import { tr } from './i18n';
 
-const CHANNEL = 'scores';
+// Android retains channel settings between app upgrades; version channel IDs when repairing them.
+const CHANNEL = 'scores_v2';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: true, shouldSetBadge: false }),
@@ -21,7 +22,10 @@ function channel() {
       vibrationPattern: [0, 250, 150, 250],
       lightColor: '#0A84FF',
       sound: 'default',
-    }).catch(() => {});
+    }).catch((error) => {
+      console.warn('[Fast Score] Could not create the default notification channel', error);
+      channelReady = null;
+    });
   }
   return channelReady;
 }
@@ -77,7 +81,7 @@ const KIND_CHANNELS = {
 };
 const kindReady = {};
 function kindChannel(kind) {
-  const id = `ev_${kind}_v1`;
+  const id = `ev_${kind}_v2`;
   if (Platform.OS !== 'android') return Promise.resolve(id);
   if (!kindReady[kind]) {
     kindReady[kind] = Notifications.setNotificationChannelAsync(id, {
@@ -89,24 +93,59 @@ function kindChannel(kind) {
       sound: `fs_${kind}.wav`,
     })
       .then(() => id)
-      .catch(() => CHANNEL);
+      .catch((error) => {
+        console.warn(`[Fast Score] Could not create the ${kind} notification channel`, error);
+        kindReady[kind] = null;
+        return CHANNEL;
+      });
   }
   return kindReady[kind];
 }
 
 export async function notifyEvent(ev, kind) {
-  if (!(await ensurePermission(false))) return;
-  await channel();
-  const channelId = kind && KIND_CHANNELS[kind] ? await kindChannel(kind) : CHANNEL;
+  if (!(await ensurePermission(false))) return false;
+  const alertKind = kind && KIND_CHANNELS[kind] ? kind : null;
+  const channelId = alertKind ? await kindChannel(alertKind) : CHANNEL;
+  const defaultSoundFallback = Platform.OS === 'android' && alertKind && channelId === CHANNEL;
   const { title, body } = text(ev);
   try {
     await Notifications.scheduleNotificationAsync({
-      content: { title, body, sound: kind ? `fs_${kind}.wav` : 'default', data: { match: favMatch(ev.match) } },
+      content: {
+        title,
+        body,
+        sound: alertKind && !defaultSoundFallback ? `fs_${alertKind}.wav` : 'default',
+        data: { match: favMatch(ev.match) },
+      },
       trigger: Platform.OS === 'android' ? { channelId } : null,
     });
-  } catch {}
+    return true;
+  } catch (error) {
+    console.warn('[Fast Score] Could not schedule a match notification', error);
+    return false;
+  }
 }
 
+/** Sends a real goal-tone notification so users can verify permission and sound. */
+export async function sendTestNotification() {
+  if (!(await ensurePermission(true))) return { ok: false, reason: 'permission' };
+  const kind = 'goal';
+  const channelId = await kindChannel(kind);
+  const defaultSoundFallback = Platform.OS === 'android' && channelId === CHANNEL;
+  try {
+    await Notifications.scheduleNotificationAsync({
+      content: {
+        title: 'Fast Score test notification',
+        body: 'Notifications are enabled. This tests the goal alert sound.',
+        sound: defaultSoundFallback ? 'default' : 'fs_goal.wav',
+      },
+      trigger: Platform.OS === 'android' ? { channelId } : null,
+    });
+    return { ok: true };
+  } catch (error) {
+    console.warn('[Fast Score] Could not schedule a test notification', error);
+    return { ok: false, reason: 'schedule' };
+  }
+}
 /** Calls onOpen(match) when a score notification is tapped (also for the one that opened the app). */
 export function onNotificationTap(onOpen) {
   const handle = (resp) => {
