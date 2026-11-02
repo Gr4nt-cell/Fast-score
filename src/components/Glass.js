@@ -130,11 +130,11 @@ function lift(dark, soft) {
   // polygonal approximation of the view's outline, which turned the round keys
   // into decagons. boxShadow follows the border radius exactly, so a circle
   // casts a circle. (React Native 0.76+ on Android.)
-  const a = soft ? (dark ? 0.18 : 0.055) : dark ? 0.32 : 0.12;
-  const y = soft ? 2 : 4;
-  const blur = soft ? 6 : 12;
+  const a = soft ? (dark ? 0.21 : 0.056) : dark ? 0.385 : 0.112;
+  const y = soft ? 1 : 3;
+  const blur = soft ? 4 : 9;
   return {
-    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(38,67,82,0.18)',
+    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.20)',
     boxShadow: `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
@@ -171,7 +171,6 @@ export function Glass({
   const flat = useContext(FlatBackdropContext);
   const dark = forceDark ?? t.dark;
   const plain = mode === 'plain';
-  const surfaceOpacityScale = 0.64;
   // Android draws a shadow only for a view that has its own background, so a
   // lifted panel is opaque — over a flat backdrop there is nothing to see
   // through to anyway.
@@ -193,7 +192,7 @@ export function Glass({
             borderRadius: radius,
             // no overflow clip here either, for the same outline reason
             backgroundColor: tint || (dark ? t.card : selected ? t.fill : t.card),
-            opacity: tint ? tintOpacity * surfaceOpacityScale : 1,
+            opacity: tint ? tintOpacity : 1,
             borderWidth: flat ? 1 : StyleSheet.hairlineWidth,
             borderColor: t.separator,
             transform: [{ scale: pressed ? 1.02 : 1 }],
@@ -223,27 +222,27 @@ export function Glass({
   const alpha = vivid
     ? realBlur
       ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
-      : dark ? (tinted ? 0.66 : 0.38) : tinted ? 0.54 : 0.12
+      : dark ? (tinted ? 0.5 : 0.24) : tinted ? 0.42 : 0.12
     : dark
-    ? realBlur ? (tinted ? 0.62 : 0.3) : tinted ? 0.8 : 0.5
-      : realBlur ? (tinted ? 0.48 : 0.16) : tinted ? 0.62 : strong ? 0.30 : 0.24;
+    ? realBlur ? (tinted ? 0.48 : 0.2) : tinted ? 0.6 : 0.34
+      : realBlur ? (tinted ? 0.4 : 0.12) : tinted ? 0.5 : 0.22;
   // Over a flat backdrop a translucent fill just shows more of the same white
   // or black, so the panel is given its own solid surface instead.
-  const a = alpha * fillScale * surfaceOpacityScale;
+  const a = alpha * fillScale;
   const fill = tint
     ? tint
     : flat
     ? dark ? '#1C1C1E' : '#FFFFFF'
-    : dark ? `rgba(36,54,62,${a})` : `rgba(255,255,255,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.28)' : 'rgba(255,255,255,0.96)';
+    : dark ? `rgba(44,44,48,${a})` : `rgba(255,255,255,${a})`;
+  const rimTop = dark ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.9)';
   const rim = flat
     ? lifted.borderColor
     : strong
-    ? dark ? 'rgba(255,255,255,0.26)' : 'rgba(35,62,79,0.18)'
+    ? dark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.24)'
     : outline
-    ? dark ? 'rgba(255,255,255,0.22)' : 'rgba(35,62,79,0.16)'
-    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(35,62,79,0.13)';
-  const edge = dark ? 'rgba(0,0,0,0.22)' : 'rgba(40,70,85,0.075)';
+    ? dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.16)'
+    : dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
+  const edge = dark ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.04)';
   const highlight = flat
     ? dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
@@ -269,22 +268,7 @@ export function Glass({
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? tintOpacity * surfaceOpacityScale : 1 }]} />
-      {/* A low-contrast spectral band gives the clear surface a refracted-glass look. */}
-      {!flat ? (
-        <LinearGradient
-          pointerEvents="none"
-          colors={
-            dark
-              ? ['rgba(130,190,220,0.018)', 'rgba(125,183,210,0.07)', 'rgba(175,195,220,0.045)', 'rgba(255,255,255,0.015)']
-              : ['rgba(114,183,210,0.025)', 'rgba(139,194,215,0.065)', 'rgba(187,205,224,0.04)', 'rgba(255,255,255,0.02)']
-          }
-          locations={[0, 0.34, 0.68, 1]}
-          start={{ x: 0, y: 0.08 }}
-          end={{ x: 1, y: 0.92 }}
-          style={[StyleSheet.absoluteFill, { borderRadius: radius, opacity: vivid ? 0.75 : 0.52 }]}
-        />
-      ) : null}
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? tintOpacity : 1 }]} />
       {!flat && scrollGlow && (strong || vivid || tint) ? (
         <Animated.View
           pointerEvents="none"
@@ -389,7 +373,7 @@ export function Glass({
     <View
       pointerEvents={pointerEvents}
       onLayout={onLayout}
-      style={[{ borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }], boxShadow: tint ? undefined : dark ? '0px 4px 14px rgba(0,0,0,0.25)' : '0px 5px 16px rgba(35,57,73,0.12)' }, style]}
+      style={[{ borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }] }, style]}
     >
       <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
         {decoration}
@@ -402,7 +386,7 @@ export function Glass({
 function BloomField({ style }) {
   return (
     <ExpoImage
-      source={require('../../assets/liquid-glass-background.png')}
+      source={require('../../assets/liquid-glass-background.svg')}
       contentFit="cover"
       cachePolicy="memory-disk"
       transition={0}
@@ -463,9 +447,9 @@ export function GlassShadow({ children, style, radius = 999 }) {
         {
           borderRadius: radius,
           shadowColor: '#000',
-          shadowOpacity: t.dark ? 0.46 : 0.12,
-          shadowRadius: 17,
-          shadowOffset: { width: 0, height: 7 },
+          shadowOpacity: t.dark ? 0.5 : 0.14,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 8 },
         },
         style,
       ]}

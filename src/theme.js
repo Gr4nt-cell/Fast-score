@@ -8,15 +8,12 @@ export const GlassBackdropContext = createContext(false);
 
 const light = {
   dark: false,
-  bg: '#F5F7FC',
+  bg: '#F1FAF7',
   liquidBackground: {
-    base: '#F5F7FC',
+    base: '#F1FAF7',
     blooms: [
-      { id: 'sky', cx: '10%', cy: '18%', r: '78%', color: '#8FB8FF', opacity: 0.84 },
-      { id: 'rose', cx: '100%', cy: '45%', r: '84%', color: '#F6B7D0', opacity: 0.78 },
-      { id: 'lilac', cx: '0%', cy: '76%', r: '72%', color: '#C8B9FF', opacity: 0.58 },
-      { id: 'aqua', cx: '82%', cy: '100%', r: '80%', color: '#9CE5D7', opacity: 0.78 },
-      { id: 'warm', cx: '88%', cy: '92%', r: '64%', color: '#F5DDB7', opacity: 0.24 },
+      { id: 'mint', cx: '0%', cy: '0%', r: '65%', color: '#63F4CC', opacity: 0.65 },
+      { id: 'peach', cx: '100%', cy: '100%', r: '65%', color: '#FFB37C', opacity: 0.65 },
     ],
   },
   grouped: 'rgba(255,255,255,0.256)',
