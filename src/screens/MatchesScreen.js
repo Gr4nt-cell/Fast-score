@@ -150,7 +150,6 @@ export default function MatchesScreen({ liveMode = false }) {
         {live ? <LiveDot /> : null}
         <Text style={{ color: live ? t.live : t.secondary, fontSize: 13, fontWeight: '700', flex: 1 }} numberOfLines={1}>
           {live ? `Live · ${sportName}` : sportName} · {summary}
-          {groups ? ' · Flashscore' : ''}
         </Text>
       </View>
     </View>

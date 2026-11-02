@@ -48,7 +48,7 @@ function rememberSlug(id, slug) {
 }
 
 async function fetchText(url, timeout = 12000, headers = HEADERS) {
-  if (directFeedUnavailable) throw new Error('Flashscore feeds are unavailable in browser builds');
+  if (directFeedUnavailable) throw new Error('Live sports data is unavailable in browser builds');
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeout);
   try {
@@ -62,7 +62,7 @@ async function fetchText(url, timeout = 12000, headers = HEADERS) {
 
 /** GET a feed ("f_1_0_0_en_1"); tries each host. Empty answers are fine (no data). */
 async function feed(name, ttl = 30000, timeout = 12000) {
-  if (directFeedUnavailable) throw new Error('Flashscore feeds are unavailable in browser builds');
+  if (directFeedUnavailable) throw new Error('Live sports data is unavailable in browser builds');
   const hit = mem.get(name);
   if (hit && Date.now() - hit.t < ttl) return hit.data;
   if (inflight.has(name)) return inflight.get(name);
@@ -87,7 +87,7 @@ async function feed(name, ttl = 30000, timeout = 12000) {
     }
     const old = mem.get(name);
     if (old) return old.data;
-    throw new Error(`Flashscore unavailable (${last})`);
+    throw new Error(`Live sports data unavailable (${last})`);
   })().finally(() => inflight.delete(name));
   inflight.set(name, pr);
   return pr;
@@ -325,13 +325,13 @@ function group(items) {
 /** Every match of a sport on a local day (Flashscore covers 7 days back and forward). */
 export async function dayBoard(sport, date, ttl = 30000) {
   const off = dayOffset(date);
-  if (off < -7 || off > 7) throw new Error('Flashscore only covers a week either side');
+  if (off < -7 || off > 7) throw new Error('Scores are available only within a week of the selected date');
       const text = await feed(`f_${FS_SPORT[sport]}_${off}_${tzHours()}_en_1`, Math.max(ttl, off === 0 ? 5000 : 5 * 60000), 8000);
   const items = matchesOf(text, sport).filter((m) => m.state === 'in' || sameLocalDay(new Date(m.date).getTime(), date));
   if (!items.length && sport === 'soccer') {
     // football always has games somewhere: an empty day means the feed isn't answering properly
     downUntil = Date.now() + 5 * 60000;
-    throw new Error('Flashscore returned nothing');
+    throw new Error('No match data was returned');
   }
   const out = group(items);
   out.source = 'flashscore';

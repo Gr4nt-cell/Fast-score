@@ -7,7 +7,7 @@ import FastLive from '../modules/fast-live';
 
 // Android keeps a channel's sound settings across app upgrades, even if the app
 // changes its configuration. Bump this when repairing channel behavior.
-const CHANNEL = 'scores_v6';
+const CHANNEL = 'scores_v7';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -100,7 +100,7 @@ const KIND_CHANNELS = {
 };
 const kindReady = {};
 function kindChannel(kind) {
-  const id = `ev_${kind}_v6`;
+  const id = `ev_${kind}_v7`;
   if (Platform.OS !== 'android') return Promise.resolve(id);
   if (!kindReady[kind]) {
     kindReady[kind] = Notifications.setNotificationChannelAsync(id, {
@@ -109,7 +109,7 @@ function kindChannel(kind) {
       importance: kind === 'lineups' ? Notifications.AndroidImportance.DEFAULT : Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 150, 250],
       lightColor: '#0A84FF',
-      sound: 'default',
+      sound: `fs_${kind}.wav`,
     })
       .then(() => id)
       .catch((error) => {
@@ -162,7 +162,7 @@ export async function notifyEvent(ev, kind) {
       content: {
         title,
         body,
-        sound: Platform.OS === 'android' || !alertKind ? 'default' : `fs_${alertKind}.wav`,
+        sound: alertKind ? `fs_${alertKind}.wav` : 'default',
         priority:
           alertKind === 'lineups'
             ? Notifications.AndroidNotificationPriority.DEFAULT

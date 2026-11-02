@@ -195,7 +195,7 @@ export default function LeaguesScreen() {
                     </Card>
                   </>
                 ) : null}
-                {idx === 'error' ? <Empty icon="cloud-offline-outline" title="Flashscore competitions unavailable" /> : null}
+                {idx === 'error' ? <Empty icon="cloud-offline-outline" title="Competitions unavailable" /> : null}
               </>
             )}
           </>
