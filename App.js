@@ -3,6 +3,7 @@ import { AppState } from 'react-native';
 import { Animated, BackHandler, Modal, View, useWindowDimensions } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as ScreenOrientation from 'expo-screen-orientation';
+import * as Device from 'expo-device';
 import { Text } from './src/components/Text';
 import { StatusBar } from 'expo-status-bar';
 import { SafeAreaProvider, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -19,8 +20,9 @@ import { onLiveTap, syncLive, trackedKeys, alertOn, playTone, setAlertKinds, ton
 import { setLanguage } from './src/i18n';
 import { pickToMatch } from './src/screens/PicksScreen';
 import TabBar, { TABS } from './src/components/TabBar';
-import { Backdrop, BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext, ScrollGlowProvider } from './src/components/Glass';
+import { Backdrop, BlurTargetView, FlatBackdropContext, Glass, GlassModeContext, GlassTargetContext, PerformanceModeContext, PerformanceProfileContext, ScrollGlowProvider } from './src/components/Glass';
 import { Pressable } from './src/components/Touch';
+import { shouldUseLowEndProfile } from './src/performanceProfile';
 import { Logo } from './src/components/ui';
 import Boundary from './src/components/Boundary';
 import MatchesScreen from './src/screens/MatchesScreen';
@@ -362,6 +364,27 @@ function Main() {
   );
 }
 
+function PerformanceProfileProvider({ defaultOptimized, children }) {
+  const { settings, setSetting } = useStore();
+  const savedProfile = settings.performanceProfile;
+  const selectedProfile = savedProfile === 'performance' || savedProfile === 'optimized' ? savedProfile : null;
+  const profile = selectedProfile || (defaultOptimized ? 'optimized' : 'performance');
+  const performanceMode = profile === 'optimized';
+  const setProfile = useCallback((next) => {
+    if (next === 'performance' || next === 'optimized') setSetting('performanceProfile', next);
+  }, [setSetting]);
+  const profileValue = useMemo(
+    () => ({ profile, automatic: selectedProfile == null, setProfile }),
+    [profile, selectedProfile, setProfile],
+  );
+
+  return (
+    <PerformanceProfileContext.Provider value={profileValue}>
+      <PerformanceModeContext.Provider value={performanceMode}>{children}</PerformanceModeContext.Provider>
+    </PerformanceProfileContext.Provider>
+  );
+}
+
 // the chosen language; changing it rebuilds the screens so every text switches at once
 function LanguageGate({ children }) {
   const { settings } = useStore();
@@ -370,15 +393,26 @@ function LanguageGate({ children }) {
 }
 
 export default function App() {
+  const defaultOptimized = useMemo(() => {
+    if (!Device.isDevice) return false;
+    return shouldUseLowEndProfile({
+      totalMemory: Device.totalMemory,
+      deviceYearClass: Device.deviceYearClass,
+      supportedCpuArchitectures: Device.supportedCpuArchitectures,
+    });
+  }, []);
+
   return (
     <SafeAreaProvider>
-      <ScrollGlowProvider>
-        <StoreProvider>
+      <StoreProvider>
+        <PerformanceProfileProvider defaultOptimized={defaultOptimized}>
+          <ScrollGlowProvider>
           <LanguageGate>
             <Main />
           </LanguageGate>
-        </StoreProvider>
-      </ScrollGlowProvider>
+          </ScrollGlowProvider>
+        </PerformanceProfileProvider>
+      </StoreProvider>
     </SafeAreaProvider>
   );
 }

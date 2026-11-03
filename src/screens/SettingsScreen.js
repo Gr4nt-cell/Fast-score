@@ -1,7 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { ActivityIndicator, Platform, Switch, View } from 'react-native';
 import { Text } from '../components/Text';
-import { ScrollGlowScrollView as ScrollView } from '../components/Glass';
+import { PerformanceProfileContext, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import Constants from 'expo-constants';
 import { useTheme } from '../theme';
 import { useStore } from '../store';
@@ -35,6 +35,7 @@ function Toggle({ label, sub, value, onChange, last }) {
 export default function SettingsScreen() {
   const t = useTheme();
   const { settings, setSetting } = useStore();
+  const performanceProfile = useContext(PerformanceProfileContext);
   const [cleared, setCleared] = useState(false);
   const [notif, setNotif] = useState(null);
   const [testNotificationStatus, setTestNotificationStatus] = useState('');
@@ -92,6 +93,29 @@ export default function SettingsScreen() {
         </View>
         <Card>
           <Toggle label="Liquid Glass" sub="Soft refracted panels with a polished edge. Off uses plain cards." value={settings.glass !== false} onChange={(v) => setSetting('glass', v)} last />
+        </Card>
+
+        <SectionTitle>Performance profile</SectionTitle>
+        <Card>
+          <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
+            <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '600' }}>Choose a profile</Text>
+            <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 3 }}>
+              {performanceProfile?.automatic
+                ? `Automatically selected as ${performanceProfile.profile === 'optimized' ? 'Optimized' : 'Performance'} for this device.`
+                : 'Your choice is saved on this device.'}
+            </Text>
+            <View style={{ marginTop: 12 }}>
+              <Segmented
+                options={[
+                  { key: 'performance', label: 'Performance' },
+                  { key: 'optimized', label: 'Optimized' },
+                ]}
+                value={performanceProfile?.profile || 'performance'}
+                onChange={(value) => performanceProfile?.setProfile?.(value)}
+                height={42}
+              />
+            </View>
+          </View>
         </Card>
 
         <SectionTitle>Start on</SectionTitle>

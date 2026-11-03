@@ -29,6 +29,8 @@ export const EXTENDED_BLUR = false;
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
 export const ScrollGlowContext = createContext(null);
+export const PerformanceModeContext = createContext(false);
+export const PerformanceProfileContext = createContext(null);
 // True when the app background is Plain. Glass relies on the colour field
 // behind it to show its shape; over flat white or flat black there is nothing
 // to refract, so panels need a crisp edge and a shadow to read at all.
@@ -37,6 +39,7 @@ export const FlatBackdropContext = createContext(false);
 const GLOW_NATIVE_DRIVER = Platform.OS !== 'web';
 
 export function ScrollGlowProvider({ children }) {
+  const performanceMode = useContext(PerformanceModeContext);
   const phase = useRef(new Animated.Value(0)).current;
   const strength = useRef(new Animated.Value(0)).current;
   const loop = useRef(null);
@@ -44,6 +47,7 @@ export function ScrollGlowProvider({ children }) {
   const active = useRef(false);
 
   const pulse = useCallback(() => {
+    if (performanceMode) return;
     if (stopTimer.current) clearTimeout(stopTimer.current);
 
     if (!active.current) {
@@ -83,7 +87,7 @@ export function ScrollGlowProvider({ children }) {
         if (finished && !active.current) phase.setValue(0);
       });
     }, 320);
-  }, [phase, strength]);
+  }, [performanceMode, phase, strength]);
 
   useEffect(
     () => () => {
@@ -93,7 +97,10 @@ export function ScrollGlowProvider({ children }) {
     [],
   );
 
-  const value = useMemo(() => ({ phase, strength, pulse }), [phase, strength, pulse]);
+  const value = useMemo(
+    () => (performanceMode ? null : { phase, strength, pulse }),
+    [performanceMode, phase, strength, pulse],
+  );
   return <ScrollGlowContext.Provider value={value}>{children}</ScrollGlowContext.Provider>;
 }
 
@@ -114,8 +121,18 @@ export function ScrollGlowScrollView({ onScroll, scrollEventThrottle = 16, ...pr
 }
 
 export function ScrollGlowFlatList({ onScroll, scrollEventThrottle = 16, ...props }) {
+  const performanceMode = useContext(PerformanceModeContext);
   const handleScroll = useScrollGlowHandler(onScroll);
-  return <NativeFlatList {...props} onScroll={handleScroll} scrollEventThrottle={scrollEventThrottle} />;
+  const optimizedProps = performanceMode
+    ? {
+        initialNumToRender: Math.min(props.initialNumToRender ?? 8, 8),
+        maxToRenderPerBatch: Math.min(props.maxToRenderPerBatch ?? 8, 8),
+        updateCellsBatchingPeriod: Math.max(props.updateCellsBatchingPeriod ?? 50, 50),
+        windowSize: Math.min(props.windowSize ?? 5, 5),
+        removeClippedSubviews: true,
+      }
+    : {};
+  return <NativeFlatList {...props} {...optimizedProps} onScroll={handleScroll} scrollEventThrottle={scrollEventThrottle} />;
 }
 
 /**
@@ -169,6 +186,7 @@ export function Glass({
   const target = useContext(GlassTargetContext);
   const scrollGlow = useContext(ScrollGlowContext);
   const flat = useContext(FlatBackdropContext);
+  const performanceMode = useContext(PerformanceModeContext);
   const dark = forceDark ?? t.dark;
   const plain = mode === 'plain';
   // Android draws a shadow only for a view that has its own background, so a
@@ -176,7 +194,7 @@ export function Glass({
   // through to anyway.
   const lifted = flat ? lift(dark, soft) : null;
   // a lifted panel is opaque, so a live blur behind it would never show
-  const bp = blur && !plain && !flat ? blurProps(target) : null;
+  const bp = blur && !performanceMode && !plain && !flat ? blurProps(target) : null;
   const realBlur = !!bp;
   const tinted = mode === 'tinted';
 
@@ -219,12 +237,16 @@ export function Glass({
   // instead of being washed out by a milky layer.
   // Without real blur, "vivid" still stays well clear of the milky default so
   // the colour of the background washes keeps coming through.
-  const alpha = vivid
+  const alpha = performanceMode
+    ? vivid
+      ? dark ? (tinted ? 0.64 : 0.42) : tinted ? 0.62 : 0.4
+      : dark ? (tinted ? 0.68 : 0.5) : tinted ? 0.66 : 0.44
+    : vivid
     ? realBlur
       ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
       : dark ? (tinted ? 0.5 : 0.24) : tinted ? 0.42 : 0.12
     : dark
-    ? realBlur ? (tinted ? 0.48 : 0.2) : tinted ? 0.6 : 0.34
+      ? realBlur ? (tinted ? 0.48 : 0.2) : tinted ? 0.6 : 0.34
       : realBlur ? (tinted ? 0.4 : 0.12) : tinted ? 0.5 : 0.22;
   // Over a flat backdrop a translucent fill just shows more of the same white
   // or black, so the panel is given its own solid surface instead.
@@ -237,6 +259,10 @@ export function Glass({
   const rimTop = dark ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.9)';
   const rim = flat
     ? lifted.borderColor
+    : performanceMode
+    ? dark
+      ? strong || outline ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)'
+      : strong || outline ? 'rgba(28,52,68,0.28)' : 'rgba(28,52,68,0.16)'
     : strong
     ? dark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.24)'
     : outline
@@ -312,28 +338,32 @@ export function Glass({
         </Animated.View>
       ) : null}
       {/* specular highlight */}
-      <LinearGradient
-        pointerEvents="none"
-        colors={[highlight, 'rgba(255,255,255,0)']}
-        start={{ x: 0.5, y: 0 }}
-        end={{ x: 0.5, y: 0.55 }}
-        style={StyleSheet.absoluteFill}
-      />
+      {!performanceMode ? (
+        <LinearGradient
+          pointerEvents="none"
+          colors={[highlight, 'rgba(255,255,255,0)']}
+          start={{ x: 0.5, y: 0 }}
+          end={{ x: 0.5, y: 0.55 }}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
       {/* darker lower edge for depth */}
-      <LinearGradient
-        pointerEvents="none"
-        colors={['rgba(0,0,0,0)', edge]}
-        start={{ x: 0.5, y: 0.55 }}
-        end={{ x: 0.5, y: 1 }}
-        style={StyleSheet.absoluteFill}
-      />
+      {!performanceMode ? (
+        <LinearGradient
+          pointerEvents="none"
+          colors={['rgba(0,0,0,0)', edge]}
+          start={{ x: 0.5, y: 0.55 }}
+          end={{ x: 0.5, y: 1 }}
+          style={StyleSheet.absoluteFill}
+        />
+      ) : null}
       {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)' }]} /> : null}
       {pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)' }]} /> : null}
       {/* rim light: bright on top, softer around (on the outer view when lifted) */}
       {lifted ? null : (
         <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong ? 1.6 : outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
       )}
-      {flat ? null : (
+      {flat || performanceMode ? null : (
         <LinearGradient
           pointerEvents="none"
           colors={[rimTop, 'rgba(255,255,255,0)']}
@@ -441,15 +471,16 @@ export function Backdrop({ style }) {
 // Soft drop shadow wrapper (kept outside the clipped glass so it isn't cut off).
 export function GlassShadow({ children, style, radius = 999 }) {
   const t = useTheme();
+  const performanceMode = useContext(PerformanceModeContext);
   return (
     <View
       style={[
         {
           borderRadius: radius,
           shadowColor: '#000',
-          shadowOpacity: t.dark ? 0.5 : 0.14,
-          shadowRadius: 20,
-          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: performanceMode ? (t.dark ? 0.28 : 0.08) : t.dark ? 0.5 : 0.14,
+          shadowRadius: performanceMode ? 8 : 20,
+          shadowOffset: { width: 0, height: performanceMode ? 3 : 8 },
         },
         style,
       ]}
