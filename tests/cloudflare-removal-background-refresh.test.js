@@ -7,7 +7,8 @@ import { test } from 'node:test';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 
 test('Cloudflare proxy and Worker source are removed', async () => {
-  const api = await readFile(path.join(root, 'src/api/espn.js'), 'utf8');
+  // the data layer after the Flashscore-only switch (espn.js was removed)
+  const api = (await Promise.all(['src/api/flashscore.js', 'src/api/sportsData.js'].map((f) => readFile(path.join(root, f), 'utf8')))).join('\n');
   const settings = await readFile(path.join(root, 'src/screens/SettingsScreen.js'), 'utf8');
   const legal = await readFile(path.join(root, 'src/legalPages.js'), 'utf8');
   assert.doesNotMatch(api, /serverUrl|serverJson|markServerDown|serverDay|workers\.dev/i);
@@ -15,6 +16,7 @@ test('Cloudflare proxy and Worker source are removed', async () => {
   assert.doesNotMatch(legal, /Cloudflare|workers\.dev|href="\/(privacy|child-safety)"/i);
   await assert.rejects(access(path.join(root, 'src/api/server.js')));
   await assert.rejects(access(path.join(root, 'wrangler.toml')));
+  await assert.rejects(access(path.join(root, 'src/api/espn.js')));
 });
 
 test('background data access and current-day auto-refresh remain available', async () => {

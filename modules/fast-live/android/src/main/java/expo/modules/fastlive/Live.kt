@@ -54,7 +54,7 @@ data class Snap(
 
 object Live {
   private const val PREFS = "fastlive"
-  const val CH_SCORES = "scores_v7"
+  const val CH_SCORES = "scores_v8"
   const val CH_LIVE = "live-tracker"
   const val EXTRA_TAP = "fastlive_match"
   const val LEAD_MS = 10 * 60 * 1000L       // wake this long before kick-off
@@ -65,7 +65,7 @@ object Live {
   private val KIND_NAMES = mapOf(
     "goal" to "Goals", "kickoff" to "Kick-off", "halftime" to "Half-time", "fulltime" to "Full-time", "redcard" to "Red cards", "lineups" to "Line-ups",
   )
-  fun channelOf(kind: String) = "ev_${kind}_v7"
+  fun channelOf(kind: String) = "ev_${kind}_v8"
 
   /** Which kinds of alert the user wants (Settings -> Alert tones); all on by default. */
   fun kindOn(ctx: Context, kind: String): Boolean {
@@ -79,7 +79,9 @@ object Live {
 
   fun toneUri(ctx: Context, kind: String): Uri? {
     val id = ctx.resources.getIdentifier("fs_$kind", "raw", ctx.packageName)
-    return if (id != 0) Uri.parse("android.resource://${ctx.packageName}/$id") else null
+    // By name, not by number: a channel keeps its sound URI forever, and numeric resource ids
+    // shift between builds (a new raw resource moved them and left the tones pointing elsewhere).
+    return if (id != 0) Uri.parse("android.resource://${ctx.packageName}/raw/fs_$kind") else null
   }
   const val MAX_MATCH_MS = 6 * 3600 * 1000L  // give up on a match this long after kick-off
 
@@ -156,6 +158,14 @@ object Live {
   fun channels(ctx: Context) {
     if (Build.VERSION.SDK_INT < 26) return
     val nm = ctx.getSystemService(NotificationManager::class.java)
+    // remove channels from earlier versions (their sounds can't be changed and may point nowhere)
+    try {
+      for (c in nm.notificationChannels) {
+        val id = c.id
+        val old = id == "scores" || Regex("^scores_v[1-7]$").matches(id) || Regex("^ev_[a-z]+_v[1-7]$").matches(id)
+        if (old) nm.deleteNotificationChannel(id)
+      }
+    } catch (e: Exception) {}
     val attrs = AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_NOTIFICATION).setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build()
     if (nm.getNotificationChannel(CH_SCORES) == null) {
       nm.createNotificationChannel(NotificationChannel(CH_SCORES, "Goals and results", NotificationManager.IMPORTANCE_HIGH).apply {

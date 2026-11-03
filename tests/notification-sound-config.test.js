@@ -28,11 +28,11 @@ test('Android notification channels use fresh, matching IDs', async () => {
   const app = await readFile(path.join(root, 'App.js'), 'utf8');
   const watcher = await readFile(path.join(root, 'src/watch.js'), 'utf8');
 
-  assert.equal(notifications.defaultChannel, 'scores_v7');
-  assert.match(jsNotifications, /const CHANNEL = 'scores_v7'/);
-  assert.match(nativeLive, /const val CH_SCORES = "scores_v7"/);
-  assert.match(jsNotifications, /`ev_\$\{kind\}_v7`/);
-  assert.match(nativeLive, /"ev_\$\{kind\}_v7"/);
+  assert.equal(notifications.defaultChannel, 'scores_v8');
+  assert.match(jsNotifications, /const CHANNEL = 'scores_v8'/);
+  assert.match(nativeLive, /const val CH_SCORES = "scores_v8"/);
+  assert.match(jsNotifications, /`ev_\$\{kind\}_v8`/);
+  assert.match(nativeLive, /"ev_\$\{kind\}_v8"/);
   assert.match(jsNotifications, /shouldShowAlert: true/);
   assert.match(jsNotifications, /getNotificationChannelAsync\(channelId\)/);
   assert.match(jsNotifications, /AndroidNotificationPriority\.HIGH/);
@@ -43,6 +43,9 @@ test('Android notification channels use fresh, matching IDs', async () => {
   assert.match(nativeModule, /AsyncFunction\("playTone"\)/);
   assert.match(nativeLive, /Settings\.System\.DEFAULT_NOTIFICATION_URI/);
   assert.match(nativeLive, /prepareAsync\(\)/);
+  assert.match(nativeLive, /android\.resource:\/\/\$\{ctx\.packageName\}\/raw\/fs_\$kind/);
+  assert.doesNotMatch(nativeLive, /android\.resource:\/\/\$\{ctx\.packageName\}\/\$id/);
+  assert.match(nativeLive, /deleteNotificationChannel/);
   assert.match(jsNotifications, /sound: `fs_\$\{kind\}\.wav`/);
   assert.match(jsNotifications, /sound: alertKind \? `fs_\$\{alertKind\}\.wav` : 'default'/);
   assert.match(nativeLive, /setSound\(toneUri\(ctx, k\) \?: Settings\.System\.DEFAULT_NOTIFICATION_URI, attrs\)/);

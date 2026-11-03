@@ -4,7 +4,6 @@ on:
   push:
     branches: [main]
     paths-ignore:
-      - '.github/workflows/odds.yml'
       - '.github/workflows/leagues-index.yml'
       - '.github/workflows/plugin-mirror.yml'
   workflow_dispatch:
