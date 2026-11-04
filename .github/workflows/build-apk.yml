@@ -57,9 +57,11 @@ jobs:
       - name: Optimised release build (R8 + resource shrinking)
         run: |
           {
+            echo ""
             echo "android.enableMinifyInReleaseBuilds=true"
             echo "android.enableShrinkResourcesInReleaseBuilds=true"
           } >> android/gradle.properties
+          grep -n "enableMinify\|enableShrink" android/gradle.properties
           # the alert tones are looked up by name at runtime; keep them through resource shrinking
           mkdir -p android/app/src/main/res/raw
           printf '%s\n' '<?xml version="1.0" encoding="utf-8"?>' '<resources xmlns:tools="http://schemas.android.com/tools" tools:keep="@raw/fs_*" />' > android/app/src/main/res/raw/keep_fs_sounds.xml
