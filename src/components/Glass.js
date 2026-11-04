@@ -143,17 +143,14 @@ export function ScrollGlowFlatList({ onScroll, scrollEventThrottle = 16, ...prop
  * they get a shallower one and end up looking like the date strip.
  */
 function lift(dark, soft) {
-  // Raised edges: a crisp 1px border plus a two-layer shadow (a soft spread and a tight contact
-  // shadow) so every panel stands clearly off the plain white or black background.
-  if (dark) {
-    return {
-      borderColor: soft ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.2)',
-      boxShadow: soft ? '0px 2px 8px rgba(0,0,0,0.85)' : '0px 4px 16px rgba(0,0,0,0.9), 0px 1px 2px rgba(0,0,0,0.9)',
-    };
-  }
+  // The original plain look (light border, soft drop shadow), with the shadow raised a little
+  // so cards stand clearly off the white or black background.
+  const a = soft ? (dark ? 0.3 : 0.08) : dark ? 0.5 : 0.15;
+  const y = soft ? 1 : 3;
+  const blur = soft ? 5 : 11;
   return {
-    borderColor: soft ? 'rgba(0,0,0,0.12)' : 'rgba(0,0,0,0.14)',
-    boxShadow: soft ? '0px 2px 6px rgba(0,0,0,0.14), 0px 1px 2px rgba(0,0,0,0.08)' : '0px 4px 14px rgba(0,0,0,0.16), 0px 1px 3px rgba(0,0,0,0.10)',
+    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.16)',
+    boxShadow: `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
 
