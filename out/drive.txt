@@ -1,0 +1,96 @@
+shot phone_1_matches
+tap 491 944
+shot phone_2_match
+tap 977 210
+shot phone_3_settings
+tap 559 2090
+shot phone_4_test_notification
+mId='1'
+mId='10'
+mId='2'
+mId='3'
+mId='5'
+mId='6'
+mId='7'
+mId='8'
+mId='9'
+mId='90'
+mId='_bugle_default_settings_group'
+mId='active'
+mId='aiai_superpacks_channel_id'
+mId='alert'
+mId='app_limit_updates'
+mId='bugle_broadcast_receiver_channel'
+mId='bugle_conversations_group'
+mId='bugle_default_channel'
+mId='bugle_misc_channel'
+mId='bugle_web_group'
+mId='complete'
+mId='connected_note'
+mId='connected_note_loud'
+mId='dck'
+mId='device_notification_channel'
+mId='eew_alert'
+mId='eew_notification'
+mId='eew_update'
+mId='ev_fulltime_v9'
+mId='ev_goal_v9'
+mId='ev_halftime_v9'
+mId='ev_kickoff_v9'
+mId='ev_lineups_v9'
+mId='ev_redcard_v9'
+mId='generic_notifications'
+mId='native_transcode_alert_channel'
+mId='native_transcode_progress_channel'
+mId='nearby_sharing_alert'
+mId='nearby_sharing_app'
+mId='nearby_sharing_file'
+mId='nearby_sharing_privacy'
+mId='opp_notification_channel'
+mId='phone_default'
+mId='phone_feedback'
+mId='phone_incoming_call'
+mId='phone_low_priority'
+mId='phone_missed_call'
+mId='phone_ongoing_call'
+mId='phone_voicemail'
+mId='safety_center_channels'
+mId='safety_center_critical_warning'
+mId='safety_center_information'
+mId='safety_center_recommendation'
+mId='scores_v9'
+mId='sim'
+mId='sms'
+mId='tapandpay'
+mId='waiting'
+mId='wallet'
+mId='wfc'
+
+11-04 03:46:27.323  1029  1029 V MediaPlayerList: mPackageChangedBroadcastReceiver: action: android.intent.action.PACKAGE_CHANGED
+11-04 03:46:27.323  1029  1029 V MediaPlayerList: mPackageChangedBroadcastReceiver: action: android.intent.action.PACKAGE_CHANGED
+11-04 03:46:30.389  1029  1029 V MediaPlayerList: mPackageChangedBroadcastReceiver: action: android.intent.action.PACKAGE_CHANGED
+11-04 03:46:30.389  1029  1029 V MediaPlayerList: mPackageChangedBroadcastReceiver: action: android.intent.action.PACKAGE_CHANGED
+11-04 03:46:40.452  1029  1029 V MediaPlayerList: mPackageChangedBroadcastReceiver: action: android.intent.action.PACKAGE_CHANGED
+11-04 03:46:40.453  1029  1029 V MediaPlayerList: mPackageChangedBroadcastReceiver: action: android.intent.action.PACKAGE_CHANGED
+11-04 03:46:44.532   468  4815 D NuPlayerDriver: NuPlayerDriver(0x7eebd16165d0) created, clientPid(5214)
+11-04 03:46:44.557   468  4815 D MediaPlayerService: OMX service is not available
+11-04 03:46:46.710   468  6294 D AudioTrack: stop(16): called with 41895 frames delivered
+11-04 03:46:47.152  5214  5249 V MediaPlayer: resetDrmState:  mDrmInfo=null mDrmProvisioningThread=null mPrepareDrmInProgress=false mActiveDrmScheme=false
+11-04 03:46:47.152  5214  5249 V MediaPlayer: cleanDrmObj: mDrmObj=null mDrmSessionId=null
+11-04 03:46:47.152   468  3437 D NuPlayerDriver: reset(0x7eebd16165d0) at state 6
+11-04 03:46:47.155   468  6288 D NuPlayerDriver: notifyResetComplete(0x7eebd16165d0)
+11-04 03:46:47.156  5214  5249 W MediaPlayer: mediaplayer went away with unhandled events
+11-04 03:46:52.376  1029  1029 V MediaPlayerList: mPackageChangedBroadcastReceiver: action: android.intent.action.PACKAGE_CHANGED
+11-04 03:46:52.377  1029  1029 V MediaPlayerList: mPackageChangedBroadcastReceiver: action: android.intent.action.PACKAGE_CHANGED
+shot tablet_1_matches
+tap 434 761
+shot tablet_2_match
+tap 682 160
+shot tablet_3_settings
+shot desktop_1_matches
+tap 391 553
+shot desktop_2_match
+tap 721 120
+shot desktop_3_settings
+pid 7185
+
