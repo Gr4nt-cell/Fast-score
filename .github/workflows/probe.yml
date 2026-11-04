@@ -21,6 +21,7 @@ jobs:
           arch: x86_64
           target: google_apis
           profile: pixel_6
+          ram-size: 4096M
           disable-animations: true
           script: adb install -r apk/fast-score.apk; adb logcat -c; python3 drive.py | tee out/drive.txt; adb logcat -d > out/logcat.txt
       - if: always()
