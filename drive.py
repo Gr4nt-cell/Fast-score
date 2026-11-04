@@ -32,16 +32,21 @@ def launch():
     sh("adb shell am force-stop com.gr4nt.fastscore")
     sh("adb shell monkey -p com.gr4nt.fastscore -c android.intent.category.LAUNCHER 1"); time.sleep(30); anr()
 def first_match():
-    pat=re.compile(r"^(\d{1,2}:\d{2}( (AM|PM))?|FT|HT|\d{1,3}')$")
+    pat=re.compile(r"^(\d{1,2}:\d{2}|FT|HT|\d{1,3}')$")
     for t,d,b,c in nodes():
-        if pat.match(t) and b[1] > 500: tap(b[2]+80, center(b)[1]); return True
+        if pat.match(t) and b[1] > 500: tap(b[2]+260, center(b)[1]+20); return True
     print('no match row', flush=True); return False
+PANE=None
 def settings_gear():
-    top=[n for n in nodes() if n[3] and n[2][1] < 400 and (n[2][2]-n[2][0]) < 220 and (n[2][3]-n[2][1]) > 60]
-    if not top: print('no gear',flush=True); return False
-    g=max(top, key=lambda n: n[2][0]); tap(*center(g[2])); return True
+    w,dpi,pane=PANE
+    s=dpi/160
+    tap(int((pane-39)*s), int(80*s)); return True
 
 def run(mode, w, h, dpi, notif=False):
+    global PANE
+    wdp=w*160/dpi
+    pane = wdp if min(w,h)*160/dpi < 600 and wdp < 720 else min(520, max(380, wdp*0.4))
+    PANE=(w,dpi,pane)
     sh(f"adb shell wm size {w}x{h}"); sh(f"adb shell wm density {dpi}")
     if w > h: sh("adb shell settings put system accelerometer_rotation 0"); sh("adb shell settings put system user_rotation 1")
     else: sh("adb shell settings put system user_rotation 0")
@@ -49,8 +54,7 @@ def run(mode, w, h, dpi, notif=False):
     shot(f'{mode}_1_matches')
     if first_match(): time.sleep(14); anr()
     shot(f'{mode}_2_match')
-    sh("adb shell input keyevent KEYCODE_BACK"); time.sleep(3)
-    if mode != 'phone': sh("adb shell input keyevent KEYCODE_BACK"); time.sleep(2); launch()
+    launch()
     settings_gear(); time.sleep(6)
     shot(f'{mode}_3_settings')
     if notif:
@@ -63,6 +67,8 @@ def run(mode, w, h, dpi, notif=False):
         print('\n'.join(l for l in lc.splitlines() if re.search(r'MediaPlayer|NuPlayer|AudioTrack|fs_goal|playTone|notification_alert', l))[:4000])
     sh("adb shell input keyevent KEYCODE_BACK")
 
+sh("adb shell settings put global anr_show_background 0")
+sh("adb shell settings put global hide_error_dialogs 1")
 sh("adb shell pm grant com.gr4nt.fastscore android.permission.POST_NOTIFICATIONS")
 sh("adb shell media volume --stream 5 --set 5")
 run('phone', 1080, 2400, 420, notif=True)
