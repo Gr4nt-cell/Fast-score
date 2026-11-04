@@ -188,7 +188,7 @@ function Main() {
   // An invisible line just above the dock: tab screens end there, so scrolling content
   // disappears at the line instead of sliding underneath the dock.
   const dockInsets = useSafeAreaInsets();
-  const dockClear = 62 + Math.max(dockInsets.bottom, 10) + 10;
+  const dockClear = 62 + Math.max(dockInsets.bottom, 10) + 2; // 2px above the dock's top edge
   const [detail, setDetail] = useState(null); // tablet: the page shown in the right-hand pane
   const counter = useRef(0);
   const { width: winW, height: winH } = useWindowDimensions();
