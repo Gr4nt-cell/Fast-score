@@ -88,6 +88,30 @@ class FastLiveModule : Module() {
       else (ctx.getSystemService(android.app.AlarmManager::class.java)?.canScheduleExactAlarms() ?: false)
     }
 
+    /** Android 11+: is the app exempt from "Pause app activity if unused" (which stops notifications)? */
+    Function("isExemptFromHibernation") {
+      if (Build.VERSION.SDK_INT < 30) true
+      else try {
+        @Suppress("DEPRECATION")
+        ctx.packageManager.isAutoRevokeWhitelisted
+      } catch (e: Exception) {
+        true
+      }
+    }
+
+    /** Opens the app's "Pause app activity if unused" setting. */
+    Function("requestHibernationExemption") {
+      try {
+        val i = if (Build.VERSION.SDK_INT >= 30) Intent(Intent.ACTION_AUTO_REVOKE_PERMISSIONS, Uri.parse("package:${ctx.packageName}"))
+        else Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS, Uri.parse("package:${ctx.packageName}"))
+        i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        ctx.startActivity(i)
+        true
+      } catch (e: Exception) {
+        false
+      }
+    }
+
     Function("isIgnoringBattery") {
       val pm = ctx.getSystemService(Context.POWER_SERVICE) as PowerManager
       pm.isIgnoringBatteryOptimizations(ctx.packageName)

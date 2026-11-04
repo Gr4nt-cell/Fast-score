@@ -8,21 +8,15 @@ export const GlassBackdropContext = createContext(false);
 
 const light = {
   dark: false,
-  bg: '#F1FAF7',
-  liquidBackground: {
-    base: '#F1FAF7',
-    blooms: [
-      { id: 'mint', cx: '0%', cy: '0%', r: '65%', color: '#63F4CC', opacity: 0.65 },
-      { id: 'peach', cx: '100%', cy: '100%', r: '65%', color: '#FFB37C', opacity: 0.65 },
-    ],
-  },
-  grouped: 'rgba(255,255,255,0.256)',
-  card: 'rgba(255,255,255,0.4864)',
-  text: '#14232B',
-  secondary: '#5F737C',
-  tertiary: '#A9BAC1',
-  separator: 'rgba(20,50,60,0.10)',
-  fill: 'rgba(255,255,255,0.32)',
+  bg: '#FFFFFF',
+  liquidBackground: { base: '#FFFFFF', blooms: [] },
+  grouped: '#FFFFFF',
+  card: '#FFFFFF',
+  text: '#000000',
+  secondary: '#6B6B6B',
+  tertiary: '#A3A3A3',
+  separator: 'rgba(0,0,0,0.10)',
+  fill: '#F2F2F2',
   blue: '#2F6BD8',
   green: '#34C759',
   red: '#FF3B30',
@@ -33,7 +27,7 @@ const light = {
   win: '#2FB869',
   draw: '#8A8A8E',
   loss: '#E5162B',
-  track: 'rgba(20,23,31,0.08)',
+  track: '#F2F2F2',
   pitch: '#2E9E55',
   pitchLine: 'rgba(255,255,255,0.55)',
 };
@@ -41,17 +35,14 @@ const light = {
 const dark = {
   dark: true,
   bg: '#000000',
-  liquidBackground: {
-    base: '#000000',
-    blooms: [],
-  },
+  liquidBackground: { base: '#000000', blooms: [] },
   grouped: '#000000',
-  card: 'rgba(22,35,42,0.64)',
-  text: '#EEF6F8',
-  secondary: '#8DA2AA',
-  tertiary: '#4A5E66',
-  separator: 'rgba(255,255,255,0.10)',
-  fill: 'rgba(24,38,45,0.64)',
+  card: '#161616',
+  text: '#FFFFFF',
+  secondary: '#9A9A9A',
+  tertiary: '#5C5C5C',
+  separator: 'rgba(255,255,255,0.12)',
+  fill: '#222222',
   blue: '#6FA8FF',
   green: '#30D158',
   red: '#FF453A',
@@ -62,7 +53,7 @@ const dark = {
   win: '#30D158',
   draw: '#8D8D93',
   loss: '#FF453A',
-  track: 'rgba(255,255,255,0.10)',
+  track: '#222222',
   pitch: '#1F6B3B',
   pitchLine: 'rgba(255,255,255,0.4)',
 };
@@ -78,4 +69,5 @@ export function useTheme() {
   return useMemo(() => (glass ? (isDark ? darkGlass : lightGlass) : isDark ? dark : light), [glass, isDark]);
 }
 
-export const TAB_BAR_SPACE = 96;
+// Tab screens now end just above the dock (see App.js), so lists only need a little air at the end.
+export const TAB_BAR_SPACE = 0;

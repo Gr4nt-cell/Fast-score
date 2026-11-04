@@ -9,7 +9,7 @@ import { SPORTS } from '../sports';
 import { clearCache } from '../api/sportsData';
 import { fixtureBoardCache } from '../api/fixtureBoardStore';
 import { ensurePermission, openNotificationSettings, permissionStatus, sendTestNotification } from '../notify';
-import { ALERT_KINDS, alertOn, askBatteryUnrestricted, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable, playTone } from '../live';
+import { ALERT_KINDS, alertOn, askBatteryUnrestricted, askHibernationExemption, hibernationExempt, askExactAlarms, batteryUnrestricted, exactAlarmsAllowed, liveAvailable, playTone } from '../live';
 import { AppState, Linking } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { LANGUAGES } from '../i18n';
@@ -41,12 +41,14 @@ export default function SettingsScreen() {
   const [testNotificationStatus, setTestNotificationStatus] = useState('');
   const [testingNotification, setTestingNotification] = useState(false);
   const [battery, setBattery] = useState(batteryUnrestricted());
+  const [awake, setAwake] = useState(hibernationExempt());
   const [alarms, setAlarms] = useState(exactAlarmsAllowed());
   useEffect(() => {
     permissionStatus().then(setNotif);
     const sub = AppState.addEventListener('change', (st) => {
       if (st !== 'active') return;
       setBattery(batteryUnrestricted());
+      setAwake(hibernationExempt());
       setAlarms(exactAlarmsAllowed());
       permissionStatus().then(setNotif);
     });
@@ -91,31 +93,23 @@ export default function SettingsScreen() {
             onChange={(v) => setSetting('theme', v)}
           />
         </View>
+        <SectionTitle>Odds</SectionTitle>
         <Card>
-          <Toggle label="Liquid Glass" sub="Soft refracted panels with a polished edge. Off uses plain cards." value={settings.glass !== false} onChange={(v) => setSetting('glass', v)} last />
-        </Card>
-
-        <SectionTitle>Performance profile</SectionTitle>
-        <Card>
-          <View style={{ paddingHorizontal: 16, paddingVertical: 14 }}>
-            <Text style={{ color: t.text, fontSize: 15.5, fontWeight: '600' }}>Choose a profile</Text>
-            <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 3 }}>
-              {performanceProfile?.automatic
-                ? `Automatically selected as ${performanceProfile.profile === 'optimized' ? 'Optimized' : 'Performance'} for this device.`
-                : 'Your choice is saved on this device.'}
-            </Text>
-            <View style={{ marginTop: 12 }}>
+          <Toggle label="Show odds" sub="MSport prices for upcoming and live matches" value={settings.showOdds !== false} onChange={(v) => setSetting('showOdds', v)} last={settings.showOdds === false} />
+          {settings.showOdds !== false ? (
+            <View style={{ paddingTop: 12 }}>
               <Segmented
+                height={40}
                 options={[
-                  { key: 'performance', label: 'Performance' },
-                  { key: 'optimized', label: 'Optimized' },
+                  { key: 'decimal', label: '1.85' },
+                  { key: 'fractional', label: '17/20' },
+                  { key: 'american', label: '-118' },
                 ]}
-                value={performanceProfile?.profile || 'performance'}
-                onChange={(value) => performanceProfile?.setProfile?.(value)}
-                height={42}
+                value={settings.oddsFormat || 'decimal'}
+                onChange={(v) => setSetting('oddsFormat', v)}
               />
             </View>
-          </View>
+          ) : null}
         </Card>
 
         <SectionTitle>Start on</SectionTitle>
@@ -177,6 +171,14 @@ export default function SettingsScreen() {
               </View>
             </Row>
           ) : null}
+          {settings.goalAlerts && notif === 'granted' && liveAvailable() && !awake ? (
+            <Row onPress={() => askHibernationExemption()}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.orange, fontSize: 15, fontWeight: '600' }}>Keep alerts on when you don't open the app</Text>
+                <Text style={{ color: t.secondary, fontSize: 12.5, marginTop: 2 }}>Tap and turn off "Pause app activity if unused". Otherwise Android stops Fast Score's notifications after a few weeks without opening it.</Text>
+              </View>
+            </Row>
+          ) : null}
           {Platform.OS === 'android' ? (
             <Row last onPress={() => Linking.openSettings().catch(() => {})}>
               <View style={{ flex: 1 }}>
@@ -232,11 +234,11 @@ export default function SettingsScreen() {
                         : diagnostics?.channelImportance === 0
                           ? 'Android has blocked the goal alert channel. Set it to High in the channel settings.'
                           : diagnostics?.channelSoundEnabled === false
-                            ? 'Android has muted the goal alert channel. Enable sound in the channel settings.'
+                            ? 'Your phone is on silent or its notification volume is at zero, so alert tones can\'t be heard. Turn the notification volume up.'
                             : diagnostics?.channelImportance > 0 && diagnostics.channelImportance < 4
                               ? 'Android has lowered the goal alert channel. Set it to High to show pop-ups.'
                               : result.ok && channelHealth?.soundEnabled === true && channelHealth?.highImportance === true
-                                ? 'Android posted the test on the High channel. If no sound or pop-up appeared, check Do Not Disturb and phone volume.'
+                                ? 'Test sent with the goal tone. If you heard nothing, check Do Not Disturb.'
                                 : result.ok
                                   ? 'Android posted the test. Check the notification shade and channel settings.'
                                   : result.reason === 'permission'

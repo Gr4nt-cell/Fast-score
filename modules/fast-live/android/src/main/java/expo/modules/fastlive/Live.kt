@@ -54,7 +54,7 @@ data class Snap(
 
 object Live {
   private const val PREFS = "fastlive"
-  const val CH_SCORES = "scores_v8"
+  const val CH_SCORES = "scores_v9"
   const val CH_LIVE = "live-tracker"
   const val EXTRA_TAP = "fastlive_match"
   const val LEAD_MS = 10 * 60 * 1000L       // wake this long before kick-off
@@ -65,7 +65,7 @@ object Live {
   private val KIND_NAMES = mapOf(
     "goal" to "Goals", "kickoff" to "Kick-off", "halftime" to "Half-time", "fulltime" to "Full-time", "redcard" to "Red cards", "lineups" to "Line-ups",
   )
-  fun channelOf(kind: String) = "ev_${kind}_v8"
+  fun channelOf(kind: String) = "ev_${kind}_v9"
 
   /** Which kinds of alert the user wants (Settings -> Alert tones); all on by default. */
   fun kindOn(ctx: Context, kind: String): Boolean {
@@ -162,7 +162,7 @@ object Live {
     try {
       for (c in nm.notificationChannels) {
         val id = c.id
-        val old = id == "scores" || Regex("^scores_v[1-7]$").matches(id) || Regex("^ev_[a-z]+_v[1-7]$").matches(id)
+        val old = id == "scores" || Regex("^scores_v[1-8]$").matches(id) || Regex("^ev_[a-z]+_v[1-8]$").matches(id)
         if (old) nm.deleteNotificationChannel(id)
       }
     } catch (e: Exception) {}
@@ -179,7 +179,11 @@ object Live {
       nm.createNotificationChannel(NotificationChannel(channelOf(k), KIND_NAMES[k] ?: k, if (k == "lineups") NotificationManager.IMPORTANCE_DEFAULT else NotificationManager.IMPORTANCE_HIGH).apply {
         description = "Alerts for matches and teams you follow"
         enableVibration(true)
-        setSound(toneUri(ctx, k) ?: Settings.System.DEFAULT_NOTIFICATION_URI, attrs)
+        // Silent channel: the app plays the event's tone itself (playTone) right after posting.
+        // Several phone makers mute custom channel sounds for apps by default, so a tone that
+        // depends on the channel often never plays; one the app plays always does, and it still
+        // follows the notification volume, silent mode and Do Not Disturb.
+        setSound(null, null)
       })
     }
     if (nm.getNotificationChannel(CH_LIVE) == null) {
@@ -198,7 +202,14 @@ object Live {
     val channel = if (Build.VERSION.SDK_INT >= 26) nm.getNotificationChannel(channelId) else null
     val notificationsEnabled = nm.areNotificationsEnabled()
     val importance = channel?.importance ?: NotificationManager.IMPORTANCE_HIGH
-    val soundEnabled = Build.VERSION.SDK_INT < 26 || channel?.sound != null
+    // the tone is played by the app on the notification stream, so "sound on" means that stream
+    // is audible: ringer in normal mode and notification volume above zero
+    val soundEnabled = try {
+      val am = ctx.getSystemService(Context.AUDIO_SERVICE) as android.media.AudioManager
+      am.ringerMode == android.media.AudioManager.RINGER_MODE_NORMAL && am.getStreamVolume(android.media.AudioManager.STREAM_NOTIFICATION) > 0
+    } catch (e: Exception) {
+      true
+    }
     var posted = false
     var error = ""
 
@@ -220,11 +231,11 @@ object Live {
           .setContentIntent(openApp(ctx, null, 7102))
         if (Build.VERSION.SDK_INT < 26) {
           @Suppress("DEPRECATION")
-          builder.setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
-          builder.setSound(Settings.System.DEFAULT_NOTIFICATION_URI)
+          builder.setDefaults(Notification.DEFAULT_VIBRATE)
         }
         nm.notify(7102, builder.build())
         posted = true
+        playTone(ctx, "goal")
       } catch (e: SecurityException) {
         error = "permission"
       } catch (e: Exception) {
@@ -276,11 +287,21 @@ object Live {
       .setContentIntent(openApp(ctx, item.tap, item.key.hashCode()))
     if (Build.VERSION.SDK_INT < 26) {
       @Suppress("DEPRECATION")
-      b.setDefaults(Notification.DEFAULT_SOUND or Notification.DEFAULT_VIBRATE)
+      b.setDefaults(Notification.DEFAULT_VIBRATE)
     }
     try {
       ctx.getSystemService(NotificationManager::class.java).notify(item.key.hashCode() + (System.currentTimeMillis() / 1000 % 1000).toInt(), b.build())
+      if (alertsAudible(ctx)) playTone(ctx, kind)
     } catch (e: Exception) {}
+  }
+
+  /** Notifications allowed for the app (the tone is only played alongside a visible alert). */
+  fun alertsAudible(ctx: Context): Boolean {
+    return try {
+      ctx.getSystemService(NotificationManager::class.java).areNotificationsEnabled()
+    } catch (e: Exception) {
+      true
+    }
   }
 
   /** Before kick-off: announce line-ups for followed football matches once they're published. */

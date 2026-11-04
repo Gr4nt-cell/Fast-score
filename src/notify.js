@@ -7,7 +7,7 @@ import FastLive from '../modules/fast-live';
 
 // Android keeps a channel's sound settings across app upgrades, even if the app
 // changes its configuration. Bump this when repairing channel behavior.
-const CHANNEL = 'scores_v8';
+const CHANNEL = 'scores_v9';
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({
@@ -100,7 +100,7 @@ const KIND_CHANNELS = {
 };
 const kindReady = {};
 function kindChannel(kind) {
-  const id = `ev_${kind}_v8`;
+  const id = `ev_${kind}_v9`;
   if (Platform.OS !== 'android') return Promise.resolve(id);
   if (!kindReady[kind]) {
     kindReady[kind] = Notifications.setNotificationChannelAsync(id, {
@@ -109,7 +109,9 @@ function kindChannel(kind) {
       importance: kind === 'lineups' ? Notifications.AndroidImportance.DEFAULT : Notifications.AndroidImportance.HIGH,
       vibrationPattern: [0, 250, 150, 250],
       lightColor: '#0A84FF',
-      sound: `fs_${kind}.wav`,
+      // silent channel: the app plays the tone itself (see playAlertTone), because several phone
+      // makers mute custom channel sounds for apps by default
+      sound: null,
     })
       .then(() => id)
       .catch((error) => {
@@ -152,6 +154,13 @@ async function withTimeout(promise, ms) {
   }
 }
 
+/** The event's tone, played by the app on the notification stream (follows volume, silent mode and DND). */
+function playAlertTone(kind) {
+  try {
+    if (Platform.OS === 'android' && FastLive?.playTone) FastLive.playTone(kind);
+  } catch {}
+}
+
 export async function notifyEvent(ev, kind) {
   if (!(await ensurePermission(false))) return false;
   const alertKind = kind && KIND_CHANNELS[kind] ? kind : null;
@@ -162,7 +171,7 @@ export async function notifyEvent(ev, kind) {
       content: {
         title,
         body,
-        sound: alertKind ? `fs_${alertKind}.wav` : 'default',
+        sound: alertKind ? false : 'default',
         priority:
           alertKind === 'lineups'
             ? Notifications.AndroidNotificationPriority.DEFAULT
@@ -171,6 +180,7 @@ export async function notifyEvent(ev, kind) {
       },
       trigger: Platform.OS === 'android' ? channelTrigger(channelId) : null,
     });
+    if (alertKind) playAlertTone(alertKind);
     return true;
   } catch (error) {
     console.warn('[Fast Score] Could not schedule a match notification', error);

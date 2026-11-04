@@ -16,14 +16,20 @@ async function sourceFiles(dir) {
   return nested.flat();
 }
 
-test('mobile sports code uses only Flashscore for sports data', async () => {
-  for (const module of ['espn.js','msport.js','sofascore.js','sportsdb.js','browserBridge.js','server.js']) {
+test('mobile sports code uses only Flashscore for sports data (MSport only for odds)', async () => {
+  for (const module of ['espn.js','sofascore.js','sportsdb.js','browserBridge.js','server.js']) {
     await assert.rejects(access(path.join(src,'api',module)));
   }
   const files=await sourceFiles(src);
   const sources=await Promise.all(files.map((file)=>readFile(file,'utf8')));
   const appCode=sources.join('\n');
-  assert.doesNotMatch(appCode,/from\s+['"][^'"]*\/api\/(espn|msport|sofascore|sportsdb|browserBridge|server)['"]/i);
+  assert.doesNotMatch(appCode,/from\s+['"][^'"]*\/api\/(espn|sofascore|sportsdb|browserBridge|server)['"]/i);
+  // MSport is imported for prices only
+  for (const m of appCode.matchAll(/import\s*\{([^}]*)\}\s*from\s+['"][^'"]*\/api\/msport['"]/g)) {
+    for (const name of m[1].split(',').map((x) => x.trim().split(/\s+as\s+/)[0]).filter(Boolean)) {
+      assert.match(name, /odds|Odds/, `msport import ${name} should be odds-only`);
+    }
+  }
   assert.match(appCode,/from\s+['"][^'"]*\/api\/flashscore['"]/);
   assert.doesNotMatch(await readFile(path.join(src,'predict.js'),'utf8'),/attachOdds|bookmaker|MARKET_WEIGHT|marketProbs/i);
 });

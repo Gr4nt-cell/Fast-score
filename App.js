@@ -36,6 +36,7 @@ import TeamScreen from './src/screens/TeamScreen';
 import PlayerScreen from './src/screens/PlayerScreen';
 import SettingsScreen from './src/screens/SettingsScreen';
 import ArticleScreen from './src/screens/ArticleScreen';
+import { warmOdds } from './src/api/msport';
 
 const PANE_ROUTES = new Set(['match', 'league', 'team', 'player']);
 
@@ -184,6 +185,10 @@ function Main() {
   const blurTarget = useRef(null);
   const [tab, setTabState] = useState('matches');
   const [stack, setStack] = useState([]);
+  // An invisible line just above the dock: tab screens end there, so scrolling content
+  // disappears at the line instead of sliding underneath the dock.
+  const dockInsets = useSafeAreaInsets();
+  const dockClear = 62 + Math.max(dockInsets.bottom, 10) + 10;
   const [detail, setDetail] = useState(null); // tablet: the page shown in the right-hand pane
   const counter = useRef(0);
   const { width: winW, height: winH } = useWindowDimensions();
@@ -200,6 +205,10 @@ function Main() {
     ScreenOrientation.lockAsync(smallest >= 600 ? ScreenOrientation.OrientationLock.DEFAULT : ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
   }, [smallest >= 600]); // eslint-disable-line react-hooks/exhaustive-deps
   useScoreWatcher();
+  // MSport's price file and lists, loaded early so odds are ready when a match opens
+  useEffect(() => {
+    warmOdds('soccer');
+  }, []);
 
   // tapping a goal notification opens that match
   useEffect(() => onNotificationTap((m) => push({ name: 'match', match: pickToMatch(m) })), []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -286,7 +295,8 @@ function Main() {
   }
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
-  const glassOn = settings.glass !== false;
+  // plain black/white surfaces everywhere (the liquid-glass look was retired)
+  const glassOn = false;
 
   return (
     <NavContext.Provider value={nav}>
@@ -298,7 +308,7 @@ function Main() {
             <View style={{ flex: 1, backgroundColor: t.bg }}>
               <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg, flexDirection: wide ? 'row' : 'column' }}>
                 {glassOn ? <Backdrop /> : null}
-                <View style={wide ? { width: Math.round(Math.min(520, Math.max(380, winW * 0.4))) } : { flex: 1 }}>
+                <View style={[wide ? { width: Math.round(Math.min(520, Math.max(380, winW * 0.4))) } : { flex: 1 }, { marginBottom: dockClear, overflow: 'hidden' }]}>
                   <Boundary resetKey={tab}>{screen}</Boundary>
                 </View>
                 {wide ? (
@@ -368,7 +378,8 @@ function PerformanceProfileProvider({ defaultOptimized, children }) {
   const { settings, setSetting } = useStore();
   const savedProfile = settings.performanceProfile;
   const selectedProfile = savedProfile === 'performance' || savedProfile === 'optimized' ? savedProfile : null;
-  const profile = selectedProfile || (defaultOptimized ? 'optimized' : 'performance');
+  // always the optimised profile: lighter lists, no animated glass work
+  const profile = 'optimized';
   const performanceMode = profile === 'optimized';
   const setProfile = useCallback((next) => {
     if (next === 'performance' || next === 'optimized') setSetting('performanceProfile', next);

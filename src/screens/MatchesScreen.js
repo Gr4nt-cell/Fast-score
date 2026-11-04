@@ -8,6 +8,7 @@ import { useNav } from '../nav';
 import { SPORTS, sportByKey } from '../sports';
 import { dayBoard, pool, sameDay } from '../api/sportsData';
 import { LeagueBlock, SportPill } from '../components/match';
+import { attachOdds } from '../api/msport';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { Empty, GlassCircle, LiveDot, Loading } from '../components/ui';
 import { ScrollGlowFlatList as FlatList } from '../components/Glass';
@@ -37,6 +38,20 @@ export default function MatchesScreen({ liveMode = false }) {
   const boardKey = fixtureBoardKey(sport, day);
   const groups = board.key === boardKey ? board.groups : null;
 
+  // MSport prices for upcoming matches, filled in after the board shows (never blocks it)
+  const withOdds = useCallback((res, id, key) => {
+    if (!res || !res.length) return;
+    const kinds = [...new Set(res.map((g) => g.sport || sport))];
+    Promise.all(kinds.map((k) => attachOdds(res.filter((g) => (g.sport || sport) === k), k)))
+      .then(() => {
+        if (id !== reqId.current) return;
+        const next = [...res];
+        if (res.source) next.source = res.source;
+        setBoard((current) => (current.key === key ? { key, groups: next } : current));
+      })
+      .catch(() => {});
+  }, [sport]);
+
   const load = useCallback(
     async (quiet, force = false) => {
       const id = ++reqId.current;
@@ -49,6 +64,7 @@ export default function MatchesScreen({ liveMode = false }) {
           const cachedGroups = Array.from(snapshot.groups);
           if (snapshot.source) cachedGroups.source = snapshot.source;
           setBoard({ key: boardKey, groups: cachedGroups });
+          withOdds(cachedGroups, id, boardKey);
           if (isToday && savedOnLocalDay(snapshot, day)) {
             setError(null);
             return;
@@ -71,13 +87,14 @@ export default function MatchesScreen({ liveMode = false }) {
         await fixtureBoardCache.set(boardKey, res);
         if (id !== reqId.current) return;
         setBoard({ key: boardKey, groups: res });
+        withOdds(res, id, boardKey);
       } catch (e) {
         if (id !== reqId.current) return;
         setError(e.message || 'Could not load matches');
         setBoard((current) => (current.key === boardKey && current.groups ? current : { key: boardKey, groups: [] }));
       }
     },
-    [sport, date, dayStamp, live, boardKey] // eslint-disable-line react-hooks/exhaustive-deps
+    [sport, date, dayStamp, live, boardKey, withOdds] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
@@ -122,7 +139,7 @@ export default function MatchesScreen({ liveMode = false }) {
   const marked = useMemo(() => new Set(favs.matches.filter((m) => sport === 'all' || m.sport === sport).map((m) => new Date(m.date).toDateString())), [favs.matches, sport]);
   const sportName = sport === 'all' ? 'All sports' : sp.name;
   const renderLeague = useCallback(
-    ({ item }) => <LeagueBlock group={item} sport={item.sport || sport} />,
+    ({ item }) => <LeagueBlock group={item} sport={item.sport || sport} showOdds />,
     [sport],
   );
 

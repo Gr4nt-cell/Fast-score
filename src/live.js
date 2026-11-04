@@ -155,3 +155,18 @@ export async function playTone(kind) {
 
 /** Which tone an in-app watcher event uses (null = no special tone). */
 export const toneKind = (ev) => (ev.kind === 'score' ? (ev.match.sport === 'soccer' ? 'goal' : null) : ev.kind === 'start' ? 'kickoff' : ev.kind === 'end' ? 'fulltime' : null);
+
+/** Android's "Pause app activity if unused" stops notifications; true when the app is exempt. */
+export function hibernationExempt() {
+  try {
+    return FastLive && FastLive.isExemptFromHibernation ? !!FastLive.isExemptFromHibernation() : true;
+  } catch {
+    return true;
+  }
+}
+
+export function askHibernationExemption() {
+  try {
+    FastLive && FastLive.requestHibernationExemption && FastLive.requestHibernationExemption();
+  } catch {}
+}

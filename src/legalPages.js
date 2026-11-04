@@ -1,6 +1,6 @@
 // Public pages for the store listing: privacy policy and child safety standards.
 
-const UPDATED = '3 November 2026';
+const UPDATED = '4 November 2026';
 const CONTACT = 'gstephen116@gmail.com';
 const DEV = 'Gr4nt';
 
@@ -38,16 +38,17 @@ export const PRIVACY = page(
 <div class="card"><h2>What is stored on your device</h2>
 <p>To work, the app keeps the following on your phone, in the app's private storage. It never leaves the device and is deleted when you uninstall the app or clear its data:</p>
 <ul>
-<li>Teams, matches, players and competitions you follow or pin; your settings (theme, sport, language, notifications).</li>
+<li>Teams, matches, players and competitions you follow or pin; your settings (theme, sport, language, odds format, notifications).</li>
 <li>Your recent searches, and the AI Picks made on your phone with their results.</li>
-<li>Copies of sports data (fixtures, scores, tables) so screens load quickly and work offline.</li>
+<li>Copies of sports data (fixtures, scores, tables, odds) so screens load quickly and work offline.</li>
 </ul></div>
 
 <div class="card"><h2>Where the app gets sports data</h2>
-<p>To show scores and tables, the app requests public sports data from these services. These requests contain <strong>no personal information</strong>, only what is needed to fetch the data (for example a match or competition id). Like any website, these services receive your device's IP address and basic technical information as part of the internet connection; their own privacy policies apply.</p>
+<p>To show scores, tables and odds, the app requests public sports data from these services. These requests contain <strong>no personal information</strong>, only what is needed to fetch the data (for example a match or competition id). Like any website, these services receive your device's IP address and basic technical information as part of the internet connection; their own privacy policies apply.</p>
 <table><tr><th>Service</th><th>Used for</th></tr>
 <tr><td>Live sports data providers</td><td>Fixtures, live scores, match events, statistics, line-ups, tables, momentum</td></tr>
-<tr><td>GitHub (raw.githubusercontent.com)</td><td>The app's list of competitions</td></tr>
+<tr><td>MSport Ghana (msport.com)</td><td>Bookmaker odds</td></tr>
+<tr><td>GitHub (raw.githubusercontent.com)</td><td>The app's lists of competitions and odds</td></tr>
 </table></div>
 
 <div class="card"><h2>Notifications</h2>
@@ -62,11 +63,11 @@ export const PRIVACY = page(
 </ul>
 <p>The app does not use your location, camera, microphone, contacts, photos or files.</p></div>
 
-<div class="card"><h2>AI Picks</h2>
-<p>Fast Score does not take bets, process payments or link your betting accounts. AI Picks are statistical estimates made on your phone, not betting advice. Gambling is for adults (18+) only; please bet responsibly.</p></div>
+<div class="card"><h2>Odds and AI Picks</h2>
+<p>Bookmaker odds are shown for information only. Fast Score does not take bets, process payments or link your betting accounts. AI Picks are statistical estimates made on your phone, not betting advice. Gambling is for adults (18+) only; please bet responsibly.</p></div>
 
 <div class="card"><h2>Children</h2>
-<p>Fast Score is intended for users aged 18 and over because AI Picks relate to betting markets. We do not knowingly collect any personal information from anyone, including children. See our child safety standards.</p></div>
+<p>Fast Score is intended for users aged 18 and over because it shows betting odds. We do not knowingly collect any personal information from anyone, including children. See our child safety standards.</p></div>
 
 <div class="card"><h2>Your choices and rights</h2>
 <p>Because we hold no personal data about you, there is nothing for us to access, correct or delete on our side. You can delete everything the app stores at any time with <em>Settings → Clear cached data</em>, by clearing the app's storage in your phone's settings, or by uninstalling the app. For any question or request, contact <a href="mailto:${CONTACT}">${CONTACT}</a>. This applies wherever you live, including under the GDPR, the UK GDPR, Ghana's Data Protection Act 2012 (Act 843) and US state privacy laws.</p></div>
@@ -87,7 +88,7 @@ export const CHILD_SAFETY = page(
 
 <div class="card"><h2>About the app</h2>
 <ul>
-<li>Fast Score shows sports scores, statistics and AI match predictions. It is intended for adults aged <strong>18 and over</strong> and is not designed for or directed at children.</li>
+<li>Fast Score shows sports scores, statistics and bookmaker odds. It is intended for adults aged <strong>18 and over</strong> and is not designed for or directed at children.</li>
 <li>The app has <strong>no user accounts, chat, messaging, comments, profiles, photo or video sharing</strong>, or any other way for users to contact each other or publish content. All content comes from sports data providers.</li>
 </ul></div>
 

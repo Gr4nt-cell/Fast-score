@@ -116,7 +116,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
   return (
     <View pointerEvents="box-none" style={[styles.wrap, { paddingBottom: Math.max(insets.bottom, 10) }]}>
       <GlassShadow radius={32} style={{ flex: 1 }}>
-        <Glass blur vivid outline radius={32} intensity={100} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: 62 }}>
+        <Glass blur vivid outline radius={32} intensity={100} onLayout={(e) => setWidth(e.nativeEvent.layout.width)} style={{ height: 62, boxShadow: t.dark ? '0px 8px 24px rgba(0,0,0,0.95), 0px 0px 0px 1px rgba(255,255,255,0.08)' : '0px 8px 24px rgba(0,0,0,0.22), 0px 1px 4px rgba(0,0,0,0.12)' }}>
           {itemW > 0 ? (
             <Animated.View
               pointerEvents="none"
@@ -136,9 +136,9 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
                 <Glass
                   radius={27}
                   selected
-                  style={{ flex: 1, borderWidth: 1, borderColor: t.dark ? 'rgba(255,255,255,0.2)' : '#FFFFFF', boxShadow: `0px 1px 6px rgba(${t.dark ? '0,0,0,0.2' : '60,120,140,0.12'})` }}
-                  tint={t.dark ? 'rgba(255,255,255,0.16)' : 'rgba(255,255,255,0.8)'}
-                  tintOpacity={0.9}
+                  style={{ flex: 1, borderWidth: 0 }}
+                  tint={t.dark ? '#FFFFFF' : '#000000'}
+                  tintOpacity={1}
                 />
               </FlatBackdropContext.Provider>
             </Animated.View>
@@ -146,7 +146,8 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
           <View style={{ flexDirection: 'row', flex: 1, paddingHorizontal: 4 }} {...responder.panHandlers}>
             {tabs.map((tab, i) => {
               const on = hover >= 0 ? i === hover : tab.key === active;
-              const color = on ? t.blue : t.secondary;
+              // the selected tab sits on a solid black (white in dark mode) pill
+              const color = on ? (t.dark ? '#000000' : '#FFFFFF') : t.secondary;
               return (
                 <View key={tab.key} style={styles.item} pointerEvents="none">
                   <View style={{ transform: [{ scale: hover === i ? 1.1 : 1 }] }}>

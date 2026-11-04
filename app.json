@@ -38,7 +38,7 @@
         "expo-notifications",
         {
           "color": "#0A84FF",
-          "defaultChannel": "scores_v8",
+          "defaultChannel": "scores_v9",
           "icon": "./assets/notification-icon.png",
           "sounds": [
             "./assets/sounds/fs_goal.wav",
@@ -57,7 +57,7 @@
           "image": "./assets/splash-icon.png",
           "imageWidth": 120,
           "resizeMode": "contain",
-          "backgroundColor": "#F1FAF7",
+          "backgroundColor": "#FFFFFF",
           "dark": {
             "image": "./assets/splash-icon.png",
             "backgroundColor": "#000000"
