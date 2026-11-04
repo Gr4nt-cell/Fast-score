@@ -4,11 +4,25 @@ permissions: { contents: write }
 jobs:
   run:
     runs-on: ubuntu-latest
+    timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
+      - env: { GH_TOKEN: '${{ github.token }}' }
+        run: |
+          mkdir -p apk out
+          gh release download latest -R ${{ github.repository }} -p fast-score.apk -D apk
+          ls -la apk
       - run: |
-          true
-          mkdir -p out && node sniff.js; ls out
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules && sudo udevadm trigger --name-match=kvm
+      - uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          arch: x86_64
+          target: google_apis
+          profile: pixel_6
+          disable-animations: true
+          script: adb install -r apk/fast-score.apk; adb logcat -c; python3 drive.py | tee out/drive.txt; adb logcat -d > out/logcat.txt
       - if: always()
         run: |
           git config user.name probe; git config user.email probe@x
