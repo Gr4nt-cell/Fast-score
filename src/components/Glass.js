@@ -1,12 +1,12 @@
-import React, { createContext, useCallback, useContext, useEffect, useMemo, useRef } from 'react';
-import { Animated, FlatList as NativeFlatList, Platform, ScrollView as NativeScrollView, StyleSheet, View } from 'react-native';
-import { Image as ExpoImage } from 'expo-image';
+import React, { createContext, useContext } from 'react';
+import { Image, FlatList as NativeFlatList, ScrollView as NativeScrollView, Platform, StyleSheet, View } from 'react-native';
 import * as ExpoBlur from 'expo-blur';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme } from '../theme';
+import { glassBudget } from '../performanceProfile';
 
-// Liquid-glass style material: real background blur where Android supports it,
-// a translucent fill, a bright specular rim on top and a darker lower edge.
+// Soft-glass material: a milky translucent fill, a delicate neutral rim and
+// diffuse depth. Real background blur stays limited to supported surfaces.
 
 const { BlurView } = ExpoBlur;
 // Newer expo-blur (SDK 55+) blurs a BlurTargetView; SDK 54 uses experimentalBlurMethod.
@@ -28,111 +28,25 @@ export const EXTENDED_BLUR = false;
 
 export const GlassTargetContext = createContext(null);
 export const GlassModeContext = createContext('clear'); // 'clear' | 'tinted' | 'plain'
-export const ScrollGlowContext = createContext(null);
+export const GlassFillScaleContext = createContext(1);
 export const PerformanceModeContext = createContext(false);
 export const PerformanceProfileContext = createContext(null);
+export const KeypadScreenShadingContext = createContext(false);
 // True when the app background is Plain. Glass relies on the colour field
 // behind it to show its shape; over flat white or flat black there is nothing
 // to refract, so panels need a crisp edge and a shadow to read at all.
 export const FlatBackdropContext = createContext(false);
 
-const GLOW_NATIVE_DRIVER = Platform.OS !== 'web';
-
-export function ScrollGlowProvider({ children }) {
-  const performanceMode = useContext(PerformanceModeContext);
-  const phase = useRef(new Animated.Value(0)).current;
-  const strength = useRef(new Animated.Value(0)).current;
-  const loop = useRef(null);
-  const stopTimer = useRef(null);
-  const active = useRef(false);
-
-  const pulse = useCallback(() => {
-    if (performanceMode) return;
-    if (stopTimer.current) clearTimeout(stopTimer.current);
-
-    if (!active.current) {
-      active.current = true;
-      phase.setValue(0);
-      loop.current = Animated.loop(
-        Animated.sequence([
-          Animated.timing(phase, {
-            toValue: 1,
-            duration: 1250,
-            useNativeDriver: GLOW_NATIVE_DRIVER,
-          }),
-          Animated.timing(phase, {
-            toValue: 0,
-            duration: 1250,
-            useNativeDriver: GLOW_NATIVE_DRIVER,
-          }),
-        ]),
-      );
-      loop.current.start();
-      Animated.timing(strength, {
-        toValue: 1,
-        duration: 180,
-        useNativeDriver: GLOW_NATIVE_DRIVER,
-      }).start();
-    }
-
-    stopTimer.current = setTimeout(() => {
-      active.current = false;
-      loop.current?.stop();
-      loop.current = null;
-      Animated.timing(strength, {
-        toValue: 0,
-        duration: 420,
-        useNativeDriver: GLOW_NATIVE_DRIVER,
-      }).start(({ finished }) => {
-        if (finished && !active.current) phase.setValue(0);
-      });
-    }, 320);
-  }, [performanceMode, phase, strength]);
-
-  useEffect(
-    () => () => {
-      if (stopTimer.current) clearTimeout(stopTimer.current);
-      loop.current?.stop();
-    },
-    [],
-  );
-
-  const value = useMemo(
-    () => (performanceMode ? null : { phase, strength, pulse }),
-    [performanceMode, phase, strength, pulse],
-  );
-  return <ScrollGlowContext.Provider value={value}>{children}</ScrollGlowContext.Provider>;
-}
-
-function useScrollGlowHandler(onScroll) {
-  const scrollGlow = useContext(ScrollGlowContext);
-  return useCallback(
-    (event) => {
-      scrollGlow?.pulse();
-      onScroll?.(event);
-    },
-    [onScroll, scrollGlow],
-  );
-}
-
-export function ScrollGlowScrollView({ onScroll, scrollEventThrottle = 16, ...props }) {
-  const handleScroll = useScrollGlowHandler(onScroll);
-  return <NativeScrollView {...props} onScroll={handleScroll} scrollEventThrottle={scrollEventThrottle} />;
-}
-
-export function ScrollGlowFlatList({ onScroll, scrollEventThrottle = 16, ...props }) {
-  const performanceMode = useContext(PerformanceModeContext);
-  const handleScroll = useScrollGlowHandler(onScroll);
-  const optimizedProps = performanceMode
-    ? {
-        initialNumToRender: Math.min(props.initialNumToRender ?? 8, 8),
-        maxToRenderPerBatch: Math.min(props.maxToRenderPerBatch ?? 8, 8),
-        updateCellsBatchingPeriod: Math.max(props.updateCellsBatchingPeriod ?? 50, 50),
-        windowSize: Math.min(props.windowSize ?? 5, 5),
-        removeClippedSubviews: true,
-      }
-    : {};
-  return <NativeFlatList {...props} {...optimizedProps} onScroll={handleScroll} scrollEventThrottle={scrollEventThrottle} />;
+function colorWithOpacity(color, opacity) {
+  const hex = /^#([\da-f]{3}|[\da-f]{6})$/i.exec(color || '');
+  if (hex) {
+    const value = hex[1].length === 3 ? [...hex[1]].map((x) => x + x).join('') : hex[1];
+    const channels = [0, 2, 4].map((i) => parseInt(value.slice(i, i + 2), 16));
+    return `rgba(${channels.join(',')},${opacity})`;
+  }
+  const rgb = /^rgba?\(\s*([\d.]+)\s*,\s*([\d.]+)\s*,\s*([\d.]+)(?:\s*,\s*([\d.]+))?\s*\)$/i.exec(color || '');
+  if (rgb) return `rgba(${rgb[1]},${rgb[2]},${rgb[3]},${Number(rgb[4] ?? 1) * opacity})`;
+  return color;
 }
 
 /**
@@ -142,15 +56,30 @@ export function ScrollGlowFlatList({ onScroll, scrollEventThrottle = 16, ...prop
  * panel shadow each reads as far heavier than one shadow under one panel, so
  * they get a shallower one and end up looking like the date strip.
  */
-function lift(dark, soft) {
-  // The original plain look (light border, soft drop shadow), with the shadow raised a little
-  // so cards stand clearly off the white or black background.
-  const a = soft ? (dark ? 0.3 : 0.08) : dark ? 0.5 : 0.15;
-  const y = soft ? 1 : 3;
-  const blur = soft ? 5 : 11;
+function lift(dark, soft, liquid, performanceMode = false) {
+  const borderColor = liquid
+    ? dark ? 'rgba(220,238,255,0.25)' : 'rgba(255,255,255,0.78)'
+    : dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.14)';
+  if (performanceMode) return { borderColor };
+
+  // boxShadow, not elevation: Android's elevation shadow is traced from a
+  // polygonal approximation of the view's outline, which turned the round keys
+  // into decagons. boxShadow follows the border radius exactly, so a circle
+  // casts a circle. (React Native 0.76+ on Android.)
+  const a = liquid
+    ? soft
+      ? dark ? 0.19 : 0.09
+      : dark ? 0.29 : 0.14
+    : soft
+      ? dark ? 0.16 : 0.045
+      : dark ? 0.26 : 0.075;
+  const y = soft ? 2 : 5;
+  const blur = soft ? 8 : 18;
   return {
-    borderColor: dark ? 'rgba(255,255,255,0.24)' : 'rgba(0,0,0,0.16)',
-    boxShadow: `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
+    borderColor,
+    boxShadow: liquid && !dark
+      ? `0px ${y}px ${blur}px rgba(57,83,70,${a})`
+      : `0px ${y}px ${blur}px rgba(0,0,0,${a})`,
   };
 }
 
@@ -173,26 +102,37 @@ export function Glass({
   intensity = 60,
   pointerEvents,
   onLayout,
-  outline = false, // stronger edge, e.g. the floating tab bar
-  strong = false, // clearly visible edge, e.g. the date strip and letter panel
-  vivid = false, // wide blur that lets the colour behind bleed through (tab bar)
+  outline = false, // extra edge contrast for floating navigation
+  strong = true, // alphabet-bar rim across the app's glass surfaces
+  vivid = true, // translucent colour bleed is the shared app-wide surface
   soft = false, // shallower shadow on a flat background, for small repeated controls
+  liquid = true, // brighter bevel and cool glass tint across glass surfaces
   fillScale = 1, // thins the fill further, e.g. a button over a photo
+  sheenScale = 1, // lowers the glass sheen without dimming its contents
+  allowDarkShading = false,
 }) {
   const t = useTheme();
   const mode = useContext(GlassModeContext);
   const target = useContext(GlassTargetContext);
-  const scrollGlow = useContext(ScrollGlowContext);
+  const glassFillScale = useContext(GlassFillScaleContext);
   const flat = useContext(FlatBackdropContext);
   const performanceMode = useContext(PerformanceModeContext);
+  const profile = useContext(PerformanceProfileContext);
+  const budget = glassBudget(profile || { lowEnd: performanceMode });
   const dark = forceDark ?? t.dark;
+  const inKeypadScreen = useContext(KeypadScreenShadingContext);
+  const showShading = true;
+  // Explicitly themed surfaces (the photo/gradient call screen) keep their
+  // existing material, as does every surface when the system theme is dark.
+  const lightLiquid = liquid && !t.dark && !dark && forceDark == null;
+  const surfaceFillScale = dark ? 1 : glassFillScale;
   const plain = mode === 'plain';
-  // Android draws a shadow only for a view that has its own background, so a
-  // lifted panel is opaque — over a flat backdrop there is nothing to see
-  // through to anyway.
-  const lifted = flat ? lift(dark, soft) : null;
+  const optimizedLight = performanceMode && !dark && forceDark == null;
+  // Flat backdrops still get the translucent fill; the stronger rim and shadow
+  // keep those surfaces distinct from the white or black behind them.
+  const lifted = flat ? lift(dark, soft, liquid && !plain, budget.compact) : null;
   // a lifted panel is opaque, so a live blur behind it would never show
-  const bp = blur && !performanceMode && !plain && !flat ? blurProps(target) : null;
+  const bp = blur && !plain && !flat && !budget.compact ? blurProps(target) : null;
   const realBlur = !!bp;
   const tinted = mode === 'tinted';
 
@@ -211,7 +151,7 @@ export function Glass({
             opacity: tint ? tintOpacity : 1,
             borderWidth: flat ? 1 : StyleSheet.hairlineWidth,
             borderColor: t.separator,
-            transform: [{ scale: pressed ? 1.02 : 1 }],
+            transform: [{ scale: 1 }],
             ...(lifted || {}),
           },
           style,
@@ -229,51 +169,51 @@ export function Glass({
   }
 
   // fill strength: stronger when there's no real blur behind it, and in Tinted mode
-  // Light mode is kept very clear (mostly see-through, defined by its rim);
-  // dark mode needs a little more body to read on black.
-  // "vivid" keeps the fill barely there so the blurred colour stays saturated
-  // instead of being washed out by a milky layer.
-  // Without real blur, "vivid" still stays well clear of the milky default so
-  // the colour of the background washes keeps coming through.
-  const alpha = performanceMode
-    ? vivid
-      ? dark ? (tinted ? 0.64 : 0.42) : tinted ? 0.62 : 0.4
-      : dark ? (tinted ? 0.68 : 0.5) : tinted ? 0.66 : 0.44
-    : vivid
+  // A soft frosted fill gives controls body without a hard reflective edge.
+  // Vivid keeps more of the existing background visible; tinted stays denser.
+  // Sheets without a live blur need enough body for their labels to read.
+  const baseAlpha = vivid
     ? realBlur
-      ? dark ? (tinted ? 0.34 : 0.14) : tinted ? 0.3 : 0.08
-      : dark ? (tinted ? 0.5 : 0.24) : tinted ? 0.42 : 0.12
+      ? dark ? (tinted ? 0.48 : 0.2) : tinted ? 0.4 : 0.12
+      : dark ? (tinted ? 0.6 : 0.34) : tinted ? 0.5 : 0.22
     : dark
-      ? realBlur ? (tinted ? 0.48 : 0.2) : tinted ? 0.6 : 0.34
-      : realBlur ? (tinted ? 0.4 : 0.12) : tinted ? 0.5 : 0.22;
-  // Over a flat backdrop a translucent fill just shows more of the same white
-  // or black, so the panel is given its own solid surface instead.
-  const a = alpha * fillScale;
+    ? realBlur ? (tinted ? 0.74 : 0.56) : tinted ? 0.94 : 0.9
+    : realBlur ? (tinted ? 0.88 : 0.76) : tinted ? 0.97 : 0.94;
+  // Optimized mode skips layered highlights and shadows, so give light-mode
+  // cards a stronger translucent body and rim to keep them easy to distinguish.
+  const alpha = optimizedLight ? Math.max(baseAlpha, tinted ? 0.6 : vivid ? 0.36 : 0.92) : baseAlpha;
+  // Flat surfaces keep their own faint colour field and rely on the raised rim
+  // and shadow for definition, rather than becoming opaque.
+  const a = alpha * fillScale * surfaceFillScale;
   const fill = tint
-    ? tint
+    ? colorWithOpacity(tint, tintOpacity * fillScale * (vivid ? 0.86 : 1))
     : flat
-    ? dark ? '#1C1C1E' : '#FFFFFF'
-    : dark ? `rgba(44,44,48,${a})` : `rgba(255,255,255,${a})`;
-  const rimTop = dark ? 'rgba(255,255,255,0.32)' : 'rgba(255,255,255,0.9)';
+    ? dark ? `rgba(39,42,48,${a})` : `rgba(246,250,255,${a})`
+    : dark ? `rgba(38,41,47,${a})` : `rgba(252,253,254,${a})`;
+  const rimTop = dark ? 'rgba(255,255,255,0.32)' : liquid ? 'rgba(255,255,255,0.96)' : 'rgba(255,255,255,0.55)';
   const rim = flat
     ? lifted.borderColor
-    : performanceMode
-    ? dark
-      ? strong || outline ? 'rgba(255,255,255,0.3)' : 'rgba(255,255,255,0.2)'
-      : strong || outline ? 'rgba(28,52,68,0.28)' : 'rgba(28,52,68,0.16)'
+    : optimizedLight
+    ? liquid
+      ? 'rgba(255,255,255,0.86)'
+      : strong || outline
+        ? 'rgba(45,66,94,0.26)'
+        : 'rgba(45,66,94,0.2)'
+    : liquid
+    ? dark ? 'rgba(220,238,255,0.28)' : lightLiquid ? t.glassBorder : 'rgba(105,143,185,0.25)'
     : strong
-    ? dark ? 'rgba(255,255,255,0.38)' : 'rgba(0,0,0,0.24)'
+    ? dark ? 'rgba(220,228,240,0.18)' : 'rgba(80,86,96,0.16)'
     : outline
-    ? dark ? 'rgba(255,255,255,0.28)' : 'rgba(0,0,0,0.16)'
-    : dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.08)';
-  const edge = dark ? 'rgba(0,0,0,0.35)' : 'rgba(0,0,0,0.04)';
+    ? dark ? 'rgba(220,228,240,0.14)' : 'rgba(80,86,96,0.12)'
+    : dark ? 'rgba(220,228,240,0.1)' : 'rgba(80,86,96,0.08)';
+  const edge = dark ? 'rgba(0,0,0,0.35)' : lightLiquid ? 'rgba(72,105,85,0.035)' : liquid ? 'rgba(70,102,145,0.075)' : 'rgba(70,78,90,0.018)';
   const highlight = flat
-    ? dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
+    ? liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.78)' : dark ? 'rgba(255,255,255,0.07)' : 'rgba(255,255,255,0)'
     : tint
-    ? 'rgba(255,255,255,0.3)'
+    ? liquid ? 'rgba(255,255,255,0.34)' : 'rgba(255,255,255,0.14)'
     : vivid
-    ? dark ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,0.55)'
-    : dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.45)';
+    ? liquid ? dark ? 'rgba(255,255,255,0.14)' : 'rgba(255,255,255,0.36)' : dark ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.24)'
+    : liquid ? dark ? 'rgba(255,255,255,0.17)' : 'rgba(255,255,255,0.42)' : dark ? 'rgba(255,255,255,0.06)' : 'rgba(255,255,255,0.2)';
 
   // Android derives an elevation shadow from the view's outline, and a view
   // that also clips its children can hand it a coarse polygon instead of the
@@ -292,76 +232,41 @@ export function Glass({
           style={StyleSheet.absoluteFill}
         />
       ) : null}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: fill, opacity: tint ? tintOpacity : 1 }]} />
-      {!flat && scrollGlow && (strong || vivid || tint) ? (
-        <Animated.View
+      <View style={[StyleSheet.absoluteFill, { backgroundColor: lifted ? 'transparent' : fill }]} />
+      {!budget.compact && lightLiquid && !tint ? (
+        <LinearGradient
           pointerEvents="none"
-          style={[
-            StyleSheet.absoluteFill,
-            {
-              opacity: scrollGlow.strength.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, vivid ? 0.2 : 0.15],
-              }),
-              transform: [
-                {
-                  translateX: scrollGlow.phase.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [-88, 88],
-                  }),
-                },
-                {
-                  translateY: scrollGlow.phase.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [8, -8],
-                  }),
-                },
-              ],
-            },
-          ]}
-        >
-          <LinearGradient
-            colors={[
-              'rgba(255,255,255,0)',
-              'rgba(255,255,255,0.06)',
-              dark ? 'rgba(255,255,255,0.24)' : 'rgba(255,255,255,0.3)',
-              'rgba(255,255,255,0.06)',
-              'rgba(255,255,255,0)',
-            ]}
-            locations={[0, 0.32, 0.5, 0.68, 1]}
-            start={{ x: 0, y: 0.5 }}
-            end={{ x: 1, y: 0.5 }}
-            style={[StyleSheet.absoluteFill, { borderRadius: radius }]}
-          />
-        </Animated.View>
+          colors={['rgba(214,238,230,0.10)', 'rgba(255,255,255,0)', 'rgba(220,230,246,0.07)']}
+          locations={[0, 0.5, 1]}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={[StyleSheet.absoluteFill, { opacity: sheenScale }]}
+        />
       ) : null}
       {/* specular highlight */}
-      {!performanceMode ? (
-        <LinearGradient
-          pointerEvents="none"
-          colors={[highlight, 'rgba(255,255,255,0)']}
-          start={{ x: 0.5, y: 0 }}
-          end={{ x: 0.5, y: 0.55 }}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : null}
+      {!budget.compact && showShading ? <LinearGradient
+        pointerEvents="none"
+        colors={[highlight, 'rgba(255,255,255,0)']}
+        start={{ x: 0.5, y: 0 }}
+        end={{ x: 0.5, y: 0.55 }}
+        style={[StyleSheet.absoluteFill, { opacity: sheenScale }]}
+      /> : null}
+      {budget.compact && showShading ? <Image source={require('../../assets/glass/static-sheen.png')} fadeDuration={0} resizeMode="stretch" pointerEvents="none" style={StyleSheet.absoluteFill} /> : null}
       {/* darker lower edge for depth */}
-      {!performanceMode ? (
-        <LinearGradient
-          pointerEvents="none"
-          colors={['rgba(0,0,0,0)', edge]}
-          start={{ x: 0.5, y: 0.55 }}
-          end={{ x: 0.5, y: 1 }}
-          style={StyleSheet.absoluteFill}
-        />
-      ) : null}
-      {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.12)' : 'rgba(0,0,0,0.05)' }]} /> : null}
+      {!budget.compact && showShading ? <LinearGradient
+        pointerEvents="none"
+        colors={['rgba(0,0,0,0)', edge]}
+        start={{ x: 0.5, y: 0.55 }}
+        end={{ x: 0.5, y: 1 }}
+        style={StyleSheet.absoluteFill}
+      /> : null}
+      {selected ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: 'rgba(255,255,255,0.12)' }]} /> : null}
       {pressed ? <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: dark ? 'rgba(255,255,255,0.18)' : 'rgba(255,255,255,0.5)' }]} /> : null}
       {/* rim light: bright on top, softer around (on the outer view when lifted) */}
       {lifted ? null : (
-        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong ? 1.6 : outline ? 1.2 : StyleSheet.hairlineWidth * 2, borderColor: rim }]} />
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, borderWidth: strong || outline ? (lightLiquid ? 1.15 : 1) : StyleSheet.hairlineWidth, borderColor: rim }]} />
       )}
-      {flat || performanceMode ? null : (
+      {budget.compact || (flat && !liquid) ? null : (
         <LinearGradient
           pointerEvents="none"
           colors={[rimTop, 'rgba(255,255,255,0)']}
@@ -382,10 +287,33 @@ export function Glass({
           {
             borderRadius: radius,
             backgroundColor: fill,
-            borderWidth: strong || outline ? 1.4 : 1,
-            transform: [{ scale: pressed ? 1.04 : 1 }],
+            borderWidth: 1,
+            transform: [{ scale: 1 }],
           },
           lifted,
+          style,
+        ]}
+      >
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
+          {decoration}
+        </View>
+        {children}
+      </View>
+    );
+  }
+
+  // On Android, clipping a view and drawing a boxShadow on that same view can
+  // leave its children unpainted after Appearance.setColorScheme changes the
+  // app from dark to light. Keep the shadow on the outer layer and clip only
+  // the decorative glass layers; render labels and controls above that layer.
+  if (lightLiquid && Platform.OS === 'android') {
+    return (
+      <View
+        pointerEvents={pointerEvents}
+        onLayout={onLayout}
+        style={[
+          { borderRadius: radius, transform: [{ scale: 1 }] },
+          !budget.shadows ? null : { boxShadow: `0px ${soft ? 2 : 5}px ${soft ? 8 : 20}px rgba(57,83,70,${soft ? 0.055 : 0.075})` },
           style,
         ]}
       >
@@ -401,67 +329,13 @@ export function Glass({
     <View
       pointerEvents={pointerEvents}
       onLayout={onLayout}
-      style={[{ borderRadius: radius, transform: [{ scale: pressed ? 1.04 : 1 }] }, style]}
+      style={[
+        { borderRadius: radius, overflow: 'hidden', transform: [{ scale: 1 }] },
+        style,
+      ]}
     >
-      <View pointerEvents="none" style={[StyleSheet.absoluteFill, { borderRadius: radius, overflow: 'hidden' }]}>
-        {decoration}
-      </View>
+      {decoration}
       {children}
-    </View>
-  );
-}
-
-function BloomField({ style }) {
-  return (
-    <ExpoImage
-      source={require('../../assets/liquid-glass-background.svg')}
-      contentFit="cover"
-      cachePolicy="memory-disk"
-      transition={0}
-      style={[StyleSheet.absoluteFill, style]}
-    />
-  );
-}
-
-/** Soft color field behind the app's translucent glass controls. */
-export function Backdrop({ style }) {
-  const t = useTheme();
-  const backdrop = t.liquidBackground;
-  const scrollGlow = useContext(ScrollGlowContext);
-  const scrollGlowStyle = scrollGlow
-    ? {
-        opacity: scrollGlow.strength.interpolate({ inputRange: [0, 1], outputRange: [0, 0.48] }),
-        transform: [
-          {
-            translateX: scrollGlow.phase.interpolate({
-              inputRange: [0, 1],
-              outputRange: [-18, 18],
-            }),
-          },
-          {
-            translateY: scrollGlow.phase.interpolate({
-              inputRange: [0, 1],
-              outputRange: [12, -12],
-            }),
-          },
-          {
-            scale: scrollGlow.strength.interpolate({
-              inputRange: [0, 1],
-              outputRange: [1, 1.06],
-            }),
-          },
-        ],
-      }
-    : null;
-
-  return (
-    <View pointerEvents="none" style={[StyleSheet.absoluteFill, { backgroundColor: backdrop.base }, style]}>
-      {!t.dark ? <BloomField /> : null}
-      {!t.dark && scrollGlow ? (
-        <Animated.View pointerEvents="none" style={[StyleSheet.absoluteFill, scrollGlowStyle]}>
-          <BloomField />
-        </Animated.View>
-      ) : null}
     </View>
   );
 }
@@ -470,15 +344,17 @@ export function Backdrop({ style }) {
 export function GlassShadow({ children, style, radius = 999 }) {
   const t = useTheme();
   const performanceMode = useContext(PerformanceModeContext);
+  const profile = useContext(PerformanceProfileContext);
+  const budget = glassBudget(profile || { lowEnd: performanceMode });
   return (
     <View
       style={[
-        {
+        !budget.shadows ? { borderRadius: radius } : {
           borderRadius: radius,
-          shadowColor: '#000',
-          shadowOpacity: performanceMode ? (t.dark ? 0.28 : 0.08) : t.dark ? 0.5 : 0.14,
-          shadowRadius: performanceMode ? 8 : 20,
-          shadowOffset: { width: 0, height: performanceMode ? 3 : 8 },
+          shadowColor: t.dark ? '#000' : '#395346',
+          shadowOpacity: t.dark ? 0.32 : 0.07,
+          shadowRadius: 20,
+          shadowOffset: { width: 0, height: 8 },
         },
         style,
       ]}
@@ -486,4 +362,22 @@ export function GlassShadow({ children, style, radius = 999 }) {
       {children}
     </View>
   );
+}
+
+
+/** The keypad material, shared by light-mode cards and in-call controls. */
+
+// Static sheen is intentional: scrolling never animates the full background or every card.
+export const ScrollGlowContext = createContext(null);
+export function ScrollGlowProvider({ children }) { return <ScrollGlowContext.Provider value={null}>{children}</ScrollGlowContext.Provider>; }
+export function ScrollGlowScrollView(props) { return <NativeScrollView {...props} />; }
+export function ScrollGlowFlatList(props) {
+  const low = useContext(PerformanceModeContext);
+  return <NativeFlatList {...props} {...(low ? {initialNumToRender:8,maxToRenderPerBatch:6,windowSize:5,updateCellsBatchingPeriod:50} : {})} />;
+}
+export function Backdrop({ style }) {
+  const t=useTheme();
+  return <View pointerEvents="none" style={[StyleSheet.absoluteFill,{backgroundColor:t.dark?'#000000':'#e6eee9'},style]}>
+    {!t.dark ? <Image source={require('../../assets/glass/pearl-mist.webp')} resizeMode="cover" fadeDuration={0} style={StyleSheet.absoluteFill} /> : null}
+  </View>;
 }

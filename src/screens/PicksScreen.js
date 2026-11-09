@@ -6,6 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useNav } from '../nav';
 import { pickHistory, picksForDate } from '../predict';
+import { forecastMetrics } from '../prediction/model';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { load } from '../store';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
@@ -66,11 +67,9 @@ function PickCard({ p, i }) {
               {p.final ? <Text style={{ color: t.text, fontWeight: '800', fontSize: 12.5, marginLeft: 4 }}>{p.final}</Text> : null}
             </View>
           ) : null}
-          {conf >= 90 ? (
-            <View style={{ backgroundColor: t.green, borderRadius: 8, paddingHorizontal: 7, height: 20, justifyContent: 'center', marginRight: 8 }}>
-              <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>90%+</Text>
-            </View>
-          ) : null}
+          <View style={{borderRadius:8,paddingHorizontal:7,paddingVertical:3,marginRight:8,backgroundColor:t.track}}>
+            <Text style={{fontSize:10.5,color:t.secondary,fontWeight:'700'}}>v{p.modelVersion || 2} · {p.quality || 'saved'}</Text>
+          </View>
           <Text style={{ color: t.secondary, fontSize: 12.5, fontWeight: '700' }}>
             {d.toDateString() !== new Date().toDateString() ? d.toLocaleDateString([], { weekday: 'short' }) + ' ' : ''}
             {d.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
@@ -99,7 +98,7 @@ function PickCard({ p, i }) {
           </View>
           <View style={{ marginLeft: 10, alignItems: 'flex-end' }}>
             <Text style={{ color: conf >= 90 ? t.green : conf >= 70 ? t.orange : t.text, fontWeight: '900', fontSize: 22 }}>{conf}%</Text>
-            <Text style={{ color: t.secondary, fontSize: 10.5, fontWeight: '600' }}>confidence</Text>
+            <Text style={{ color: t.secondary, fontSize: 10.5, fontWeight: '600' }}>model estimate</Text>
           </View>
         </View>
         <ProbBar probs={p.probs} draws={sp.draws} />
@@ -151,24 +150,26 @@ export default function PicksScreen() {
         setError(e.message || 'Could not build the picks');
         setDay({ picks: [] });
       }
-      pickHistory(14).then(setHistory).catch(() => {});
-      load('picks5:index', []).then((idx) => setMarked(new Set(idx.map((x) => new Date(Number(x.slice(0, 4)), Number(x.slice(4, 6)) - 1, Number(x.slice(6))).toDateString()))));
+      pickHistory(14).then(value => {if(id===reqId.current)setHistory(value);}).catch(() => {});
+      load('picks5:index', []).then((idx) => {if(id===reqId.current)setMarked(new Set((Array.isArray(idx)?idx:[]).filter(x=>/^\d{8}$/.test(x)).map((x) => new Date(Number(x.slice(0,4)),Number(x.slice(4,6))-1,Number(x.slice(6))).toDateString())));}).catch(()=>{});
     },
     [date] // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
     run(false);
+    return ()=>{reqId.current++;};
   }, [run]);
 
-  const settled = history.flatMap((h) => h.picks).filter((p) => p.result === true || p.result === false);
-  const hits = settled.filter((p) => p.result === true).length;
+  const metrics = forecastMetrics(history);
+  const hits = metrics.hits;
+  const settled = new Array(metrics.count);
   const dayName = diff === 0 ? 'today' : diff === 1 ? 'tomorrow' : diff === -1 ? 'yesterday' : date.toLocaleDateString([], { weekday: 'long', day: 'numeric', month: 'long' });
   const dayHits = day ? day.picks.filter((p) => p.result === true).length : 0;
   const daySettled = day ? day.picks.filter((p) => p.result === true || p.result === false).length : 0;
   const note =
-    day && day.kind === 'backtest'
-      ? 'Worked out afterwards: the app wasn’t opened that day, so these picks were made from each team’s games before kick-off.'
+    day && day.kind === 'simulation'
+      ? 'Legacy historical simulation · excluded from the forecast track record.'
       : day && day.kind === 'preview'
       ? 'Saved preview from the fixtures known so far. This date’s picks stay fixed; results update after matches finish.'
       : null;
@@ -192,8 +193,8 @@ export default function PicksScreen() {
         <LinearGradient colors={t.dark ? ['rgba(122,92,255,0.35)', 'rgba(191,90,242,0.12)'] : ['rgba(122,92,255,0.16)', 'rgba(191,90,242,0.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
         <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: t.text, fontWeight: '800', fontSize: 17 }}>Track record</Text>
-            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{settled.length ? `${hits} of ${settled.length} picks landed in the last 14 days` : 'Results appear here after the picks are played'}</Text>
+            <Text style={{ color: t.text, fontWeight: '800', fontSize: 17 }}>v3 forecast record</Text>
+            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{settled.length ? `${hits} / ${settled.length} settled · Brier ${metrics.brier.toFixed(3)}` : 'Results appear after saved v3 forecasts finish'}</Text>
           </View>
           <Text style={{ color: t.purple, fontWeight: '900', fontSize: 30 }}>{settled.length ? `${Math.round((hits / settled.length) * 100)}%` : '—'}</Text>
         </View>
@@ -207,8 +208,7 @@ export default function PicksScreen() {
             tintColor={t.secondary}
             onRefresh={async () => {
               setRefreshing(true);
-              await run(true);
-              setRefreshing(false);
+              try { await run(true); } finally { setRefreshing(false); }
             }}
           />
         }
@@ -217,7 +217,10 @@ export default function PicksScreen() {
           <Card>
             <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>How the picks are made</Text>
             <Text style={{ color: t.secondary, fontSize: 13.5, lineHeight: 20 }}>
-              Each day Fast Score scans fixtures for football, basketball, ice hockey, American football, baseball and rugby, then uses each team's last 10 finished matches. Football uses a Poisson goals model with home advantage; other team sports use recent win rate and scoring difference. The model also considers verified league strength, team division and current standings when available. It doesn't use bookmaker prices. The five strongest calls make the list, with at most two per competition. Calls rated at 90% or more carry a 90%+ badge. Each day's first non-empty list is saved and stays fixed, including previews for future dates. Refreshing updates match results, never replaces the picks.{'\n\n'}Use the calendar to see earlier saved picks and their results, or preview the coming week. A day the app wasn't opened is worked out afterwards using only games played before each kick-off. A percentage is the model's estimate, not a guarantee.{'\n\n'}This runs entirely on your phone. It's for fun and insight, not betting advice.
+              Version 3 uses up to 20 verified prior results per team. Recent dates and home/away games receive more weight; thin samples are shrunk toward conservative priors. Football uses a normalized goals distribution with low-score and uncertainty adjustments. Other supported team sports use regularized form and scoring margins. Verified competition context supplies only a bounded prior.
+              {'\n\n'}Up to five eligible picks are saved before kick-off, with at most two per competition and no repeated teams. When evidence is insufficient, fewer picks appear. Saved forecasts stay fixed. Older forecasts retain their original model version. Historical simulations are labelled separately and excluded from the v3 record.
+              {'\n\n'}Percentages are uncalibrated model estimates. The record shows settled v3 forecasts and a Brier probability score (lower is better). Live accuracy must be measured as results accumulate.
+
             </Text>
           </Card>
         ) : null}
@@ -244,8 +247,8 @@ export default function PicksScreen() {
         ) : (
           <Empty
             icon="sparkles-outline"
-            title={error ? 'Couldn’t build picks' : 'No picks for this day'}
-            body={error || (diff > 0 ? 'Not enough fixtures with data are known yet for this day. Pull down to try again.' : 'There weren’t enough games with data. Pull down to try again.')}
+            title={error ? 'Couldn’t build picks' : day.kind === 'unrecorded' ? 'No saved forecast' : 'No eligible picks'}
+            body={error || (day.kind === 'unrecorded' ? 'Only selections recorded before kick-off appear in the forecast record.' : 'The available match evidence did not meet the selection criteria. Pull down to check again.')}
             action="Check again"
             onAction={() => run(true)}
           />

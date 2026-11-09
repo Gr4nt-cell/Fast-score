@@ -117,7 +117,7 @@ function useScoreWatcher() {
       checking = false;
     };
     check();
-    const iv = setInterval(check, 10000);
+    const iv = setInterval(check, 5000);
     const sub = AppState.addEventListener('change', (state) => state === 'active' && check());
     return () => {
       clearInterval(iv);
@@ -139,7 +139,7 @@ function Toast({ onOpen }) {
   useEffect(() => {
     if (!toast) return undefined;
     success();
-    Animated.spring(y, { toValue: 0, useNativeDriver: true, speed: 14, bounciness: 8 }).start();
+    Animated.spring(y, { toValue: 0, useNativeDriver: true, speed: 14, bounciness: 0 }).start();
     const id = setTimeout(() => Animated.timing(y, { toValue: -160, duration: 250, useNativeDriver: true }).start(() => clearToast()), 5500);
     return () => clearTimeout(id);
   }, [toast]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -295,8 +295,8 @@ function Main() {
   }
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
-  // plain black/white surfaces everywhere (the liquid-glass look was retired)
-  const glassOn = false;
+  // Keep the shared Pearl Mist material enabled unless explicitly disabled.
+  const glassOn = settings.glass !== false;
 
   return (
     <NavContext.Provider value={nav}>
@@ -379,13 +379,13 @@ function PerformanceProfileProvider({ defaultOptimized, children }) {
   const savedProfile = settings.performanceProfile;
   const selectedProfile = savedProfile === 'performance' || savedProfile === 'optimized' ? savedProfile : null;
   // always the optimised profile: lighter lists, no animated glass work
-  const profile = 'optimized';
+  const profile = defaultOptimized ? 'optimized' : 'performance';
   const performanceMode = profile === 'optimized';
   const setProfile = useCallback((next) => {
     if (next === 'performance' || next === 'optimized') setSetting('performanceProfile', next);
   }, [setSetting]);
   const profileValue = useMemo(
-    () => ({ profile, automatic: selectedProfile == null, setProfile }),
+    () => ({ profile, lowEnd: defaultOptimized, automatic: true, setProfile }),
     [profile, selectedProfile, setProfile],
   );
 

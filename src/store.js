@@ -6,7 +6,11 @@ import { setItemWithRecovery } from './storageRecovery.js';
 export async function load(key, fallback) {
   try {
     const s = await AsyncStorage.getItem(key);
-    return s == null ? fallback : JSON.parse(s);
+    if(s==null)return fallback;
+    const value=JSON.parse(s);
+    if(Array.isArray(fallback))return Array.isArray(value)?value:fallback;
+    if(fallback && typeof fallback==='object')return value && typeof value==='object' && !Array.isArray(value)?value:fallback;
+    return value;
   } catch {
     return fallback;
   }
@@ -53,7 +57,7 @@ export function StoreProvider({ children }) {
   useEffect(() => {
     Promise.all([load('settings', DEFAULT_SETTINGS), load('favs', EMPTY_FAVS)]).then(([s, f]) => {
       setSettings({ ...DEFAULT_SETTINGS, ...s });
-      setFavs({ ...EMPTY_FAVS, ...f });
+      setFavs(Object.fromEntries(Object.keys(EMPTY_FAVS).map(key=>[key,Array.isArray(f?.[key])?f[key].filter(x=>typeof x==='string'||(x && typeof x==='object')):[]])));
       setReady(true);
     });
   }, []);
