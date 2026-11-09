@@ -42,7 +42,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
 
   useEffect(() => {
     if (st.current.dragging) return;
-    Animated.spring(pos, { toValue: index, useNativeDriver: true, speed: 16, bounciness: 8 }).start();
+    Animated.spring(pos, { toValue: index, useNativeDriver: true, speed: 16, bounciness: 0 }).start();
   }, [index, pos]);
 
   const slotAt = (x) => {
@@ -65,7 +65,7 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
           st.current.hover = slot;
           setHover(slot);
           tick();
-          Animated.spring(lift, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 6 }).start();
+          Animated.spring(lift, { toValue: 1, useNativeDriver: true, speed: 30, bounciness: 0 }).start();
         },
         onPanResponderMove: (e, g) => {
           const { itemW: w, n } = st.current;
@@ -100,9 +100,9 @@ export default function TabBar({ tabs, active, onChange, badges = {} }) {
     st.current.dragging = false;
     st.current.hover = -1;
     setHover(-1);
-    Animated.spring(lift, { toValue: 0, useNativeDriver: true, speed: 22, bounciness: 10 }).start();
+    Animated.spring(lift, { toValue: 0, useNativeDriver: true, speed: 22, bounciness: 0 }).start();
     const target = commit && slot >= 0 ? slot : st.current.index;
-    Animated.spring(pos, { toValue: target, useNativeDriver: true, speed: 16, bounciness: 8 }).start();
+    Animated.spring(pos, { toValue: target, useNativeDriver: true, speed: 16, bounciness: 0 }).start();
     if (commit && slot >= 0) {
       const key = st.current.tabs[slot].key;
       if (slot !== st.current.index) tick();

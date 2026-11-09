@@ -27,6 +27,6 @@ test('background data access and current-day auto-refresh remain available', asy
   assert.match(settings, /Allow background data use/);
   assert.match(settings, /Linking\.openSettings\(\)/);
   assert.match(matches, /sameDay\(date, new Date\(\)\).*60_000/);
-  assert.match(app, /setInterval\(check, 10000\)/);
+  assert.match(app, /setInterval\(check, 5000\)/);
   assert.match(background, /registerTaskAsync/);
 });

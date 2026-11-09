@@ -8,8 +8,11 @@ version = '0.1.0'
 
 android {
   namespace "expo.modules.fastlive"
+  lint { abortOnError true }
   defaultConfig {
     versionCode 1
     versionName '0.1.0'
   }
 }
+
+dependencies { testImplementation 'junit:junit:4.13.2' }

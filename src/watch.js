@@ -4,6 +4,7 @@
 import { load, save } from './store';
 import { sportByKey } from './sports';
 import { pool, scoreboard } from './api/sportsData';
+import { matchEvents } from './watchEvents';
 
 const KEY = 'watch:sigs';
 
@@ -20,7 +21,7 @@ export async function checkFollowed(favs, onEvent) {
   if (!leagues.size) return [];
   const res = await pool([...leagues.keys()], 4, (k) => {
     const [s, l] = k.split('|');
-    return scoreboard(s, l, today, 8000);
+    return scoreboard(s, l, today, 5000);
   });
   const sigs = await load(KEY, {});
   const events = [];
@@ -34,16 +35,7 @@ export async function checkFollowed(favs, onEvent) {
       const prev = sigs[m.key] && sigs[m.key].s;
       sigs[m.key] = { s: sig, t: Date.now() };
       if (!prev || prev === sig) return;
-      const [pState, pScore] = prev.split('|');
-      if (m.state === 'in' && pScore !== score && m.home.score != null) {
-        const [ph, pa] = pScore.split('-').map(Number);
-        const scorer = Number(m.home.score) > (ph || 0) ? m.home : Number(m.away.score) > (pa || 0) ? m.away : null;
-        events.push({ kind: 'score', title: m.sport === 'soccer' ? 'GOAL!' : 'Score update', scorer, match: m });
-      } else if (pState === 'pre' && m.state === 'in') {
-        events.push({ kind: 'start', title: m.sport === 'soccer' ? 'Kick-off' : 'Started', match: m });
-      } else if (pState === 'in' && m.state === 'post') {
-        events.push({ kind: 'end', title: m.sport === 'soccer' ? 'Full time' : 'Final', match: m });
-      }
+      events.push(...matchEvents(prev,m));
     })
   );
   // forget matches not seen for two days

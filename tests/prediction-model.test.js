@@ -1,0 +1,43 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {buildPrediction,goalDistribution,summarizeHistory,validScore,isForecastArchive,forecastMetrics} from '../src/prediction/model.js';
+const kickoff=Date.UTC(2026,10,10),day=86400000;
+const match={sport:'soccer',kind:'match',home:{id:'h',name:'Home'},away:{id:'a',name:'Away'},date:new Date(kickoff).toISOString(),neutral:true};
+const games=(gf=2,ga=1,n=20)=>Array.from({length:n},(_,i)=>({key:String(i),date:new Date(kickoff-(i+1)*day).toISOString(),gf,ga,home:i%2===0,opponent:'op'+i}));
+test('a missing score is never interpreted as a clean sheet or 0–0 result',()=>{
+ for(const value of [null,undefined,'',false,NaN,Infinity,-1,1.5])assert.equal(validScore(value),null);
+ assert.equal(validScore('0'),0);assert.equal(validScore(3),3);
+});
+test('future, duplicate, invalid and year-old matches do not enter model evidence',()=>{
+ const rows=games();rows.push(rows[0],{...rows[0],key:'future',date:new Date(kickoff+day).toISOString()},
+ {...rows[0],key:'old',date:new Date(kickoff-400*day).toISOString()},{...rows[0],key:'missing',gf:null});
+ const summary=summarizeHistory(rows,null,kickoff);assert.equal(summary.n,20);
+ assert(summary.eff>15&&summary.eff<=20);
+});
+test('normalized score grids produce coherent result, totals and BTTS probabilities',()=>{
+ for(const h of [.2,.8,1.35,2.5,4])for(const a of [.2,1,3,4]){
+  const p=goalDistribution(h,a);assert(Math.abs(p.home+p.draw+p.away-1)<1e-10);
+  for(const value of Object.values(p))assert(value>=0&&value<=1+1e-12);
+  assert(p.over15>=p.over);assert(p.under35>=1-p.over);
+  const swapped=goalDistribution(a,h);assert(Math.abs(p.home-swapped.away)<1e-10);
+ }
+});
+test('neutral identical teams are symmetric; stronger scoring form moves the estimate',()=>{
+ const equal=buildPrediction(match,games(),games(),{asOf:kickoff});assert(equal);
+ assert(Math.abs(equal.probs.home-equal.probs.away)<1e-10);
+ const strong=buildPrediction(match,games(3,0),games(0,3),{asOf:kickoff});
+ assert(strong.probs.home>equal.probs.home);assert.equal(strong.calibration,'unvalidated');
+});
+test('sparse and stale data abstain; a future kickoff cannot admit results after asOf',()=>{
+ assert.equal(buildPrediction(match,games(1,1,3),games(),{asOf:kickoff}),null);
+ assert.equal(buildPrediction(match,games().map(g=>({...g,date:new Date(kickoff-200*day).toISOString()})),games(),{asOf:kickoff}),null);
+ assert.equal(buildPrediction({...match,date:new Date(kickoff+30*day)},games(),games(),{asOf:kickoff-25*day}),null);
+});
+test('track record excludes hindsight simulations, invalid archives, voids and older models',()=>{
+ const pick={date:new Date(kickoff).toISOString(),tip:{prob:.8},result:true,modelVersion:3};
+  const archive={generatedAt:kickoff-day,modelVersion:3,picks:[pick]};
+  assert(isForecastArchive(archive));assert(!isForecastArchive({...archive,generatedAt:kickoff+1}));assert(!isForecastArchive({...archive,picks:{}}));
+  const result=forecastMetrics([archive,{...archive,provenance:'simulation'},{...archive,picks:[{...pick,result:'void'}]},
+ {...archive,modelVersion:2,picks:[{...pick,modelVersion:2}]}]);
+ assert.equal(result.count,1);assert.equal(result.hits,1);assert(Math.abs(result.brier-.04)<1e-12);
+});

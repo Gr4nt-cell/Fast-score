@@ -71,7 +71,7 @@ class FastLiveModule : Module() {
 
     /** Only matches the running live service is polling; others need the background fallback. */
     Function("trackedKeys") {
-      if (LiveService.running) Live.due(ctx).map { it.key } else emptyList<String>()
+      if (LiveService.running) Live.due(ctx).filter { System.currentTimeMillis()-Live.prefs(ctx).getLong("checked:${it.key}",0L) in 0L..45000L }.map { it.key } else emptyList<String>()
     }
 
     /** The match of a tapped alert that opened the app, once. */

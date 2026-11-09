@@ -112,7 +112,7 @@ object Live {
   }
 
   fun saveSnap(ctx: Context, key: String, s: Snap) {
-    prefs(ctx).edit().putString("s:$key", "${s.state}|${s.hs}|${s.aws}|${s.clock}|${if (s.ht) "1" else "0"}|${s.reds}|${if (s.li) "1" else "0"}").apply()
+    prefs(ctx).edit().putString("s:$key", "${s.state}|${s.hs}|${s.aws}|${s.clock}|${if (s.ht) "1" else "0"}|${s.reds}|${if (s.li) "1" else "0"}").putLong("checked:$key",System.currentTimeMillis()).apply()
   }
 
   /** Followed football matches (Flashscore) in the hour before kick-off whose line-ups we haven't announced. */
@@ -272,9 +272,15 @@ object Live {
   private val APP_SHOWS = setOf("goal", "kickoff", "fulltime")
 
   /** Post an alert of one kind on its own channel (and tone), if the user wants that kind. */
+  private val lastAlerts = LinkedHashMap<String, Pair<String,Long>>()
+  @Synchronized
   fun alert(ctx: Context, item: Item, kind: String, title: String, text: String) {
     if (!kindOn(ctx, kind)) return
     if (kind in APP_SHOWS && appInForeground()) return
+    val tag="${item.key}:$kind"
+    val signature="$title|$text"
+    val previous=lastAlerts[tag]
+    if(previous?.first==signature && System.currentTimeMillis()-previous.second<5000L)return
     channels(ctx)
     val b = if (Build.VERSION.SDK_INT >= 26) Notification.Builder(ctx, channelOf(kind)) else Notification.Builder(ctx)
     @Suppress("DEPRECATION")
@@ -290,7 +296,9 @@ object Live {
       b.setDefaults(Notification.DEFAULT_VIBRATE)
     }
     try {
-      ctx.getSystemService(NotificationManager::class.java).notify(item.key.hashCode() + (System.currentTimeMillis() / 1000 % 1000).toInt(), b.build())
+      ctx.getSystemService(NotificationManager::class.java).notify(tag,7101,b.build())
+      lastAlerts[tag]=signature to System.currentTimeMillis()
+      if(lastAlerts.size>250)lastAlerts.remove(lastAlerts.keys.first())
       if (alertsAudible(ctx)) playTone(ctx, kind)
     } catch (e: Exception) {}
   }
@@ -410,8 +418,9 @@ object Live {
       return null
     }
     return try {
-      conn.connectTimeout = 10000
-      conn.readTimeout = 12000
+      conn.connectTimeout = 2500
+      conn.readTimeout = 3500
+      conn.useCaches = false
       for ((k, v) in headers) conn.setRequestProperty(k, v)
       if (conn.responseCode != 200) null else conn.inputStream.bufferedReader().use { r -> r.readText() }
     } catch (e: Exception) {
@@ -439,12 +448,13 @@ object Live {
   )
 
   /** Current state of a match, or null if the source didn't answer. */
-  fun poll(it: Item): Snap? {
-    return if (it.src == "fs") pollFs(it) else pollEspn(it)
+  fun poll(it: Item, includeIncidents: Boolean = true): Snap? {
+    return if (it.src == "fs") pollFs(it, includeIncidents) else pollEspn(it)
   }
 
-  private fun pollFs(it: Item): Snap? {
+  private fun pollFs(it: Item, includeIncidents: Boolean): Snap? {
     for (h in FS_HOSTS) {
+      if (Thread.currentThread().isInterrupted) return null
       val body = get("$h/dc_${it.fsSport}_${it.id}", FS_HEADERS) ?: continue
       val f = fields(body)
       val da = f["DA"] ?: continue
@@ -460,12 +470,18 @@ object Live {
         }
       }
       val lineups = (f["DX"] ?: "").split(",").contains("LI")
-      var reds = "" // unknown
-      var scorer = ""
-      if (it.sport == "soccer" && state != "pre") {
-        // incidents: red cards per side and the latest goal's scorer
-        val sui = get("$h/df_sui_${it.fsSport}_${it.id}", FS_HEADERS)
-        if (sui != null) {
+      val base = Snap(state, f["DE"] ?: "", f["DF"] ?: "", clock, stage == 38, "", lineups, "")
+      return if (includeIncidents) enrich(it, base) else base
+    }
+    return null
+  }
+
+  /** Incident names/cards never hold up the first score notification. */
+  fun enrich(it: Item, base: Snap): Snap {
+    if (it.sport != "soccer" || base.state == "pre" || Thread.currentThread().isInterrupted) return base
+    val sui = get("${FS_HOSTS[0]}/df_sui_${it.fsSport}_${it.id}", FS_HEADERS) ?: return base
+    var reds = ""
+    var scorer = ""
           var rh = 0
           var ra = 0
           for (rec in sui.split("~")) {
@@ -479,11 +495,7 @@ object Live {
             }
           }
           reds = "$rh:$ra"
-        }
-      }
-      return Snap(state, f["DE"] ?: "", f["DF"] ?: "", clock, stage == 38, reds, lineups, scorer)
-    }
-    return null
+    return base.copy(reds=reds, scorer=scorer)
   }
 
   private fun pollEspn(it: Item): Snap? {

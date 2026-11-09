@@ -54,9 +54,10 @@ test('Android notification channels use fresh, matching IDs', async () => {
 
   const toneStart = nativeLive.indexOf('fun playTone(');
   assert.ok(nativeLive.indexOf('setAudioAttributes(', toneStart) < nativeLive.indexOf('setDataSource(ctx, sound)', toneStart));
-  assert.match(app, /setInterval\(check, 10000\)/);
-  assert.match(watcher, /scoreboard\(s, l, today, 8000\)/);
-  assert.match(liveService, /if \(anyLive\) 15 \* 1000L/);
+  assert.match(app, /setInterval\(check, 5000\)/);
+  assert.match(watcher, /scoreboard\(s, l, today, 5000\)/);
+  assert.match(liveService, /LivePollPolicy.delay/);
+  assert.match(liveService, /ExecutorCompletionService/);
 });
 
 test('all notification sounds are declared and packaged as app assets', async () => {

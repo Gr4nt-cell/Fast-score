@@ -16,11 +16,10 @@ export function Pressable({ style, children, onPressIn, onPressOut, feedback, di
   const off = mode === 'none' || !interactive || typeof style === 'function';
 
   const to = (value) =>
-    Animated.spring(v, {
+    Animated.timing(v, {
       toValue: value,
       useNativeDriver: true,
-      speed: value ? 60 : 28,
-      bounciness: value ? 0 : 8,
+      duration: value ? 90 : 140,
     }).start();
 
   const anim = off

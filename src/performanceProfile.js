@@ -20,3 +20,5 @@ export function shouldUseLowEndProfile({
   );
   return has32BitArm && !has64BitArm;
 }
+
+export function glassBudget({lowEnd=false,profile}={}) { const compact=lowEnd||profile==='optimized'; return {compact,shadows:!compact}; }

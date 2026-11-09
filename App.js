@@ -117,7 +117,7 @@ function useScoreWatcher() {
       checking = false;
     };
     check();
-    const iv = setInterval(check, 10000);
+    const iv = setInterval(check, 5000);
     const sub = AppState.addEventListener('change', (state) => state === 'active' && check());
     return () => {
       clearInterval(iv);
@@ -139,7 +139,7 @@ function Toast({ onOpen }) {
   useEffect(() => {
     if (!toast) return undefined;
     success();
-    Animated.spring(y, { toValue: 0, useNativeDriver: true, speed: 14, bounciness: 8 }).start();
+    Animated.spring(y, { toValue: 0, useNativeDriver: true, speed: 14, bounciness: 0 }).start();
     const id = setTimeout(() => Animated.timing(y, { toValue: -160, duration: 250, useNativeDriver: true }).start(() => clearToast()), 5500);
     return () => clearTimeout(id);
   }, [toast]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -308,6 +308,7 @@ function Main() {
             <View style={{ flex: 1, backgroundColor: t.bg }}>
               <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg, flexDirection: wide ? 'row' : 'column' }}>
                 {glassOn ? <Backdrop /> : null}
+                {glassOn ? <Backdrop /> : null}
                 <View style={[wide ? { width: Math.round(Math.min(520, Math.max(380, winW * 0.4))) } : { flex: 1 }, { marginBottom: dockClear, overflow: 'hidden' }]}>
                   <Boundary resetKey={tab}>{screen}</Boundary>
                 </View>
@@ -344,6 +345,7 @@ function Main() {
                         <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onPress={pop} feedback="none" />
                         <View style={{ width: w, height: h, borderRadius: 28, overflow: 'hidden', backgroundColor: t.bg }}>
                           {glassOn ? <Backdrop /> : null}
+                          {glassOn ? <Backdrop /> : null}
                           <Boundary resetKey={route.key}>
                             <Screen route={route} />
                           </Boundary>
@@ -379,13 +381,13 @@ function PerformanceProfileProvider({ defaultOptimized, children }) {
   const savedProfile = settings.performanceProfile;
   const selectedProfile = savedProfile === 'performance' || savedProfile === 'optimized' ? savedProfile : null;
   // always the optimised profile: lighter lists, no animated glass work
-  const profile = 'optimized';
+  const profile = defaultOptimized ? 'optimized' : 'performance';
   const performanceMode = profile === 'optimized';
   const setProfile = useCallback((next) => {
     if (next === 'performance' || next === 'optimized') setSetting('performanceProfile', next);
   }, [setSetting]);
   const profileValue = useMemo(
-    () => ({ profile, automatic: selectedProfile == null, setProfile }),
+    () => ({ profile, lowEnd: defaultOptimized, automatic: true, setProfile }),
     [profile, selectedProfile, setProfile],
   );
 
