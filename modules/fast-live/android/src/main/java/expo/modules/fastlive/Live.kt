@@ -201,7 +201,7 @@ object Live {
     val nm = ctx.getSystemService(NotificationManager::class.java)
     val channel = if (Build.VERSION.SDK_INT >= 26) nm.getNotificationChannel(channelId) else null
     val notificationsEnabled = nm.areNotificationsEnabled()
-    val importance = channel?.importance ?: NotificationManager.IMPORTANCE_HIGH
+    val importance = if (Build.VERSION.SDK_INT >= 26) channel?.importance ?: NotificationManager.IMPORTANCE_HIGH else NotificationManager.IMPORTANCE_HIGH
     // the tone is played by the app on the notification stream, so "sound on" means that stream
     // is audible: ringer in normal mode and notification volume above zero
     val soundEnabled = try {
