@@ -295,8 +295,8 @@ function Main() {
   }
 
   if (!ready) return <View style={{ flex: 1, backgroundColor: t.bg }} />;
-  // plain black/white surfaces everywhere (the liquid-glass look was retired)
-  const glassOn = false;
+  // Keep the shared Pearl Mist material enabled unless explicitly disabled.
+  const glassOn = settings.glass !== false;
 
   return (
     <NavContext.Provider value={nav}>
@@ -307,7 +307,6 @@ function Main() {
             <StatusBar style={t.dark ? 'light' : 'dark'} />
             <View style={{ flex: 1, backgroundColor: t.bg }}>
               <BlurTargetView ref={blurTarget} style={{ flex: 1, backgroundColor: t.bg, flexDirection: wide ? 'row' : 'column' }}>
-                {glassOn ? <Backdrop /> : null}
                 {glassOn ? <Backdrop /> : null}
                 <View style={[wide ? { width: Math.round(Math.min(520, Math.max(380, winW * 0.4))) } : { flex: 1 }, { marginBottom: dockClear, overflow: 'hidden' }]}>
                   <Boundary resetKey={tab}>{screen}</Boundary>
@@ -344,7 +343,6 @@ function Main() {
                       <View style={{ flex: 1, backgroundColor: 'rgba(0,0,0,0.38)', alignItems: 'center', justifyContent: 'center' }}>
                         <Pressable style={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0 }} onPress={pop} feedback="none" />
                         <View style={{ width: w, height: h, borderRadius: 28, overflow: 'hidden', backgroundColor: t.bg }}>
-                          {glassOn ? <Backdrop /> : null}
                           {glassOn ? <Backdrop /> : null}
                           <Boundary resetKey={route.key}>
                             <Screen route={route} />
