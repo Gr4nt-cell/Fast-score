@@ -106,11 +106,15 @@ jobs:
           jarsigner -verify release/fast-score.aab | grep -q 'jar verified'
           keytool -exportcert -rfc -keystore "$RUNNER_TEMP/upload.jks" -storepass:env UPLOAD_PASSWORD -alias upload -file release/upload-certificate.pem
           sha256sum release/fast-score.apk release/fast-score.aab > release/SHA256SUMS
+      # A copy for the run page only; the release below is the real download. Never block on it
+      # (private repos have an artifact storage quota) and let copies expire quickly.
       - uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: fast-score-signed-android
           path: release/
           if-no-files-found: error
+          retention-days: 3
       - name: Publish built files
         env:
           GH_TOKEN: ${{ github.token }}
