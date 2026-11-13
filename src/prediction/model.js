@@ -134,6 +134,8 @@ export function forecastMetrics(days,version=MODEL_VERSION) {
 // thinks is clearly too short. Real MSport prices are used when known; otherwise the model's fair
 // price less a typical bookmaker margin.
 export const PICK_RULES = { minProb: 0.55, minPrice: 1.4, maxPrice: 2.6, minValue: 0.95, margin: 0.94 };
+// used only to fill the list to five when too few matches clear the main rules
+export const PICK_RULES_RELAXED = { minProb: 0.52, minPrice: 1.3, maxPrice: 3.0, minValue: 0.92, margin: 0.94 };
 
 const num = (x) => (Number.isFinite(Number(x)) && Number(x) > 1 ? Number(x) : null);
 function findMarket(odds, re) {

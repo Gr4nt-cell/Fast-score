@@ -3,7 +3,7 @@ import { SPORTS, sportByKey } from './sports';
 import { addDays, dayBoard, pool, recentGames, scoreboard, ymd } from './api/sportsData';
 import { domesticProfile, contextAdjustment } from './competitionContext';
 import { datesForPickHistory, getOrCreatePickDay } from './pickArchive';
-import { buildPrediction, choosePick, HISTORY_LIMIT, MODEL_VERSION, validScore, isForecastArchive } from './prediction/model';
+import { buildPrediction, choosePick, PICK_RULES_RELAXED, HISTORY_LIMIT, MODEL_VERSION, validScore, isForecastArchive } from './prediction/model';
 import { matchOdds } from './api/msport';
 
 export const LAST_N=HISTORY_LIMIT;
@@ -67,9 +67,9 @@ export async function generatePicks(date=new Date(),onProgress,{past=false}={}) 
       }
     }catch{}
   }
-  const candidates=boards.sort((a,b)=>(b.priority||0)-(a.priority||0)||new Date(a.date)-new Date(b.date)).slice(0,100);
+  const candidates=boards.sort((a,b)=>(b.priority||0)-(a.priority||0)||new Date(a.date)-new Date(b.date)).slice(0,160);
   onProgress?.(`Checking evidence for ${candidates.length} matches…`);
-  const preds=await pool(candidates,3,async match=>{
+  const preds=await pool(candidates,4,async match=>{
     const prediction=await predictMatch(match);
     if(!prediction)return null;
     // real prices make the pick about value, not just likelihood (best effort, never blocks)
@@ -78,9 +78,14 @@ export async function generatePicks(date=new Date(),onProgress,{past=false}={}) 
       try{odds=await Promise.race([matchOdds(match),new Promise(r=>setTimeout(()=>r(null),6000))]);}catch{}
     }
     const tip=choosePick(prediction,odds);
-    return tip?{match,prediction,tip}:null;
+    const relaxed=tip?null:choosePick(prediction,odds,PICK_RULES_RELAXED);
+    // last resort: the model's most likely market, at its fair price
+    const safe=!tip&&!relaxed&&prediction.safe?{...prediction.safe,price:Math.round(100/prediction.safe.prob)/100,priceSource:'model',rewardScore:0}:null;
+    const best=tip||relaxed||safe;
+    return best?{match,prediction,tip:best,tier:tip?0:relaxed?1:2}:null;
   });
-  const ranked=preds.filter(Boolean).sort((a,b)=>b.tip.rewardScore-a.tip.rewardScore);
+  // main-rule picks first; the relaxed tier and then the safest picks only fill the list up to five
+  const ranked=preds.filter(Boolean).sort((a,b)=>a.tier-b.tier||b.tip.rewardScore-a.tip.rewardScore||b.tip.prob-a.tip.prob);
   const picks=[],counts=new Map(),teams=new Set();
   for(const {match,prediction,tip} of ranked){
     if(new Date(match.date).getTime()<=Date.now()+60000)continue;
@@ -89,7 +94,7 @@ export async function generatePicks(date=new Date(),onProgress,{past=false}={}) 
     picks.push(slim(match,prediction,tip));teams.add(home);teams.add(away);counts.set(league,(counts.get(league)||0)+1);
     if(picks.length===PICKS_PER_DAY)break;
   }
-  return {...empty,generatedAt:Date.now(),scanned:boards.length,modelled:preds.filter(Boolean).length,candidateLimit:100,picks};
+  return {...empty,generatedAt:Date.now(),scanned:boards.length,modelled:preds.filter(Boolean).length,candidateLimit:160,picks};
 }
 
 let pickIndexWrite=Promise.resolve();
@@ -107,11 +112,15 @@ function archivedPicks(date,{onProgress}={}){
 }
 export async function getDailyPicks(options={}){return (await archivedPicks(new Date(),options)).day;}
 
-/** Today's list from an older model is rebuilt once, as long as none of its matches has started. */
+/** Today's list is rebuilt (once per couple of hours at most) when it came from an older model or has
+ * fewer than five picks, as long as none of its matches has started. */
 async function refreshOutdatedToday(){
   const key='picks5:'+ymd(new Date());
   const day=await load(key,null);
-  if(!day || !(Number(day.modelVersion)<MODEL_VERSION))return;
+  if(!day)return;
+  // older model, or a short list that is a couple of hours old (more matches may now qualify)
+  const short=(day.picks||[]).length<PICKS_PER_DAY && Date.now()-(Number(day.generatedAt)||0)>2*3600000;
+  if(!(Number(day.modelVersion)<MODEL_VERSION) && !short)return;
   const first=Math.min(...(day.picks||[]).map(p=>new Date(p.date).getTime()).filter(Number.isFinite));
   if(day.picks?.length && !(first>Date.now()))return;
   await saveAndWait(key,null);
