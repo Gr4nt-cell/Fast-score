@@ -34,10 +34,28 @@ test('sparse and stale data abstain; a future kickoff cannot admit results after
  assert.equal(buildPrediction({...match,date:new Date(kickoff+30*day)},games(),games(),{asOf:kickoff-25*day}),null);
 });
 test('track record excludes hindsight simulations, invalid archives, voids and older models',()=>{
- const pick={date:new Date(kickoff).toISOString(),tip:{prob:.8},result:true,modelVersion:3};
-  const archive={generatedAt:kickoff-day,modelVersion:3,picks:[pick]};
+ const pick={date:new Date(kickoff).toISOString(),tip:{prob:.8},result:true,modelVersion:4};
+  const archive={generatedAt:kickoff-day,modelVersion:4,picks:[pick]};
   assert(isForecastArchive(archive));assert(!isForecastArchive({...archive,generatedAt:kickoff+1}));assert(!isForecastArchive({...archive,picks:{}}));
   const result=forecastMetrics([archive,{...archive,provenance:'simulation'},{...archive,picks:[{...pick,result:'void'}]},
- {...archive,modelVersion:2,picks:[{...pick,modelVersion:2}]}]);
+ {...archive,modelVersion:3,picks:[{...pick,modelVersion:3}]}]);
  assert.equal(result.count,1);assert.equal(result.hits,1);assert(Math.abs(result.brier-.04)<1e-12);
+});
+test('daily picks prefer a worthwhile price over the safest market, and stay reasonable',async()=>{
+ const {choosePick,PICK_RULES}=await import('../src/prediction/model.js');
+ const pred={quality:'high',support:.8,candidates:[
+  {side:'over15',label:'Over 1.5 goals',prob:.86},
+  {side:'home',label:'Home to win',prob:.66},
+  {side:'btts',label:'Both teams to score',prob:.58},
+  {side:'away',label:'Away to win',prob:.12}]};
+ const tip=choosePick(pred,null);
+ assert(tip&&tip.side!=='over15'&&tip.prob>=PICK_RULES.minProb);
+ assert(tip.price>=PICK_RULES.minPrice&&tip.price<=PICK_RULES.maxPrice);
+ // a real price far below the model's fair price is rejected
+ const short=choosePick({...pred,candidates:[{side:'home',label:'Home',prob:.66}]},{dec:{home:1.3,away:9}});
+ assert.equal(short,null);
+ // a real price with value is used and labelled
+ const priced=choosePick({...pred,candidates:[{side:'home',label:'Home',prob:.66}]},{dec:{home:1.72,away:5}});
+ assert.equal(priced.priceSource,'MSport');assert.equal(priced.price,1.72);
+ assert.equal(choosePick({...pred,quality:'low'},null),null);
 });

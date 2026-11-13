@@ -3,10 +3,11 @@ import { SPORTS, sportByKey } from './sports';
 import { addDays, dayBoard, pool, recentGames, scoreboard, ymd } from './api/sportsData';
 import { domesticProfile, contextAdjustment } from './competitionContext';
 import { datesForPickHistory, getOrCreatePickDay } from './pickArchive';
-import { buildPrediction, HISTORY_LIMIT, MODEL_VERSION, validScore, isForecastArchive } from './prediction/model';
+import { buildPrediction, choosePick, HISTORY_LIMIT, MODEL_VERSION, validScore, isForecastArchive } from './prediction/model';
+import { matchOdds } from './api/msport';
 
 export const LAST_N=HISTORY_LIMIT;
-export const PICK_THRESHOLD=.62;
+export const PICK_THRESHOLD=.55;
 export const PICKS_PER_DAY=5;
 const recentCache=new Map();
 const SUPPORTED=['soccer','basketball','hockey','football','baseball','rugby'];
@@ -44,10 +45,10 @@ export async function predictMatch(match) {
   return prediction;
 }
 
-function slim(match,prediction) {
+function slim(match,prediction,tip=prediction.safe) {
   const side=s=>({id:s.id,name:s.name,short:s.short,logo:s.logo});
   return {key:match.key,id:match.id,eventId:match.eventId,sport:match.sport,league:match.league,leagueName:match.leagueName,date:match.date,
-    home:side(match.home),away:side(match.away),tip:prediction.safe,probs:prediction.probs,xg:prediction.xg,
+    home:side(match.home),away:side(match.away),tip,probs:prediction.probs,xg:prediction.xg,
     reasons:prediction.reasons,quality:prediction.quality,modelVersion:MODEL_VERSION,sample:prediction.sample,
     calibration:prediction.calibration,support:prediction.support,homeForm:prediction.last.homeForm,awayForm:prediction.last.awayForm};
 }
@@ -70,15 +71,22 @@ export async function generatePicks(date=new Date(),onProgress,{past=false}={}) 
   onProgress?.(`Checking evidence for ${candidates.length} matches…`);
   const preds=await pool(candidates,3,async match=>{
     const prediction=await predictMatch(match);
-    return prediction?.safe?{match,prediction}:null;
+    if(!prediction)return null;
+    // real prices make the pick about value, not just likelihood (best effort, never blocks)
+    let odds=null;
+    if(match.sport==='soccer' || match.sport==='basketball' || match.sport==='hockey'){
+      try{odds=await Promise.race([matchOdds(match),new Promise(r=>setTimeout(()=>r(null),6000))]);}catch{}
+    }
+    const tip=choosePick(prediction,odds);
+    return tip?{match,prediction,tip}:null;
   });
-  const ranked=preds.filter(Boolean).sort((a,b)=>b.prediction.safe.evidenceScore-a.prediction.safe.evidenceScore);
+  const ranked=preds.filter(Boolean).sort((a,b)=>b.tip.rewardScore-a.tip.rewardScore);
   const picks=[],counts=new Map(),teams=new Set();
-  for(const {match,prediction} of ranked){
+  for(const {match,prediction,tip} of ranked){
     if(new Date(match.date).getTime()<=Date.now()+60000)continue;
     const league=`${match.sport}/${match.league}`,home=`${match.sport}/${match.home.id}`,away=`${match.sport}/${match.away.id}`;
     if((counts.get(league)||0)>=2 || teams.has(home)||teams.has(away))continue;
-    picks.push(slim(match,prediction));teams.add(home);teams.add(away);counts.set(league,(counts.get(league)||0)+1);
+    picks.push(slim(match,prediction,tip));teams.add(home);teams.add(away);counts.set(league,(counts.get(league)||0)+1);
     if(picks.length===PICKS_PER_DAY)break;
   }
   return {...empty,generatedAt:Date.now(),scanned:boards.length,modelled:preds.filter(Boolean).length,candidateLimit:100,picks};
@@ -98,6 +106,16 @@ function archivedPicks(date,{onProgress}={}){
     legacyKeys:[`picksf:${ymd(date)}`],create:()=>generatePicks(date,onProgress)});
 }
 export async function getDailyPicks(options={}){return (await archivedPicks(new Date(),options)).day;}
+
+/** Today's list from an older model is rebuilt once, as long as none of its matches has started. */
+async function refreshOutdatedToday(){
+  const key='picks5:'+ymd(new Date());
+  const day=await load(key,null);
+  if(!day || !(Number(day.modelVersion)<MODEL_VERSION))return;
+  const first=Math.min(...(day.picks||[]).map(p=>new Date(p.date).getTime()).filter(Number.isFinite));
+  if(day.picks?.length && !(first>Date.now()))return;
+  await saveAndWait(key,null);
+}
 
 export function judgePick(p,match){
   if(match.postponed)return 'void';
@@ -144,6 +162,7 @@ export async function pickHistory(days=14){
 }
 export async function picksForDate(date,{onProgress}={}){
   const key=ymd(date),today=ymd(new Date());
+  if(key===today)await refreshOutdatedToday().catch(()=>{});
   if(key<today){
     const saved=await load('picks5:'+key,null) || await load('picksbt:'+key,null);
     if(!saved?.picks?.length)return {date:key,picks:[],kind:'unrecorded',modelVersion:MODEL_VERSION};

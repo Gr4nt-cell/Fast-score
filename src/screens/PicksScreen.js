@@ -98,7 +98,9 @@ function PickCard({ p, i }) {
           </View>
           <View style={{ marginLeft: 10, alignItems: 'flex-end' }}>
             <Text style={{ color: conf >= 90 ? t.green : conf >= 70 ? t.orange : t.text, fontWeight: '900', fontSize: 22 }}>{conf}%</Text>
-            <Text style={{ color: t.secondary, fontSize: 10.5, fontWeight: '600' }}>model estimate</Text>
+            <Text style={{ color: t.secondary, fontSize: 10.5, fontWeight: '600' }}>
+              {p.tip.price ? `@ ${p.tip.price.toFixed(2)}${p.tip.priceSource === 'MSport' ? ' MSport' : ' est.'}` : 'model estimate'}
+            </Text>
           </View>
         </View>
         <ProbBar probs={p.probs} draws={sp.draws} />
@@ -193,8 +195,8 @@ export default function PicksScreen() {
         <LinearGradient colors={t.dark ? ['rgba(122,92,255,0.35)', 'rgba(191,90,242,0.12)'] : ['rgba(122,92,255,0.16)', 'rgba(191,90,242,0.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
         <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: t.text, fontWeight: '800', fontSize: 17 }}>v3 forecast record</Text>
-            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{settled.length ? `${hits} / ${settled.length} settled · Brier ${metrics.brier.toFixed(3)}` : 'Results appear after saved v3 forecasts finish'}</Text>
+            <Text style={{ color: t.text, fontWeight: '800', fontSize: 17 }}>v4 forecast record</Text>
+            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{settled.length ? `${hits} / ${settled.length} settled · Brier ${metrics.brier.toFixed(3)}` : 'Results appear after saved v4 forecasts finish'}</Text>
           </View>
           <Text style={{ color: t.purple, fontWeight: '900', fontSize: 30 }}>{settled.length ? `${Math.round((hits / settled.length) * 100)}%` : '—'}</Text>
         </View>
@@ -217,9 +219,10 @@ export default function PicksScreen() {
           <Card>
             <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>How the picks are made</Text>
             <Text style={{ color: t.secondary, fontSize: 13.5, lineHeight: 20 }}>
-              Version 3 uses up to 20 verified prior results per team. Recent dates and home/away games receive more weight; thin samples are shrunk toward conservative priors. Football uses a normalized goals distribution with low-score and uncertainty adjustments. Other supported team sports use regularized form and scoring margins. Verified competition context supplies only a bounded prior.
-              {'\n\n'}Up to five eligible picks are saved before kick-off, with at most two per competition and no repeated teams. When evidence is insufficient, fewer picks appear. Saved forecasts stay fixed. Older forecasts retain their original model version. Historical simulations are labelled separately and excluded from the v3 record.
-              {'\n\n'}Percentages are uncalibrated model estimates. The record shows settled v3 forecasts and a Brier probability score (lower is better). Live accuracy must be measured as results accumulate.
+              Version 4 uses up to 20 verified prior results per team. Recent dates and home/away games receive more weight; thin samples are shrunk toward conservative priors. Football uses a normalized goals distribution with low-score and uncertainty adjustments. Other supported team sports use regularized form and scoring margins. Verified competition context supplies only a bounded prior.
+              {'\n\n'}Each day's five picks aim for a worthwhile price, not just the safest bet: a market the model rates at 55% or more, priced roughly 1.40–2.60 (MSport's price when known, otherwise the model's fair price less a typical margin), and never one the model thinks is clearly too short. Among those, picks that are both likely and well paid rank first.
+              {'\n\n'}Up to five eligible picks are saved before kick-off, with at most two per competition and no repeated teams. When evidence is insufficient, fewer picks appear. Saved forecasts stay fixed. Older forecasts retain their original model version. Historical simulations are labelled separately and excluded from the v4 record.
+              {'\n\n'}Percentages are uncalibrated model estimates. The record shows settled v4 forecasts and a Brier probability score (lower is better). Live accuracy must be measured as results accumulate.
 
             </Text>
           </Card>

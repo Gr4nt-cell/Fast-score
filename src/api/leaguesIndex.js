@@ -4,6 +4,17 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { tplSlug } from './flashscore';
 
 const URL = 'https://raw.githubusercontent.com/Gr4nt-cell/Fast-score/data/leagues.json';
+
+// A copy ships inside the app (src/data/leagues.json, refreshed with scripts/build_leagues.py), so
+// Leagues works even when the online copy can't be reached — e.g. while the GitHub repo is private,
+// raw.githubusercontent.com answers 404 for it.
+function bundled() {
+  try {
+    return require('../data/leagues.json');
+  } catch {
+    return null;
+  }
+}
 const KEY = 'fs:leaguesIndex';
 let cached = null;
 let loading = null;
@@ -34,6 +45,12 @@ export async function leaguesIndex() {
       if (stored) {
         cached = stored;
         return stored.data;
+      }
+      const local = bundled();
+      if (local && local.sports) {
+        // keep it for a day, then try the online copy again
+        cached = { t: Date.now() - 2 * 86400000, data: local };
+        return local;
       }
       throw e;
     }

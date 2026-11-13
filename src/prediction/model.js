@@ -1,5 +1,5 @@
 // Versioned, deterministic statistical inference. No generated team ratings or result leakage.
-export const MODEL_VERSION = 3;
+export const MODEL_VERSION = 4;
 export const HISTORY_LIMIT = 20;
 const DAY = 86400000;
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -106,7 +106,7 @@ export function buildPrediction(match, homeGames, awayGames, {asOf=Date.now(),co
   const quality=Math.min(H.n,A.n)<10||support<.5?'low':Math.max(H.ageDays,A.ageDays)>30?'medium':'high';
   const safe=candidates.find(c=>c.prob>=.62&&c.evidenceScore>=.55&&quality!=='low')||null;
   const rec=r=>`${r.W}W ${r.D}D ${r.L}L`;
-  return {modelVersion:MODEL_VERSION,probs,tip:candidates[0],safe,xg,over:model.over,btts:model.btts,quality,support,
+  return {modelVersion:MODEL_VERSION,probs,tip:candidates[0],safe,candidates,xg,over:model.over,btts:model.btts,quality,support,
     calibration:'unvalidated',sample:{home:H.n,away:A.n,effective:Math.min(H.eff,A.eff)},
     reasons:[`${hn}: ${rec(H.rec)} in ${H.n} prior games; ${H.gf.toFixed(1)} scored / ${H.ga.toFixed(1)} conceded`,
       `${an}: ${rec(A.rec)} in ${A.n} prior games; ${A.gf.toFixed(1)} scored / ${A.ga.toFixed(1)} conceded`,
@@ -126,4 +126,59 @@ export function forecastMetrics(days,version=MODEL_VERSION) {
   const picks=days.filter(isForecastArchive).flatMap(d=>d.picks.map(p=>({...p,modelVersion:p.modelVersion||d.modelVersion}))).filter(p=>(version==null||p.modelVersion===version)&&typeof p.result==='boolean'&&Number.isFinite(p.tip?.prob));
   if(!picks.length)return {count:0,hits:0,brier:null};
   return {count:picks.length,hits:picks.filter(p=>p.result).length,brier:picks.reduce((s,p)=>s+(p.tip.prob-Number(p.result))**2,0)/picks.length};
+}
+
+// ---------- daily pick selection: rewarding but reasonable ----------
+// The safest market (e.g. Over 1.5 at ~1.20) is rarely worth backing. A daily pick instead aims for
+// a price of roughly 1.40-2.60 the model still rates as likely (>=55%), and never a price the model
+// thinks is clearly too short. Real MSport prices are used when known; otherwise the model's fair
+// price less a typical bookmaker margin.
+export const PICK_RULES = { minProb: 0.55, minPrice: 1.4, maxPrice: 2.6, minValue: 0.95, margin: 0.94 };
+
+const num = (x) => (Number.isFinite(Number(x)) && Number(x) > 1 ? Number(x) : null);
+function findMarket(odds, re) {
+  return (odds?.markets || []).find((m) => re.test(m.name || ''));
+}
+function outcomePrice(market, re) {
+  const o = market && (market.outcomes || []).find((x) => re.test(String(x.label || '')));
+  return o ? num(o.odds) : null;
+}
+/** MSport decimal price for a model candidate, or null. */
+export function marketPrice(c, odds) {
+  if (!odds) return null;
+  const dec = odds.dec || {};
+  switch (c.side) {
+    case 'home': return num(dec.home);
+    case 'draw': return num(dec.draw);
+    case 'away': return num(dec.away);
+    case 'over': return outcomePrice(findMarket(odds, /over\/under 2\.5|total.*2\.5/i), /^over/i);
+    case 'under': return outcomePrice(findMarket(odds, /over\/under 2\.5|total.*2\.5/i), /^under/i);
+    case 'over15': return outcomePrice(findMarket(odds, /over\/under 1\.5|total.*1\.5/i), /^over/i);
+    case 'under35': return outcomePrice(findMarket(odds, /over\/under 3\.5|total.*3\.5/i), /^under/i);
+    case 'btts': return outcomePrice(findMarket(odds, /both teams|gg\/ng|btts/i), /^(yes|gg)$/i);
+    case 'dc1x': return outcomePrice(findMarket(odds, /double chance/i), /home.*draw|^1x$|1 or x/i);
+    case 'dcx2': return outcomePrice(findMarket(odds, /double chance/i), /draw.*away|^x2$|x or 2/i);
+    default: return null;
+  }
+}
+
+/** Best rewarding-but-reasonable pick for one match, or null. */
+export function choosePick(prediction, odds, rules = PICK_RULES) {
+  if (!prediction || prediction.quality === 'low') return null;
+  const support = Number(prediction.support) || 0;
+  let best = null;
+  for (const c of prediction.candidates || []) {
+    const p = c.prob;
+    if (!(p >= rules.minProb)) continue;
+    if (p - 0.12 * (1 - support) < rules.minProb - 0.05) continue; // thin evidence
+    const market = marketPrice(c, odds);
+    const price = market || (1 / p) * rules.margin;
+    if (price < rules.minPrice || price > rules.maxPrice) continue;
+    const value = p * price;
+    if (market && value < rules.minValue) continue; // the bookmaker's price is clearly too short
+    // likely enough to land, paid enough to matter: peaks for ~55-70% at ~1.5-1.9
+    const score = p * p * Math.log(price) * (market ? 1 + Math.min(Math.max(value - 1, 0), 0.15) : 0.97);
+    if (!best || score > best.rewardScore) best = { ...c, price: Math.round(price * 100) / 100, priceSource: market ? 'MSport' : 'model', value, rewardScore: score };
+  }
+  return best;
 }
