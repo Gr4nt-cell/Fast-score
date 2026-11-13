@@ -1,0 +1,11 @@
+tap 540 1359
+shot p1_matches
+tap 296 2289
+shot p2_leagues
+shot p3_leagues_scrolled
+tap 459 2289
+shot p4_picks
+shot p5_picks_scrolled
+shot p6_picks_scrolled2
+pid 3440
+
