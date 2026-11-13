@@ -135,7 +135,7 @@ export function forecastMetrics(days,version=MODEL_VERSION) {
 // price less a typical bookmaker margin.
 export const PICK_RULES = { minProb: 0.55, minPrice: 1.4, maxPrice: 2.6, minValue: 0.95, margin: 0.94 };
 // used only to fill the list to five when too few matches clear the main rules
-export const PICK_RULES_RELAXED = { minProb: 0.52, minPrice: 1.3, maxPrice: 3.0, minValue: 0.92, margin: 0.94 };
+export const PICK_RULES_RELAXED = { minProb: 0.52, minPrice: 1.3, maxPrice: 3.0, minValue: 0.92, margin: 0.94, lowSampleMin: 8 };
 
 const num = (x) => (Number.isFinite(Number(x)) && Number(x) > 1 ? Number(x) : null);
 function findMarket(odds, re) {
@@ -166,7 +166,10 @@ export function marketPrice(c, odds) {
 
 /** Best rewarding-but-reasonable pick for one match, or null. */
 export function choosePick(prediction, odds, rules = PICK_RULES) {
-  if (!prediction || prediction.quality === 'low') return null;
+  if (!prediction) return null;
+  // thin evidence is only accepted by the relaxed rules, and only with 8+ recent results per team
+  const sample = Math.min(prediction.sample?.home || 0, prediction.sample?.away || 0);
+  if (prediction.quality === 'low' && !(rules.lowSampleMin && sample >= rules.lowSampleMin)) return null;
   const support = Number(prediction.support) || 0;
   let best = null;
   for (const c of prediction.candidates || []) {

@@ -59,3 +59,10 @@ test('daily picks prefer a worthwhile price over the safest market, and stay rea
  assert.equal(priced.priceSource,'MSport');assert.equal(priced.price,1.72);
  assert.equal(choosePick({...pred,quality:'low'},null),null);
 });
+test('relaxed rules accept a thin-evidence match only with enough recent results',async()=>{
+ const {choosePick,PICK_RULES_RELAXED}=await import('../src/prediction/model.js');
+ const pred={quality:'low',support:.45,sample:{home:12,away:9},candidates:[{side:'home',label:'Home',prob:.6}]};
+ assert.equal(choosePick(pred,null),null);
+ assert(choosePick(pred,null,PICK_RULES_RELAXED));
+ assert.equal(choosePick({...pred,sample:{home:12,away:6}},null,PICK_RULES_RELAXED),null);
+});

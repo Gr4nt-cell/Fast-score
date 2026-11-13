@@ -60,7 +60,7 @@ export async function generatePicks(date=new Date(),onProgress,{past=false}={}) 
   for(const sport of SUPPORTED){
     onProgress?.(`Scanning ${sportByKey(sport).name.toLowerCase()}…`);
     try{
-      const groups=await dayBoard(sport,date,{leagues:[],ttl:120000});
+      const groups=await dayBoard(sport,date,{leagues:[],limit:40,ttl:120000});
       for(const group of groups)for(const match of group.items||[]){
         if(match.kind!=='match'||match.state!=='pre'||match.postponed||new Date(match.date).getTime()<=Date.now()+60000||seen.has(match.key))continue;
         seen.add(match.key);boards.push(match);
@@ -80,7 +80,8 @@ export async function generatePicks(date=new Date(),onProgress,{past=false}={}) 
     const tip=choosePick(prediction,odds);
     const relaxed=tip?null:choosePick(prediction,odds,PICK_RULES_RELAXED);
     // last resort: the model's most likely market, at its fair price
-    const safe=!tip&&!relaxed&&prediction.safe?{...prediction.safe,price:Math.round(100/prediction.safe.prob)/100,priceSource:'model',rewardScore:0}:null;
+    const fallback=prediction.safe||((prediction.tip?.prob>=.65&&Math.min(prediction.sample?.home||0,prediction.sample?.away||0)>=8)?prediction.tip:null);
+    const safe=!tip&&!relaxed&&fallback?{...fallback,price:Math.round(100/fallback.prob)/100,priceSource:'model',rewardScore:0}:null;
     const best=tip||relaxed||safe;
     return best?{match,prediction,tip:best,tier:tip?0:relaxed?1:2}:null;
   });

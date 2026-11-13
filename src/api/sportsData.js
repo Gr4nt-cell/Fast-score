@@ -31,14 +31,14 @@ export async function pool(items, concurrency, fn) {
   return results;
 }
 
-export async function dayBoard(sport, date, { ttl = 30000, leagues } = {}) {
+export async function dayBoard(sport, date, { ttl = 30000, leagues, limit = 15 } = {}) {
   const groups = await flashscore.dayBoard(sport, date, ttl);
   if (!Array.isArray(leagues) || !groups.length) return groups;
   const ordered = [...groups].sort(
     (a, b) => Number(b.league?.priority || 0) - Number(a.league?.priority || 0),
   );
-  const highPriority = ordered.filter((group) => Number(group.league?.priority) >= 74).slice(0, 15);
-  const shortlist = highPriority.length ? highPriority : ordered.slice(0, 15);
+  const highPriority = ordered.filter((group) => Number(group.league?.priority) >= 74).slice(0, limit);
+  const shortlist = highPriority.length >= Math.min(limit, 15) ? highPriority : ordered.slice(0, limit);
   shortlist.source = groups.source || 'flashscore';
   return shortlist;
 }
