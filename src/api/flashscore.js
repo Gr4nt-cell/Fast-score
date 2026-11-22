@@ -61,7 +61,7 @@ async function fetchText(url, timeout = 12000, headers = HEADERS) {
 }
 
 /** GET a feed ("f_1_0_0_en_1"); tries each host. Empty answers are fine (no data). */
-async function feed(name, ttl = 30000, timeout = 12000) {
+async function feed(name, ttl = 30000, timeout = 12000, allowStale = true) {
   if (directFeedUnavailable) throw new Error('Live sports data is unavailable in browser builds');
   const hit = mem.get(name);
   if (hit && Date.now() - hit.t < ttl) return hit.data;
@@ -86,7 +86,7 @@ async function feed(name, ttl = 30000, timeout = 12000) {
       }
     }
     const old = mem.get(name);
-    if (old) return old.data;
+    if (old && allowStale) return old.data;
     throw new Error(`Live sports data unavailable (${last})`);
   })().finally(() => inflight.delete(name));
   inflight.set(name, pr);
@@ -504,32 +504,63 @@ const KEY_TYPES = {
   'Missed Penalty': ['Penalty - Missed', 'penalty-missed'],
 };
 
+function applyCore(match, c, sport) {
+  if (!match || !c || !c.DA) return match;
+  const state = c.DA === '2' ? 'in' : c.DA === '3' ? 'post' : 'pre';
+  const ac = Number(c.DB);
+  const next = { ...match, state, completed: state === 'post', home: { ...match.home }, away: { ...match.away } };
+  if (state !== 'pre') {
+    if (c.DE != null && c.DE !== '') next.home.score = c.DE;
+    if (c.DF != null && c.DF !== '') next.away.score = c.DF;
+  }
+  if (state === 'in') next.short = liveClock({ AC: c.DB, AO: c.DD }, sport);
+  else if (state === 'post') next.short = ac === 10 ? 'AET' : ac === 11 ? 'PEN' : ac === 8 ? 'Ret' : ac === 9 ? 'W/O' : ac === 54 ? 'Awd' : 'FT';
+  next.clock = next.short;
+  next.detail = STAGE[ac] || match.detail;
+  return next;
+}
+
+/** Lightweight live score update. Unlike summary, this downloads only the core match feed. */
+export async function liveScore(sport, eventId, current) {
+  const s = FS_SPORT[sport] || 1;
+  // Do not disguise a failed refresh as a fresh score by returning a cached response here.
+  const core = await feed(`dc_${s}_${eventId}`, 0, 8000, false);
+  const c = parse(core)[0] || {};
+  if (!c.DA) throw new Error('Live score was not returned');
+  const match = current || findCached(eventId);
+  if (!match) throw new Error('Match details are not cached');
+  return applyCore(match, c, sport);
+}
+
+const settled = (promise) => promise.then((value) => ({ value }), (error) => ({ error: String(error && error.message ? error.message : error) }));
+
 /** Match details in the shape used by the match screen. */
 export async function summary(sport, eventId) {
   const s = FS_SPORT[sport] || 1;
-  const [core, sui, st, li, hh, sur, lc, momentum] = await Promise.all([
-    feed(`dc_${s}_${eventId}`, 10000).catch(() => ''),
-    feed(`df_sui_${s}_${eventId}`, 15000).catch(() => ''),
-    feed(`df_st_${s}_${eventId}`, 20000).catch(() => ''),
-    feed(`df_li_${s}_${eventId}`, 5 * 60000).catch(() => ''),
-    feed(`df_hh_${s}_${eventId}`, 30 * 60000).catch(() => ''),
-    feed(`df_sur_${s}_${eventId}`, 15000).catch(() => ''),
-    feed(`df_lc_${s}_${eventId}`, 15000).catch(() => ''),
-    sport === 'soccer' ? matchMomentum(eventId).catch(() => null) : null,
+  const results = await Promise.all([
+    settled(feed(`dc_${s}_${eventId}`, 3000)),
+    settled(feed(`df_sui_${s}_${eventId}`, 15000)),
+    settled(feed(`df_st_${s}_${eventId}`, 20000)),
+    settled(feed(`df_li_${s}_${eventId}`, 60000)),
+    settled(feed(`df_hh_${s}_${eventId}`, 30 * 60000)),
+    settled(feed(`df_sur_${s}_${eventId}`, 15000)),
+    settled(feed(`df_lc_${s}_${eventId}`, 15000)),
+    settled(sport === 'soccer' ? matchMomentum(eventId) : Promise.resolve(null)),
   ]);
-  let match = findCached(eventId);
-  const c = parse(core)[0] || {};
-  if (match && c.DA) {
-    // the core feed is fresher than the day list
-    const state = c.DA === '2' ? 'in' : c.DA === '3' ? 'post' : 'pre';
-    match.state = state;
-    match.completed = state === 'post';
-    if (state !== 'pre') {
-      if (c.DE != null && c.DE !== '') match.home.score = c.DE;
-      if (c.DF != null && c.DF !== '') match.away.score = c.DF;
-    }
-    if (state === 'in') match.short = match.clock = liveClock({ AC: c.DB, AO: c.DD }, sport);
-  }
+  const [coreResult, suiResult, stResult, liResult, hhResult, surResult, lcResult, momentumResult] = results;
+  const core = coreResult.value || '';
+  const sui = suiResult.value || '';
+  const st = stResult.value || '';
+  const li = liResult.value || '';
+  const hh = hhResult.value || '';
+  const sur = surResult.value || '';
+  const lc = lcResult.value || '';
+  const momentum = momentumResult.value || null;
+  const errors = {};
+  ['core', 'incidents', 'statistics', 'lineups', 'h2h', 'info', 'commentary', 'momentum'].forEach((key, i) => {
+    if (results[i].error) errors[key] = results[i].error;
+  });
+  const match = applyCore(findCached(eventId), parse(core)[0] || {}, sport);
   const hid = match ? match.home.id : 'home';
   const aid = match ? match.away.id : 'away';
 
@@ -672,6 +703,7 @@ export async function summary(sport, eventId) {
 
   return {
     __match: match,
+    __errors: errors,
     commentary: commentary.length ? commentary : undefined,
     momentum,
     keyEvents,
