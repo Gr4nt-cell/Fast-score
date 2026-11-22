@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { StyleSheet, View } from 'react-native';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { AppState, StyleSheet, View } from 'react-native';
 import { Text } from '../components/Text';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useTheme } from '../theme';
@@ -7,7 +7,7 @@ import { useNav } from '../nav';
 import { useStore, formatOdds } from '../store';
 import { cachedOdds, matchOdds as msportOdds, oddsStatus } from '../api/msport';
 import { sportByKey } from '../sports';
-import { scoreboard, standings as fetchStandings, summary as fetchSummary } from '../api/sportsData';
+import { liveScore as fetchLiveScore, scoreboard, standings as fetchStandings, summary as fetchSummary } from '../api/sportsData';
 import { predictMatch } from '../predict';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import { Pressable } from '../components/Touch';
@@ -17,6 +17,34 @@ import { Card, Empty, FormPills, GlassCircle, Loading, Logo, Row, StatBar, TabSt
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const LOWER_BETTER = /foul|card|offside|turnover|error|penalt|giveaway/i;
+const LIVE_SCORE_POLL_MS = 3000;
+const DETAILS_POLL_MS = 20000;
+
+function mergeMatch(old, next) {
+  if (!next) return old;
+  return {
+    ...old,
+    ...next,
+    home: { ...old.home, ...next.home, logo: (next.home && next.home.logo) || old.home.logo },
+    away: { ...old.away, ...next.away, logo: (next.away && next.away.logo) || old.away.logo },
+    odds: next.odds || old.odds,
+  };
+}
+
+// A section that fails during a later refresh must not erase data already shown on screen.
+function mergeSummary(old, next) {
+  if (!old || !next) return next || old;
+  const errors = next.__errors || {};
+  const merged = { ...old, ...next, __errors: errors };
+  if (errors.incidents && !(next.keyEvents || []).length) merged.keyEvents = old.keyEvents;
+  if (errors.statistics && !next.boxscore) merged.boxscore = old.boxscore;
+  if (errors.lineups && !next.rosters) merged.rosters = old.rosters;
+  if (errors.h2h && !next.headToHeadGames) merged.headToHeadGames = old.headToHeadGames;
+  if (errors.info) merged.gameInfo = old.gameInfo;
+  if (errors.commentary && !next.commentary) merged.commentary = old.commentary;
+  if (errors.momentum && !next.momentum) merged.momentum = old.momentum;
+  return merged;
+}
 
 // ---------- header ----------
 
@@ -125,6 +153,7 @@ function Probability({ probs, label, home, away, draws }) {
 
 function AIPrediction({ m, pred }) {
   const t = useTheme();
+  const [showMarkets, setShowMarkets] = useState(false);
   if (!pred) return null;
   const sp = sportByKey(m.sport);
   return (
@@ -134,7 +163,7 @@ function AIPrediction({ m, pred }) {
           <Ionicons name="sparkles" size={16} color="#fff" />
         </View>
         <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, flex: 1 }}>AI prediction</Text>
-        <Text style={{ color: t.secondary, fontSize: 12 }}>Last 10 matches{pred.market ? ' + odds' : ''}</Text>
+        <Text style={{ color: t.secondary, fontSize: 12 }}>Last 20 matches{pred.market ? ' + odds' : ''}</Text>
       </View>
       <Probability probs={pred.probs} home={m.home.short || m.home.name} away={m.away.short || m.away.name} draws={sp.draws} />
       {pred.last ? (
@@ -162,6 +191,22 @@ function AIPrediction({ m, pred }) {
           {pred.tip.label} · {Math.round(pred.tip.prob * 100)}%
         </Text>
       </View>
+      <Pressable onPress={() => setShowMarkets((value) => !value)} style={{ marginTop: 12, minHeight: 40, justifyContent: 'center' }}>
+        <Text style={{ color: t.blue, fontSize: 13, fontWeight: '700' }}>{showMarkets ? 'Hide model selections' : `View all ${pred.candidates.length} model selections`}</Text>
+      </Pressable>
+      {showMarkets ? (
+        <View style={{ marginBottom: 12, borderRadius: 14, backgroundColor: t.track, paddingHorizontal: 12 }}>
+          {pred.candidates.map((candidate, index) => (
+            <View key={`${candidate.market}-${candidate.side}`} style={{ minHeight: 42, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 8, borderBottomWidth: index === pred.candidates.length - 1 ? 0 : StyleSheet.hairlineWidth, borderBottomColor: t.separator }}>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: t.secondary, fontSize: 10.5, fontWeight: '700' }}>{candidate.market}</Text>
+                <Text style={{ color: t.text, fontSize: 13, fontWeight: '600' }}>{candidate.label}</Text>
+              </View>
+              <Text style={{ color: t.text, fontSize: 14, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{Math.round(candidate.prob * 100)}%</Text>
+            </View>
+          ))}
+        </View>
+      ) : null}
       {pred.xg ? (
         <View style={{ flexDirection: 'row', marginTop: 12, gap: 8 }}>
           {[
@@ -226,7 +271,7 @@ function Timeline({ m, events }) {
   );
 }
 
-function InfoCard({ m, sum }) {
+function InfoCard({ m, sum, onRetry }) {
   const t = useTheme();
   const gi = (sum && sum.gameInfo) || {};
   const venue = (gi.venue && `${gi.venue.fullName}${gi.venue.address && gi.venue.address.city ? ', ' + gi.venue.address.city : ''}`) || m.venue;
@@ -239,6 +284,7 @@ function InfoCard({ m, sum }) {
     ['tv-outline', 'Broadcast', m.broadcast],
     ['cloud-outline', 'Weather', gi.weather && (gi.weather.displayValue || (gi.weather.temperature != null ? `${gi.weather.temperature}°` : null))],
   ].filter((r) => r[2]);
+  if (!rows.length && sum.__errors?.info) return <Empty icon="cloud-offline-outline" title="Couldn’t load match info" body="Check your connection and try again." action="Try again" onAction={onRetry} />;
   return (
     <Card>
       <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 4 }}>Match info</Text>
@@ -586,13 +632,18 @@ function parseRoster(r) {
   return { team: r.team || {}, homeAway: r.homeAway, formation: r.formation, starters: players.filter((p) => p.starter), bench: players.filter((p) => !p.starter) };
 }
 
-function SoccerLineups({ m, sum }) {
+function SoccerLineups({ m, sum, onRetry }) {
   const t = useTheme();
   const nav = useNav();
   const rosters = (sum.rosters || []).map(parseRoster);
   const home = rosters.find((r) => r.homeAway === 'home') || rosters[0];
   const away = rosters.find((r) => r.homeAway === 'away') || rosters[1];
-  if (!home || !away || !home.starters.length) return <Empty icon="people-outline" title="Lineups not available yet" body="They usually appear about an hour before kick-off." />;
+  if (sum.__errors && sum.__errors.lineups && !rosters.length) {
+    return <Empty icon="cloud-offline-outline" title="Couldn’t load lineups" body="Check your connection. Any previously loaded lineups remain visible while the app retries." action="Try again" onAction={onRetry} />;
+  }
+  if (!home || !away || !home.starters.length) {
+    return <Empty icon="people-outline" title={m.state === 'pre' ? 'Lineups not available yet' : 'Lineups unavailable'} body={m.state === 'pre' ? 'They usually appear about an hour before kick-off.' : 'The sports provider has not supplied lineups for this match.'} />;
+  }
   const openP = (p) => p.id && nav.push({ name: 'player', sport: m.sport, league: m.league, id: p.id, title: p.name });
   const hl = buildLines(home.starters, home.formation);
   const al = buildLines(away.starters, away.formation);
@@ -706,10 +757,11 @@ function BoxScore({ m, sum }) {
 
 // ---------- statistics ----------
 
-function TeamStats({ m, sum }) {
+function TeamStats({ m, sum, onRetry }) {
   const t = useTheme();
   const teams = (sum.boxscore && sum.boxscore.teams) || [];
-  if (teams.length < 2) return <Empty icon="stats-chart-outline" title="No statistics yet" />;
+  if (sum.__errors && sum.__errors.statistics && teams.length < 2) return <Empty icon="cloud-offline-outline" title="Couldn’t load statistics" body="Check your connection. Any previously loaded statistics remain visible while the app retries." action="Try again" onAction={onRetry} />;
+  if (teams.length < 2) return <Empty icon="stats-chart-outline" title={m.state === 'pre' ? 'No statistics yet' : 'Statistics unavailable'} body={m.state === 'pre' ? 'Statistics appear after the match starts.' : 'The sports provider has not supplied statistics for this match.'} />;
   const home = teams.find((x) => x.homeAway === 'home' || (x.team && String(x.team.id) === m.home.id)) || teams[1];
   const away = teams.find((x) => x !== home) || teams[0];
   const stats = (home.statistics || [])
@@ -719,7 +771,7 @@ function TeamStats({ m, sum }) {
       return { label: s.label || s.abbreviation || s.name, home: s.displayValue, away: a.displayValue, name: s.name };
     })
     .filter(Boolean);
-  if (!stats.length) return <Empty icon="stats-chart-outline" title="No statistics yet" />;
+  if (!stats.length) return <Empty icon="stats-chart-outline" title="Statistics unavailable" body="The provider returned team information without comparable match statistics." />;
   const poss = stats.find((s) => /possession/i.test(s.name));
   return (
     <View>
@@ -754,7 +806,7 @@ function TeamStats({ m, sum }) {
 
 // ---------- commentary / plays ----------
 
-function Commentary({ m, sum }) {
+function Commentary({ m, sum, onRetry }) {
   const t = useTheme();
   const [scoringOnly, setScoringOnly] = useState(false);
   let items = [];
@@ -771,6 +823,7 @@ function Commentary({ m, sum }) {
         score: p.scoringPlay && p.homeScore != null ? `${p.homeScore}-${p.awayScore}` : null,
       }));
   }
+  if (!items.length && sum.__errors?.commentary) return <Empty icon="cloud-offline-outline" title="Couldn’t load commentary" body="Check your connection and try again." action="Try again" onAction={onRetry} />;
   if (!items.length) return <Empty icon="chatbubbles-outline" title="No commentary yet" />;
   const shown = scoringOnly ? items.filter((x) => x.scoring) : items;
   return (
@@ -797,7 +850,7 @@ function Commentary({ m, sum }) {
 
 // ---------- head to head ----------
 
-function H2H({ m, sum }) {
+function H2H({ m, sum, onRetry }) {
   const t = useTheme();
   const games = [];
   (sum.headToHeadGames || []).forEach((g) => (g.events || []).forEach((e) => games.push(e)));
@@ -813,6 +866,7 @@ function H2H({ m, sum }) {
     else if (e.gameResult === 'L') aw++;
     else dr++;
   });
+  if (!h2h.length && !forms.length && sum.__errors?.h2h) return <Empty icon="cloud-offline-outline" title="Couldn’t load head to head" body="Check your connection and try again." action="Try again" onAction={onRetry} />;
   if (!h2h.length && !forms.length) return <Empty icon="git-compare-outline" title="No head-to-head data" />;
   return (
     <View>
@@ -946,39 +1000,88 @@ export default function MatchScreen({ route }) {
   });
   const [sum, setSum] = useState(null);
   const [table, setTable] = useState(null);
+  const [tableError, setTableError] = useState(null);
   const [pred, setPred] = useState(null);
+  const [predError, setPredError] = useState(null);
+  const [scoreError, setScoreError] = useState(null);
   const [tab, setTab] = useState('details');
   const teamGame = !sp.individual && m.kind === 'match';
+  const matchRef = useRef(m);
+  const scoreRevision = useRef(0);
+  const detailBusy = useRef(false);
+  matchRef.current = m;
 
   const refresh = useCallback(async () => {
+    if (detailBusy.current) return;
+    detailBusy.current = true;
+    const revision = scoreRevision.current;
     try {
       if (teamGame) {
-        const s = await fetchSummary(sport, m.league, m.eventId, 15000);
-        setSum(s);
-        if (s && s.__match) {
-          const n = s.__match;
-          setM((old) => ({ ...old, ...n, home: { ...old.home, ...n.home, logo: n.home.logo || old.home.logo }, away: { ...old.away, ...n.away, logo: n.away.logo || old.away.logo } }));
-        }
+        const s = await fetchSummary(sport, m.league, m.eventId);
+        setSum((old) => mergeSummary(old, s));
+        // A slower full summary must never overwrite a newer lightweight score response.
+        if (s && s.__match && scoreRevision.current === revision) setM((old) => mergeMatch(old, s.__match));
       } else {
         setSum({});
-        const sb = await scoreboard(sport, m.league, new Date(m.date), 15000);
+        const sb = await scoreboard(sport, m.league, new Date(m.date), 0);
         const n = sb.items.find((x) => x.key === m.key);
-        if (n) setM(n);
+        if (n) setM((old) => mergeMatch(old, n));
       }
-    } catch {
-      setSum((s) => s || {});
+    } catch (error) {
+      setSum((s) => s || { __errors: { core: String(error && error.message ? error.message : error) } });
+    } finally {
+      detailBusy.current = false;
     }
-  }, [sport, m.league, m.eventId, m.key, m.date, m.leagueName, teamGame]);
+  }, [sport, m.league, m.eventId, m.key, m.date, teamGame]);
 
   useEffect(() => {
     refresh();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
-    if (m.state !== 'in') return undefined;
-    const iv = setInterval(refresh, 20000);
+    if (m.state !== 'in' || !teamGame) return undefined;
+    const iv = setInterval(refresh, DETAILS_POLL_MS);
     return () => clearInterval(iv);
-  }, [m.state, refresh]);
+  }, [m.state, refresh, teamGame]);
+
+  // Live scores use one small feed. Slow requests are skipped rather than stacked, and polling
+  // pauses in the background. A failure keeps the last valid score visible and retries on the next tick.
+  useEffect(() => {
+    if (m.state !== 'in' || m.kind !== 'match') return undefined;
+    let alive = true;
+    let busy = false;
+    let appState = AppState.currentState;
+    const tick = async () => {
+      if (!alive || busy || appState !== 'active') return;
+      busy = true;
+      try {
+        const previous = matchRef.current;
+        const next = await fetchLiveScore(sport, m.league, m.eventId, previous);
+        if (!alive) return;
+        if (next) {
+          scoreRevision.current += 1;
+          setM((old) => mergeMatch(old, next));
+          if (previous.state === 'in' && next.state === 'post') refresh();
+        }
+        setScoreError(null);
+      } catch {
+        if (alive) setScoreError('Connection interrupted. Retrying every 3 seconds; the last valid score is still shown.');
+      } finally {
+        busy = false;
+      }
+    };
+    tick();
+    const iv = setInterval(tick, LIVE_SCORE_POLL_MS);
+    const sub = AppState.addEventListener('change', (state) => {
+      appState = state;
+      if (state === 'active') tick();
+    });
+    return () => {
+      alive = false;
+      clearInterval(iv);
+      sub.remove();
+    };
+  }, [m.state, m.kind, sport, m.league, m.eventId, refresh]);
 
   // MSport prices: on open, soon again (the price file may still be loading), then every minute
   const [oddsChecked, setOddsChecked] = useState(!!(m.odds && m.odds.home != null));
@@ -1001,12 +1104,30 @@ export default function MatchScreen({ route }) {
     };
   }, [m.state === 'post']); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const loadPrediction = useCallback(async () => {
+    setPredError(null);
+    try {
+      setPred(await predictMatch(route.match));
+    } catch (error) {
+      setPredError(String(error && error.message ? error.message : error));
+    }
+  }, [route.match]);
+
+  const loadTable = useCallback(async () => {
+    setTable(null);
+    setTableError(null);
+    try {
+      setTable(await fetchStandings(sport, m.league));
+    } catch (error) {
+      setTable([]);
+      setTableError(String(error && error.message ? error.message : error));
+    }
+  }, [sport, m.league]);
+
   useEffect(() => {
     if (!teamGame) return;
-    fetchStandings(sport, m.league)
-      .then(setTable)
-      .catch(() => setTable([]));
-    predictMatch(route.match).then(setPred).catch(() => {});
+    loadTable();
+    loadPrediction();
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   const events = useMemo(() => {
@@ -1058,18 +1179,20 @@ export default function MatchScreen({ route }) {
     if (!sum) return <Loading />;
     switch (tab) {
       case 'lineups':
-        return sport === 'soccer' ? <SoccerLineups m={m} sum={sum} /> : <BoxScore m={m} sum={sum} />;
+        return sport === 'soccer' ? <SoccerLineups m={m} sum={sum} onRetry={refresh} /> : <BoxScore m={m} sum={sum} />;
       case 'stats':
         return (
           <View>
             <MomentumGraph m={m} mom={sum.momentum} compact />
-            <TeamStats m={m} sum={sum} />
+            <TeamStats m={m} sum={sum} onRetry={refresh} />
           </View>
         );
       case 'commentary':
-        return <Commentary m={m} sum={sum} />;
+        return <Commentary m={m} sum={sum} onRetry={refresh} />;
       case 'standings':
-        return table == null ? (
+        return tableError ? (
+          <Empty icon="cloud-offline-outline" title="Couldn’t load standings" body={tableError} action="Try again" onAction={loadTable} />
+        ) : table == null ? (
           <Loading />
         ) : table.length ? (
           <Card>
@@ -1079,7 +1202,7 @@ export default function MatchScreen({ route }) {
           <Empty icon="list-outline" title="No table for this competition" />
         );
       case 'h2h':
-        return <H2H m={m} sum={sum} />;
+        return <H2H m={m} sum={sum} onRetry={refresh} />;
       default:
         return (
           <View>
@@ -1088,10 +1211,11 @@ export default function MatchScreen({ route }) {
             <LiveAction m={m} sum={sum} />
             <Timeline m={m} events={events} />
             <MomentumGraph m={m} mom={sum.momentum} />
+            {!pred && predError ? <Empty icon="cloud-offline-outline" title="Couldn’t load prediction" body={predError} action="Try again" onAction={loadPrediction} /> : null}
             {m.state !== 'post' ? <AIPrediction m={m} pred={pred} /> : null}
             <MSportMarkets m={m} />
             {m.state === 'post' && pred ? <AIPrediction m={m} pred={pred} /> : null}
-            <InfoCard m={m} sum={sum} />
+            <InfoCard m={m} sum={sum} onRetry={refresh} />
           </View>
         );
     }
@@ -1104,6 +1228,12 @@ export default function MatchScreen({ route }) {
       {m.kind === 'match' ? <ScoreHeader m={m} sport={sport} /> : null}
       {tabs.length > 1 ? <TabStrip tabs={tabs} value={tab} onChange={setTab} /> : null}
       {teamGame ? <OddsBar m={m} checked={oddsChecked} /> : null}
+      {scoreError && m.state === 'in' ? (
+        <View style={{ marginHorizontal: 16, marginBottom: 10, padding: 11, borderRadius: 14, backgroundColor: t.track, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Ionicons name="cloud-offline-outline" size={18} color={t.orange} />
+          <Text style={{ flex: 1, color: t.secondary, fontSize: 12.5, lineHeight: 17 }}>{scoreError}</Text>
+        </View>
+      ) : null}
       <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingBottom: 40, paddingTop: 2 }}>
         {body()}
       </ScrollView>
