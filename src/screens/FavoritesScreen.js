@@ -20,6 +20,7 @@ export default function FavoritesScreen() {
   const insets = useSafeAreaInsets();
   const [mode, setMode] = useState('matches');
   const [matches, setMatches] = useState(null);
+  const [matchesError, setMatchesError] = useState(null);
   const [teamGames, setTeamGames] = useState({});
   const [refreshing, setRefreshing] = useState(false);
 
@@ -43,13 +44,19 @@ export default function FavoritesScreen() {
     });
     out.sort((a, b) => (a.state === 'in' ? -1 : 0) - (b.state === 'in' ? -1 : 0) || new Date(a.date) - new Date(b.date));
     setMatches(out);
+    const failed = res.filter((value) => value == null).length;
+    setMatchesError(failed ? `${failed} saved score ${failed === 1 ? 'request' : 'requests'} failed. Saved matches are still shown; pull down to retry.` : null);
   }, [favs.matches]);
 
   const loadTeams = useCallback(async () => {
     const res = await pool(favs.teams, 4, (tm) => teamSchedule(tm.sport, tm.league, tm.teamId));
     const map = {};
     favs.teams.forEach((tm, i) => {
-      const g = res[i] || [];
+      if (res[i] == null) {
+        map[tm.id] = { error: true };
+        return;
+      }
+      const g = res[i];
       map[tm.id] = { next: g.find((x) => x.state !== 'post'), last: [...g].reverse().find((x) => x.state === 'post') };
     });
     setTeamGames(map);
@@ -111,6 +118,7 @@ export default function FavoritesScreen() {
           <Loading />
         ) : (
           <>
+            {matchesError ? <Text style={{ color: t.orange, fontSize: 12.5, lineHeight: 18, marginHorizontal: 20, marginBottom: 10 }}>{matchesError}</Text> : null}
             <Glass radius={24} strong style={{ marginHorizontal: 16, paddingHorizontal: 6, marginBottom: 14 }}>
               {matches.map((m, i) => (
                 <MatchRow key={m.key} m={m} last={i === matches.length - 1} showLeague />
@@ -142,8 +150,9 @@ export default function FavoritesScreen() {
                   <Chevron />
                 </Row>
                 <View style={{ paddingHorizontal: 6 }}>
-                  {g && g.last ? <MatchRow m={g.last} last={!g.next} showLeague /> : null}
-                  {g && g.next ? <MatchRow m={g.next} last showLeague /> : null}
+                  {g && g.error ? <Text style={{ color: t.orange, fontSize: 12.5, paddingHorizontal: 14, paddingBottom: 12 }}>Couldn’t load this team’s matches. Pull down to retry.</Text> : null}
+                  {g && !g.error && g.last ? <MatchRow m={g.last} last={!g.next} showLeague /> : null}
+                  {g && !g.error && g.next ? <MatchRow m={g.next} last showLeague /> : null}
                   {!g ? <Loading /> : null}
                 </View>
               </Card>

@@ -23,6 +23,7 @@ export default function LeaguesScreen() {
   const { settings, favs, toggle } = useStore();
   const [sport, setSport] = useState(settings.sport || 'soccer');
   const [idx, setIdx] = useState(null); // { countries, top, total } | 'error'
+  const [reload, setReload] = useState(0);
   const [open, setOpen] = useState({}); // expanded countries
   const [q, setQ] = useState('');
   const [pinnedInfo, setPinnedInfo] = useState({});
@@ -34,7 +35,7 @@ export default function LeaguesScreen() {
     sportLeagues(sport)
       .then((r) => setIdx(r.total ? r : 'error'))
       .catch(() => setIdx('error'));
-  }, [sport]);
+  }, [sport, reload]);
 
   // names for pinned competitions that came from the full index or from day lists
   useEffect(() => {
@@ -195,7 +196,7 @@ export default function LeaguesScreen() {
                     </Card>
                   </>
                 ) : null}
-                {idx === 'error' ? <Empty icon="cloud-offline-outline" title="Competitions unavailable" /> : null}
+                {idx === 'error' ? <Empty icon="cloud-offline-outline" title="Competitions unavailable" body="The competition index could not be loaded. Check your connection and retry." action="Try again" onAction={() => setReload((n) => n + 1)} /> : null}
               </>
             )}
           </>

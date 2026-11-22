@@ -48,12 +48,16 @@ export default function PlayerScreen({ route }) {
   const { isFav, toggle } = useStore();
   const { sport, league, id } = route;
   const [data, setData] = useState(null);
+  const [error, setError] = useState(null);
+  const [reload, setReload] = useState(0);
 
   useEffect(() => {
+    setData(null);
+    setError(null);
     fetchAthlete(sport, league, id)
       .then(setData)
-      .catch(() => setData({ athlete: {} }));
-  }, [sport, league, id]);
+      .catch((reason) => setError(String(reason && reason.message ? reason.message : reason)));
+  }, [sport, league, id, reload]);
 
   const a = (data && data.athlete) || {};
   const name = a.displayName || route.title;
@@ -94,7 +98,9 @@ export default function PlayerScreen({ route }) {
   return (
     <View style={{ flex: 1, backgroundColor: t.bg }}>
       <PushHeader title={name} right={<GlassCircle icon={fav ? 'star' : 'star-outline'} color={fav ? t.yellow : undefined} onPress={() => toggle('players', favItem)} />} />
-      {!data ? (
+      {error ? (
+        <Empty icon="cloud-offline-outline" title="Couldn’t load player" body={error} action="Try again" onAction={() => setReload((n) => n + 1)} />
+      ) : !data ? (
         <Loading />
       ) : (
         <ScrollView contentContainerStyle={{ paddingBottom: 40 }}>
@@ -127,7 +133,7 @@ export default function PlayerScreen({ route }) {
           ) : null}
           <StatTable title="Season statistics" labels={st && st.labels} rows={statRows} />
           <StatTable title="Recent games" labels={gl && gl.labels} rows={glRows.slice(0, 10)} />
-          {!facts.length && !statRows.length ? <Empty icon="person-outline" title="No profile available" body="ESPN doesn't publish details for this player." /> : null}
+          {!facts.length && !statRows.length ? <Empty icon="person-outline" title="No profile available" body="The sports provider doesn’t publish details for this player." /> : null}
         </ScrollView>
       )}
     </View>
