@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '../components/Text';
 import { useTheme } from '../theme';
@@ -17,18 +17,54 @@ export default function TeamScreen({ route }) {
   const { sport, league, id } = route;
   const [info, setInfo] = useState(null);
   const [games, setGames] = useState(null);
+  const [gamesError, setGamesError] = useState(null);
   const [squad, setSquad] = useState(null);
+  const [squadError, setSquadError] = useState(null);
   const [table, setTable] = useState(null);
+  const [tableError, setTableError] = useState(null);
   const [tab, setTab] = useState('overview');
+
+  const loadGames = useCallback(async () => {
+    setGames(null);
+    setGamesError(null);
+    try {
+      setGames(await teamSchedule(sport, league, id));
+    } catch (error) {
+      setGames([]);
+      setGamesError(String(error && error.message ? error.message : error));
+    }
+  }, [sport, league, id]);
+
+  const loadSquad = useCallback(async () => {
+    setSquad(null);
+    setSquadError(null);
+    try {
+      setSquad(await fetchRoster(sport, league, id));
+    } catch (error) {
+      setSquad({ groups: [] });
+      setSquadError(String(error && error.message ? error.message : error));
+    }
+  }, [sport, league, id]);
+
+  const loadTable = useCallback(async () => {
+    setTable(null);
+    setTableError(null);
+    try {
+      setTable(await fetchStandings(sport, league));
+    } catch (error) {
+      setTable([]);
+      setTableError(String(error && error.message ? error.message : error));
+    }
+  }, [sport, league]);
 
   useEffect(() => {
     fetchTeam(sport, league, id).then(setInfo).catch(() => setInfo({}));
-    teamSchedule(sport, league, id).then(setGames).catch(() => setGames([]));
-  }, [sport, league, id]);
+    loadGames();
+  }, [sport, league, id, loadGames]);
 
   useEffect(() => {
-    if (tab === 'squad' && squad == null) fetchRoster(sport, league, id).then(setSquad).catch(() => setSquad({ groups: [] }));
-    if (tab === 'standings' && table == null) fetchStandings(sport, league).then(setTable).catch(() => setTable([]));
+    if (tab === 'squad' && squad == null && !squadError) loadSquad();
+    if (tab === 'standings' && table == null && !tableError) loadTable();
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const name = (info && info.displayName) || route.title;
@@ -80,7 +116,9 @@ export default function TeamScreen({ route }) {
           onChange={setTab}
         />
         {tab === 'overview' ? (
-          games == null ? (
+          gamesError ? (
+            <Empty icon="cloud-offline-outline" title="Couldn’t load team matches" body={gamesError} action="Try again" onAction={loadGames} />
+          ) : games == null ? (
             <Loading />
           ) : (
             <View>
@@ -113,7 +151,9 @@ export default function TeamScreen({ route }) {
           )
         ) : null}
         {tab === 'matches' ? (
-          games == null ? (
+          gamesError ? (
+            <Empty icon="cloud-offline-outline" title="Couldn’t load team matches" body={gamesError} action="Try again" onAction={loadGames} />
+          ) : games == null ? (
             <Loading />
           ) : games.length ? (
             <View>
@@ -139,7 +179,9 @@ export default function TeamScreen({ route }) {
           )
         ) : null}
         {tab === 'squad' ? (
-          squad == null ? (
+          squadError ? (
+            <Empty icon="cloud-offline-outline" title="Couldn’t load squad" body={squadError} action="Try again" onAction={loadSquad} />
+          ) : squad == null ? (
             <Loading />
           ) : squad.groups.length ? (
             <View>
@@ -171,7 +213,9 @@ export default function TeamScreen({ route }) {
           )
         ) : null}
         {tab === 'standings' ? (
-          table == null ? (
+          tableError ? (
+            <Empty icon="cloud-offline-outline" title="Couldn’t load standings" body={tableError} action="Try again" onAction={loadTable} />
+          ) : table == null ? (
             <Loading />
           ) : table.length ? (
             <Card>

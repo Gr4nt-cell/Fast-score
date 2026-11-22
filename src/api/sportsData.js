@@ -51,6 +51,10 @@ export function summary(sport, _league, eventId) {
   return flashscore.summary(sport, eventId);
 }
 
+export function liveScore(sport, _league, eventId, current) {
+  return flashscore.liveScore(sport, eventId, current);
+}
+
 export function standings(sport, league) {
   return flashscore.standings(league, sport);
 }

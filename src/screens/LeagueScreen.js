@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '../components/Text';
 import { useTheme } from '../theme';
@@ -8,6 +8,7 @@ import { leagueMeta } from '../sports';
 import { scoreboard, standings as fetchStandings, teams as fetchTeams } from '../api/sportsData';
 import { leagueLogo } from '../api/flashscore';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
+import { Pressable } from '../components/Touch';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import Standings from '../components/Standings';
 import { MatchRow } from '../components/match';
@@ -52,24 +53,56 @@ export default function LeagueScreen({ route }) {
   const [tab, setTab] = useState('matches');
   const [date, setDate] = useState(startOfDay(new Date()));
   const [board, setBoard] = useState(null);
+  const [boardError, setBoardError] = useState(null);
   const [logo, setLogo] = useState(route.logo);
   const [table, setTable] = useState(null);
+  const [tableError, setTableError] = useState(null);
   const [teamList, setTeams] = useState(null);
+  const [teamsError, setTeamsError] = useState(null);
   const [stage, setStage] = useState(null);
 
-  useEffect(() => {
+  const loadBoard = useCallback(async () => {
     setBoard(null);
-    scoreboard(sport, league, date, 30000)
-      .then((r) => {
-        setBoard(r.items);
-        if (r.league.logo) setLogo(r.league.logo);
-      })
-      .catch(() => setBoard([]));
+    setBoardError(null);
+    try {
+      const r = await scoreboard(sport, league, date, 0);
+      setBoard(r.items);
+      if (r.league.logo) setLogo(r.league.logo);
+    } catch (error) {
+      setBoard([]);
+      setBoardError(String(error && error.message ? error.message : error));
+    }
   }, [sport, league, date]);
 
+  const loadTable = useCallback(async () => {
+    setTable(null);
+    setTableError(null);
+    try {
+      setTable(await fetchStandings(sport, league));
+    } catch (error) {
+      setTable([]);
+      setTableError(String(error && error.message ? error.message : error));
+    }
+  }, [sport, league]);
+
+  const loadTeams = useCallback(async () => {
+    setTeams(null);
+    setTeamsError(null);
+    try {
+      setTeams(await fetchTeams(sport, league));
+    } catch (error) {
+      setTeams([]);
+      setTeamsError(String(error && error.message ? error.message : error));
+    }
+  }, [sport, league]);
+
   useEffect(() => {
-    if (tab === 'standings' && table == null) fetchStandings(sport, league).then(setTable).catch(() => setTable([]));
-    if (tab === 'teams' && teamList == null) fetchTeams(sport, league).then(setTeams).catch(() => setTeams([]));
+    loadBoard();
+  }, [loadBoard]);
+
+  useEffect(() => {
+    if (tab === 'standings' && table == null && !tableError) loadTable();
+    if (tab === 'teams' && teamList == null && !teamsError) loadTeams();
   }, [tab]); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -102,7 +135,9 @@ export default function LeagueScreen({ route }) {
           <View>
             <DateStrip value={date} onChange={setDate} />
             <View style={{ height: 14 }} />
-            {board == null ? (
+            {boardError ? (
+              <Empty icon="cloud-offline-outline" title="Couldn’t load matches" body={boardError} action="Try again" onAction={loadBoard} />
+            ) : board == null ? (
               <Loading />
             ) : board.length ? (
               <Glass radius={24} strong style={{ marginHorizontal: 16, paddingHorizontal: 6 }}>
@@ -116,7 +151,9 @@ export default function LeagueScreen({ route }) {
           </View>
         ) : null}
         {tab === 'standings' ? (
-          table == null ? (
+          tableError ? (
+            <Empty icon="cloud-offline-outline" title="Couldn’t load standings" body={tableError} action="Try again" onAction={loadTable} />
+          ) : table == null ? (
             <Loading />
           ) : table.length ? (
             <StageTables table={table} stage={stage} setStage={setStage} sport={sport} league={league} />
@@ -125,7 +162,9 @@ export default function LeagueScreen({ route }) {
           )
         ) : null}
         {tab === 'teams' ? (
-          teamList == null ? (
+          teamsError ? (
+            <Empty icon="cloud-offline-outline" title="Couldn’t load teams" body={teamsError} action="Try again" onAction={loadTeams} />
+          ) : teamList == null ? (
             <Loading />
           ) : (
             <Card>

@@ -2,11 +2,17 @@
 
 Android live scores with the dialer’s liquid glass material, Pearl Mist background and AMOLED dark mode. Sports data comes from Flashscore; MSport supplies prices only.
 
-## AI Picks v3
+## AI Picks v5
 
-A new on-device statistical engine uses up to 20 verified prior results, date/venue weights, conservative sample shrinkage, a normalized football score distribution and uncertainty adjustments. Other supported team sports use regularized form and scoring margins. It may abstain or return fewer than five picks when evidence is weak. These are uncalibrated estimates; improved accuracy has not yet been established against an independent chronological dataset.
+The on-device statistical engine uses up to 20 verified prior results, date/venue weights, conservative sample shrinkage, a normalized football score distribution and uncertainty adjustments. Football selections cover 1X2, double chance, draw-no-bet, total goals from 0.5 to 4.5, both teams to score, team totals and win-to-nil; all probabilities come from the same score grid. Other supported team sports use regularized form and scoring margins for their supported result markets.
 
-Genuine forecasts are saved before kickoff with their original model version. The v3 track record includes only settled v3 forecasts and reports a Brier probability score. Legacy simulations are labelled and excluded. Historical dates with no saved forecast stay empty.
+Daily selection prioritizes uncertainty-adjusted probability, checks real MSport prices when available, and saves up to five eligible matches with at most two per competition and no repeated teams. It may abstain or return fewer than five when evidence or prices are unsuitable. These are uncalibrated estimates, not guarantees of a winning rate; improved accuracy has not yet been established against an independent chronological dataset.
+
+Genuine forecasts are saved before kickoff with their original model version. The v5 track record includes only settled v5 forecasts and reports a Brier probability score. Legacy simulations and older model versions are excluded. Historical dates with no saved forecast stay empty.
+
+## Live updates and connection handling
+
+An open live match refreshes its lightweight score feed every 3 seconds while the app is in the foreground, with slower detail updates, overlap protection, stale-response protection and immediate resume checks. A failed refresh keeps the last valid score visible and reports the interruption. Statistics, lineups and other match sections retain previously loaded data during temporary failures and distinguish provider-empty responses from request errors. Scoreboards use less frequent bounded refreshes because they download entire match lists.
 
 ## Notifications and smoothness
 
