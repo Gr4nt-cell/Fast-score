@@ -44,6 +44,8 @@ export default function SearchScreen() {
   const [teamsIdx, setTeamsIdx] = useState(null);
   const [remote, setRemote] = useState([]);
   const [busy, setBusy] = useState(false);
+  const [searchError, setSearchError] = useState(null);
+  const [retry, setRetry] = useState(0);
   const [recent, setRecent] = useState([]);
   const timer = useRef(null);
 
@@ -56,18 +58,32 @@ export default function SearchScreen() {
 
   useEffect(() => {
     clearTimeout(timer.current);
+    setSearchError(null);
     if (q.trim().length < 2) {
       setRemote([]);
+      setBusy(false);
       return undefined;
     }
+    let alive = true;
     timer.current = setTimeout(async () => {
       setBusy(true);
-      const r = await flashscoreSearch(q.trim());
-      setRemote(r);
-      setBusy(false);
+      try {
+        const r = await flashscoreSearch(q.trim());
+        if (alive) setRemote(r);
+      } catch (error) {
+        if (alive) {
+          setRemote([]);
+          setSearchError(String(error && error.message ? error.message : error));
+        }
+      } finally {
+        if (alive) setBusy(false);
+      }
     }, 350);
-    return () => clearTimeout(timer.current);
-  }, [q]);
+    return () => {
+      alive = false;
+      clearTimeout(timer.current);
+    };
+  }, [q, retry]);
 
   const nq = norm(q.trim());
   const leagues = useMemo(() => {
@@ -105,7 +121,7 @@ export default function SearchScreen() {
   };
   const openRecent = (r) => (r.type === 'team' ? openTeam(r) : r.type === 'league' ? openLeague(r) : openPlayer(r));
 
-  const nothing = nq.length >= 2 && !busy && teamsIdx && !leagues.length && !localTeams.length && !players.length && !remoteTeams.length;
+  const nothing = nq.length >= 2 && !busy && !searchError && teamsIdx && !leagues.length && !localTeams.length && !players.length && !remoteTeams.length;
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: t.bg }} contentContainerStyle={{ paddingBottom: TAB_BAR_SPACE + 20 }} keyboardShouldPersistTaps="handled" onScrollBeginDrag={Keyboard.dismiss}>
@@ -206,7 +222,8 @@ export default function SearchScreen() {
         </>
       ) : null}
 
-      {nq.length >= 2 && (busy || !teamsIdx) ? <Loading /> : null}
+      {nq.length >= 2 && (busy || !teamsIdx) && !searchError ? <Loading /> : null}
+      {searchError ? <Empty icon="cloud-offline-outline" title="Search unavailable" body={searchError} action="Try again" onAction={() => setRetry((n) => n + 1)} /> : null}
       {nothing ? <Empty icon="search" title={`No results for “${q.trim()}”`} body="Try a shorter name or another spelling." /> : null}
     </ScrollView>
   );

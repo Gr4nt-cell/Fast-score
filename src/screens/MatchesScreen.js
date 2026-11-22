@@ -6,7 +6,7 @@ import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useStore } from '../store';
 import { useNav } from '../nav';
 import { SPORTS, sportByKey } from '../sports';
-import { dayBoard, pool, sameDay } from '../api/sportsData';
+import { dayBoard, sameDay } from '../api/sportsData';
 import { LeagueBlock, SportPill } from '../components/match';
 import { attachOdds } from '../api/msport';
 import DateStrip, { startOfDay } from '../components/DateStrip';
@@ -76,8 +76,17 @@ export default function MatchesScreen({ liveMode = false }) {
         const ttl = force ? 0 : isToday || live ? 20000 : 5 * 60 * 1000;
         let res;
         if (sport === 'all') {
-          const per = await pool(SPORTS, 4, async (s) => (await dayBoard(s.key, day, { ttl })).map((g) => ({ ...g, sport: s.key })));
+          const per = await Promise.all(SPORTS.map(async (s) => {
+            try {
+              return (await dayBoard(s.key, day, { ttl })).map((g) => ({ ...g, sport: s.key }));
+            } catch {
+              return null;
+            }
+          }));
+          const failed = per.filter((value) => value == null).length;
+          if (failed === SPORTS.length) throw new Error('Live sports data is unavailable for every sport');
           res = per.filter(Boolean).flat();
+          if (failed) setError(`${failed} ${failed === 1 ? 'sport is' : 'sports are'} temporarily unavailable. Other scores are still shown.`);
         } else {
           const b = await dayBoard(sport, day, { ttl });
           res = b.map((g) => ({ ...g, sport }));
@@ -104,7 +113,16 @@ export default function MatchesScreen({ liveMode = false }) {
   // Keep today's board updating, with faster polling around live matches.
   const refreshPlan = useMemo(() => fixtureRefreshPlan(groups), [groups]);
   useEffect(() => {
-    const refresh = () => load(true, true);
+    let busy = false;
+    const refresh = async () => {
+      if (busy) return;
+      busy = true;
+      try {
+        await load(true, true);
+      } finally {
+        busy = false;
+      }
+    };
     const pollIntervalMs = refreshPlan.pollIntervalMs || ((live || sameDay(date, new Date())) ? 60_000 : null);
     if (pollIntervalMs) {
       const iv = setInterval(refresh, pollIntervalMs);
@@ -192,6 +210,11 @@ export default function MatchesScreen({ liveMode = false }) {
               body={live ? (sport === 'all' ? 'Nothing is in play in any sport at the moment. Check Matches for what’s coming up today.' : 'Pick All or another sport above, or check Matches for what’s coming up.') : 'Try another date or sport.'}
             />
           )
+        }
+        ListHeaderComponent={
+          groups && shown.length && error ? (
+            <Text style={{ color: t.orange, fontSize: 12.5, lineHeight: 18, marginHorizontal: 20, marginBottom: 10 }}>{error} Pull down to retry.</Text>
+          ) : null
         }
         ListFooterComponent={
           groups && shown.length ? (
