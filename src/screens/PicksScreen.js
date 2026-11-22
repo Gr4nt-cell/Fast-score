@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
 import { useNav } from '../nav';
 import { pickHistory, picksForDate } from '../predict';
-import { forecastMetrics } from '../prediction/model';
+import { forecastMetrics, MODEL_VERSION } from '../prediction/model';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { load } from '../store';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
@@ -195,8 +195,8 @@ export default function PicksScreen() {
         <LinearGradient colors={t.dark ? ['rgba(122,92,255,0.35)', 'rgba(191,90,242,0.12)'] : ['rgba(122,92,255,0.16)', 'rgba(191,90,242,0.04)']} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={StyleSheet.absoluteFill} />
         <View style={{ padding: 14, flexDirection: 'row', alignItems: 'center' }}>
           <View style={{ flex: 1 }}>
-            <Text style={{ color: t.text, fontWeight: '800', fontSize: 17 }}>v4 forecast record</Text>
-            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{settled.length ? `${hits} / ${settled.length} settled · Brier ${metrics.brier.toFixed(3)}` : 'Results appear after saved v4 forecasts finish'}</Text>
+            <Text style={{ color: t.text, fontWeight: '800', fontSize: 17 }}>{`v${MODEL_VERSION} forecast record`}</Text>
+            <Text style={{ color: t.secondary, fontSize: 13, marginTop: 2 }}>{settled.length ? `${hits} / ${settled.length} settled · Brier ${metrics.brier.toFixed(3)}` : `Results appear after saved v${MODEL_VERSION} forecasts finish`}</Text>
           </View>
           <Text style={{ color: t.purple, fontWeight: '900', fontSize: 30 }}>{settled.length ? `${Math.round((hits / settled.length) * 100)}%` : '—'}</Text>
         </View>
@@ -219,10 +219,10 @@ export default function PicksScreen() {
           <Card>
             <Text style={{ color: t.text, fontWeight: '800', fontSize: 16, marginBottom: 6 }}>How the picks are made</Text>
             <Text style={{ color: t.secondary, fontSize: 13.5, lineHeight: 20 }}>
-              Version 4 uses up to 20 verified prior results per team. Recent dates and home/away games receive more weight; thin samples are shrunk toward conservative priors. Football uses a normalized goals distribution with low-score and uncertainty adjustments. Other supported team sports use regularized form and scoring margins. Verified competition context supplies only a bounded prior.
-              {'\n\n'}Each day's five picks aim for a worthwhile price, not just the safest bet: a market the model rates at 55% or more, priced roughly 1.40–2.60 (MSport's price when known, otherwise the model's fair price less a typical margin), and never one the model thinks is clearly too short. Among those, picks that are both likely and well paid rank first.
-              {'\n\n'}Up to five eligible picks are saved before kick-off, with at most two per competition and no repeated teams. When evidence is insufficient, fewer picks appear. Saved forecasts stay fixed. Older forecasts retain their original model version. Historical simulations are labelled separately and excluded from the v4 record.
-              {'\n\n'}Percentages are uncalibrated model estimates. The record shows settled v4 forecasts and a Brier probability score (lower is better). Live accuracy must be measured as results accumulate.
+              Version 5 uses up to 20 verified prior results per team. Recent dates and home/away games receive more weight; thin samples are shrunk toward conservative priors. Football uses one normalized goals distribution for 1X2, double chance, draw-no-bet, totals from 0.5 to 4.5, both teams to score, team totals and win-to-nil. Other supported team sports use regularized form and scoring margins for their supported result markets.
+              {'\n\n'}Each day's five picks prioritize uncertainty-adjusted likelihood rather than longer odds. Real MSport prices are checked when available; selections with clearly poor value are rejected. Price is only a small ranking tie-breaker.
+              {'\n\n'}Up to five eligible picks are saved before kick-off, with at most two per competition and no repeated teams. When evidence is insufficient, fewer picks appear rather than forcing weak selections. Saved forecasts stay fixed. Older forecasts retain their original model version. Historical simulations are labelled separately and excluded from the v5 record.
+              {'\n\n'}Percentages are uncalibrated model estimates, not guarantees. The record shows settled v5 forecasts and a Brier probability score (lower is better). Actual accuracy must be measured as results accumulate.
 
             </Text>
           </Card>
@@ -243,6 +243,7 @@ export default function PicksScreen() {
               {dayName.charAt(0).toUpperCase() + dayName.slice(1)}
             </SectionTitle>
             {note ? <Text style={{ color: t.secondary, fontSize: 12.5, marginHorizontal: 22, marginBottom: 10, lineHeight: 17 }}>{note}</Text> : null}
+            {day.warnings && day.warnings.length ? <Text style={{ color: t.orange, fontSize: 12.5, marginHorizontal: 22, marginBottom: 10, lineHeight: 17 }}>{day.warnings.join(' · ')}. Pull down to retry.</Text> : null}
             {day.picks.map((p, i) => (
               <PickCard key={p.key} p={p} i={i} />
             ))}
