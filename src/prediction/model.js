@@ -1,5 +1,5 @@
 // Versioned, deterministic statistical inference. No generated team ratings or result leakage.
-export const MODEL_VERSION = 4;
+export const MODEL_VERSION = 5;
 export const HISTORY_LIMIT = 20;
 const DAY = 86400000;
 const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
@@ -53,11 +53,21 @@ export function goalDistribution(lh, la, uncertainty=.12, rho=-.06) {
     }
   }
   const total=grid.reduce((s,row)=>s+row.reduce((a,b)=>a+b,0),0);
-  const out={home:0,draw:0,away:0,over:0,over15:0,under35:0,btts:0};
+  const out={home:0,draw:0,away:0,over:0,over15:0,under35:0,btts:0,
+    over05:0,over35:0,over45:0,homeOver05:0,homeOver15:0,awayOver05:0,awayOver15:0,homeWinToNil:0,awayWinToNil:0};
   for(let i=0;i<=max;i++)for(let j=0;j<=max;j++){
-    const p=grid[i][j]/total;out[i>j?'home':i===j?'draw':'away']+=p;
-    if(i+j>=3)out.over+=p;if(i+j>=2)out.over15+=p;if(i+j<=3)out.under35+=p;if(i&&j)out.btts+=p;
+    const p=grid[i][j]/total,totalGoals=i+j;out[i>j?'home':i===j?'draw':'away']+=p;
+    if(totalGoals>=3)out.over+=p;if(totalGoals>=2)out.over15+=p;if(totalGoals<=3)out.under35+=p;
+    if(totalGoals>=1)out.over05+=p;if(totalGoals>=4)out.over35+=p;if(totalGoals>=5)out.over45+=p;
+    if(i>=1)out.homeOver05+=p;if(i>=2)out.homeOver15+=p;if(j>=1)out.awayOver05+=p;if(j>=2)out.awayOver15+=p;
+    if(i>j&&j===0)out.homeWinToNil+=p;if(j>i&&i===0)out.awayWinToNil+=p;
+    if(i&&j)out.btts+=p;
   }
+  out.under05=1-out.over05;out.under15=1-out.over15;out.under=1-out.over;
+  out.over35=Math.max(0,Math.min(1,out.over35));out.under35=1-out.over35;
+  out.under45=1-out.over45;out.bttsNo=1-out.btts;
+  out.homeUnder05=1-out.homeOver05;out.homeUnder15=1-out.homeOver15;
+  out.awayUnder05=1-out.awayOver05;out.awayUnder15=1-out.awayOver15;
   return out;
 }
 
@@ -93,14 +103,42 @@ export function buildPrediction(match, homeGames, awayGames, {asOf=Date.now(),co
   const candidates=[{market:'1X2',label:`${hn} to win`,short:'1',side:'home',prob:probs.home},
     {market:'1X2',label:`${an} to win`,short:'2',side:'away',prob:probs.away}];
   if(probs.draw>0)candidates.push({market:'1X2',label:'Draw',short:'X',side:'draw',prob:probs.draw});
-  if(match.sport==='soccer')candidates.push(
-    {market:'Double chance',label:`${hn} or draw`,short:'1X',side:'dc1x',prob:probs.home+probs.draw},
-    {market:'Double chance',label:`${an} or draw`,short:'X2',side:'dcx2',prob:probs.away+probs.draw},
-    {market:'Goals',label:'Over 2.5 goals',short:'O2.5',side:'over',prob:model.over},
-    {market:'Goals',label:'Under 2.5 goals',short:'U2.5',side:'under',prob:1-model.over},
-    {market:'Goals',label:'Over 1.5 goals',short:'O1.5',side:'over15',prob:model.over15},
-    {market:'Goals',label:'Under 3.5 goals',short:'U3.5',side:'under35',prob:model.under35},
-    {market:'BTTS',label:'Both teams to score',short:'GG',side:'btts',prob:model.btts});
+  if(match.sport==='soccer'){
+    const noDraw=Math.max(1e-9,probs.home+probs.away);
+    candidates.push(
+      {market:'Double chance',label:`${hn} or draw`,short:'1X',side:'dc1x',prob:probs.home+probs.draw},
+      {market:'Double chance',label:`${hn} or ${an}`,short:'12',side:'dc12',prob:probs.home+probs.away},
+      {market:'Double chance',label:`${an} or draw`,short:'X2',side:'dcx2',prob:probs.away+probs.draw},
+      {market:'Draw no bet',label:`${hn} · draw no bet`,short:'DNB1',side:'dnbHome',prob:probs.home/noDraw},
+      {market:'Draw no bet',label:`${an} · draw no bet`,short:'DNB2',side:'dnbAway',prob:probs.away/noDraw},
+      {market:'Total goals',label:'Over 0.5 goals',short:'O0.5',side:'over05',prob:model.over05},
+      {market:'Total goals',label:'Under 0.5 goals',short:'U0.5',side:'under05',prob:model.under05},
+      {market:'Total goals',label:'Over 1.5 goals',short:'O1.5',side:'over15',prob:model.over15},
+      {market:'Total goals',label:'Under 1.5 goals',short:'U1.5',side:'under15',prob:model.under15},
+      {market:'Total goals',label:'Over 2.5 goals',short:'O2.5',side:'over',prob:model.over},
+      {market:'Total goals',label:'Under 2.5 goals',short:'U2.5',side:'under',prob:model.under},
+      {market:'Total goals',label:'Over 3.5 goals',short:'O3.5',side:'over35',prob:model.over35},
+      {market:'Total goals',label:'Under 3.5 goals',short:'U3.5',side:'under35',prob:model.under35},
+      {market:'Total goals',label:'Over 4.5 goals',short:'O4.5',side:'over45',prob:model.over45},
+      {market:'Total goals',label:'Under 4.5 goals',short:'U4.5',side:'under45',prob:model.under45},
+      {market:'BTTS',label:'Both teams to score · Yes',short:'GG',side:'btts',prob:model.btts},
+      {market:'BTTS',label:'Both teams to score · No',short:'NG',side:'bttsNo',prob:model.bttsNo},
+      {market:'Home team total',label:`${hn} over 0.5`,short:'H O0.5',side:'homeOver05',prob:model.homeOver05},
+      {market:'Home team total',label:`${hn} under 0.5`,short:'H U0.5',side:'homeUnder05',prob:model.homeUnder05},
+      {market:'Home team total',label:`${hn} over 1.5`,short:'H O1.5',side:'homeOver15',prob:model.homeOver15},
+      {market:'Home team total',label:`${hn} under 1.5`,short:'H U1.5',side:'homeUnder15',prob:model.homeUnder15},
+      {market:'Away team total',label:`${an} over 0.5`,short:'A O0.5',side:'awayOver05',prob:model.awayOver05},
+      {market:'Away team total',label:`${an} under 0.5`,short:'A U0.5',side:'awayUnder05',prob:model.awayUnder05},
+      {market:'Away team total',label:`${an} over 1.5`,short:'A O1.5',side:'awayOver15',prob:model.awayOver15},
+      {market:'Away team total',label:`${an} under 1.5`,short:'A U1.5',side:'awayUnder15',prob:model.awayUnder15},
+      {market:'Win to nil',label:`${hn} to win to nil`,short:'H WTN',side:'homeWinToNil',prob:model.homeWinToNil},
+      {market:'Win to nil',label:`${an} to win to nil`,short:'A WTN',side:'awayWinToNil',prob:model.awayWinToNil});
+  }else if(probs.draw>0){
+    const noDraw=Math.max(1e-9,probs.home+probs.away);
+    candidates.push(
+      {market:'Draw no bet',label:`${hn} · draw no bet`,short:'DNB1',side:'dnbHome',prob:probs.home/noDraw},
+      {market:'Draw no bet',label:`${an} · draw no bet`,short:'DNB2',side:'dnbAway',prob:probs.away/noDraw});
+  }
   for(const c of candidates)c.evidenceScore=c.prob-.12*(1-support);
   candidates.sort((a,b)=>b.evidenceScore-a.evidenceScore);
   const quality=Math.min(H.n,A.n)<10||support<.5?'low':Math.max(H.ageDays,A.ageDays)>30?'medium':'high';
@@ -116,6 +154,29 @@ export function buildPrediction(match, homeGames, awayGames, {asOf=Date.now(),co
     last:{home:H.rows,away:A.rows,homeForm:H.form,awayForm:A.form}};
 }
 
+/** Settle a supported selection from regulation-time scores. Draw-no-bet returns void on a draw. */
+export function judgeScore(side, h, a) {
+  if (validScore(h) == null || validScore(a) == null) return null;
+  h = Number(h); a = Number(a);
+  switch (side) {
+    case 'home': return h > a; case 'away': return a > h; case 'draw': return h === a;
+    case 'over05': return h + a >= 1; case 'under05': return h + a === 0;
+    case 'over15': return h + a >= 2; case 'under15': return h + a <= 1;
+    case 'over': return h + a >= 3; case 'under': return h + a <= 2;
+    case 'over35': return h + a >= 4; case 'under35': return h + a <= 3;
+    case 'over45': return h + a >= 5; case 'under45': return h + a <= 4;
+    case 'btts': return h > 0 && a > 0; case 'bttsNo': return !(h > 0 && a > 0);
+    case 'dc1x': return h >= a; case 'dc12': return h !== a; case 'dcx2': return a >= h;
+    case 'dnbHome': return h === a ? 'void' : h > a; case 'dnbAway': return h === a ? 'void' : a > h;
+    case 'homeOver05': return h >= 1; case 'homeUnder05': return h === 0;
+    case 'homeOver15': return h >= 2; case 'homeUnder15': return h <= 1;
+    case 'awayOver05': return a >= 1; case 'awayUnder05': return a === 0;
+    case 'awayOver15': return a >= 2; case 'awayUnder15': return a <= 1;
+    case 'homeWinToNil': return h > a && a === 0; case 'awayWinToNil': return a > h && h === 0;
+    default: return null;
+  }
+}
+
 export function isForecastArchive(day) {
   if(!Array.isArray(day?.picks) || !day.picks.length || day.picks.some(p=>!p||!Number.isFinite(new Date(p.date).getTime())))return false;
   const first=Math.min(...day.picks.map(p=>new Date(p.date).getTime()));
@@ -128,14 +189,13 @@ export function forecastMetrics(days,version=MODEL_VERSION) {
   return {count:picks.length,hits:picks.filter(p=>p.result).length,brier:picks.reduce((s,p)=>s+(p.tip.prob-Number(p.result))**2,0)/picks.length};
 }
 
-// ---------- daily pick selection: rewarding but reasonable ----------
-// The safest market (e.g. Over 1.5 at ~1.20) is rarely worth backing. A daily pick instead aims for
-// a price of roughly 1.40-2.60 the model still rates as likely (>=55%), and never a price the model
-// thinks is clearly too short. Real MSport prices are used when known; otherwise the model's fair
-// price less a typical bookmaker margin.
-export const PICK_RULES = { minProb: 0.55, minPrice: 1.4, maxPrice: 2.6, minValue: 0.95, margin: 0.94 };
+// ---------- daily pick selection: conservative probability first ----------
+// Rank by uncertainty-adjusted likelihood, with price only a small tie-breaker. Real MSport prices
+// are used when known; otherwise the model's fair price less a typical bookmaker margin. These are
+// still uncalibrated estimates: no threshold can guarantee a winning rate.
+export const PICK_RULES = { minProb: 0.60, minPrice: 1.05, maxPrice: 3.0, minValue: 0.92, margin: 0.94 };
 // used only to fill the list to five when too few matches clear the main rules
-export const PICK_RULES_RELAXED = { minProb: 0.52, minPrice: 1.3, maxPrice: 3.0, minValue: 0.92, margin: 0.94, lowSampleMin: 8 };
+export const PICK_RULES_RELAXED = { minProb: 0.56, minPrice: 1.03, maxPrice: 3.5, minValue: 0.90, margin: 0.94, lowSampleMin: 8 };
 
 const num = (x) => (Number.isFinite(Number(x)) && Number(x) > 1 ? Number(x) : null);
 function findMarket(odds, re) {
@@ -153,13 +213,29 @@ export function marketPrice(c, odds) {
     case 'home': return num(dec.home);
     case 'draw': return num(dec.draw);
     case 'away': return num(dec.away);
+    case 'over05': return outcomePrice(findMarket(odds, /over\/under 0\.5|total.*0\.5/i), /^over/i);
+    case 'under05': return outcomePrice(findMarket(odds, /over\/under 0\.5|total.*0\.5/i), /^under/i);
+    case 'over15': return outcomePrice(findMarket(odds, /over\/under 1\.5|total.*1\.5/i), /^over/i);
+    case 'under15': return outcomePrice(findMarket(odds, /over\/under 1\.5|total.*1\.5/i), /^under/i);
     case 'over': return outcomePrice(findMarket(odds, /over\/under 2\.5|total.*2\.5/i), /^over/i);
     case 'under': return outcomePrice(findMarket(odds, /over\/under 2\.5|total.*2\.5/i), /^under/i);
-    case 'over15': return outcomePrice(findMarket(odds, /over\/under 1\.5|total.*1\.5/i), /^over/i);
+    case 'over35': return outcomePrice(findMarket(odds, /over\/under 3\.5|total.*3\.5/i), /^over/i);
     case 'under35': return outcomePrice(findMarket(odds, /over\/under 3\.5|total.*3\.5/i), /^under/i);
+    case 'over45': return outcomePrice(findMarket(odds, /over\/under 4\.5|total.*4\.5/i), /^over/i);
+    case 'under45': return outcomePrice(findMarket(odds, /over\/under 4\.5|total.*4\.5/i), /^under/i);
     case 'btts': return outcomePrice(findMarket(odds, /both teams|gg\/ng|btts/i), /^(yes|gg)$/i);
+    case 'bttsNo': return outcomePrice(findMarket(odds, /both teams|gg\/ng|btts/i), /^(no|ng)$/i);
     case 'dc1x': return outcomePrice(findMarket(odds, /double chance/i), /home.*draw|^1x$|1 or x/i);
+    case 'dc12': return outcomePrice(findMarket(odds, /double chance/i), /home.*away|^12$|1 or 2/i);
     case 'dcx2': return outcomePrice(findMarket(odds, /double chance/i), /draw.*away|^x2$|x or 2/i);
+    case 'dnbHome': return outcomePrice(findMarket(odds, /draw no bet/i), /home|^1$/i);
+    case 'dnbAway': return outcomePrice(findMarket(odds, /draw no bet/i), /away|^2$/i);
+    case 'homeOver05': case 'homeUnder05': case 'homeOver15': case 'homeUnder15':
+      return outcomePrice(findMarket(odds, /home.*total|1st team.*total/i), new RegExp(`^${c.side.includes('Over') ? 'over' : 'under'}.*${c.side.includes('05') ? '0\\.5' : '1\\.5'}`, 'i'));
+    case 'awayOver05': case 'awayUnder05': case 'awayOver15': case 'awayUnder15':
+      return outcomePrice(findMarket(odds, /away.*total|2nd team.*total/i), new RegExp(`^${c.side.includes('Over') ? 'over' : 'under'}.*${c.side.includes('05') ? '0\\.5' : '1\\.5'}`, 'i'));
+    case 'homeWinToNil': return outcomePrice(findMarket(odds, /home.*win to nil|win to nil/i), /home.*yes|^home$/i);
+    case 'awayWinToNil': return outcomePrice(findMarket(odds, /away.*win to nil|win to nil/i), /away.*yes|^away$/i);
     default: return null;
   }
 }
@@ -175,15 +251,16 @@ export function choosePick(prediction, odds, rules = PICK_RULES) {
   for (const c of prediction.candidates || []) {
     const p = c.prob;
     if (!(p >= rules.minProb)) continue;
-    if (p - 0.12 * (1 - support) < rules.minProb - 0.05) continue; // thin evidence
+    const adjusted = p - 0.12 * (1 - support);
+    if (adjusted < rules.minProb - 0.03) continue; // thin evidence
     const market = marketPrice(c, odds);
     const price = market || (1 / p) * rules.margin;
     if (price < rules.minPrice || price > rules.maxPrice) continue;
     const value = p * price;
     if (market && value < rules.minValue) continue; // the bookmaker's price is clearly too short
-    // likely enough to land, paid enough to matter: peaks for ~55-70% at ~1.5-1.9
-    const score = p * p * Math.log(price) * (market ? 1 + Math.min(Math.max(value - 1, 0), 0.15) : 0.97);
-    if (!best || score > best.rewardScore) best = { ...c, price: Math.round(price * 100) / 100, priceSource: market ? 'MSport' : 'model', value, rewardScore: score };
+    // Probability dominates; a modest price/value bonus breaks near-ties without chasing long odds.
+    const score = adjusted + Math.min(0.04, Math.max(0, Math.log(price)) * 0.03) + (market ? Math.min(0.02, Math.max(0, value - 1) * 0.1) : 0);
+    if (!best || score > best.rewardScore) best = { ...c, adjustedProb: adjusted, price: Math.round(price * 100) / 100, priceSource: market ? 'MSport' : 'model', value, rewardScore: score };
   }
   return best;
 }

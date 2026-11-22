@@ -3,11 +3,11 @@ import { SPORTS, sportByKey } from './sports';
 import { addDays, dayBoard, pool, recentGames, scoreboard, ymd } from './api/sportsData';
 import { domesticProfile, contextAdjustment } from './competitionContext';
 import { datesForPickHistory, getOrCreatePickDay } from './pickArchive';
-import { buildPrediction, choosePick, PICK_RULES_RELAXED, HISTORY_LIMIT, MODEL_VERSION, validScore, isForecastArchive } from './prediction/model';
+import { buildPrediction, choosePick, PICK_RULES_RELAXED, HISTORY_LIMIT, MODEL_VERSION, validScore, isForecastArchive, judgeScore } from './prediction/model';
 import { matchOdds } from './api/msport';
 
 export const LAST_N=HISTORY_LIMIT;
-export const PICK_THRESHOLD=.55;
+export const PICK_THRESHOLD=.60;
 export const PICKS_PER_DAY=5;
 const recentCache=new Map();
 const SUPPORTED=['soccer','basketball','hockey','football','baseball','rugby'];
@@ -18,7 +18,7 @@ export async function lastMatches(sport, league, teamId, before=new Date()) {
   let entry=recentCache.get(key);
   if(!entry || entry.expires<=now){
     entry={expires:now+10*60000,promise:null};
-    entry.promise=recentGames(sport,league,teamId).catch(()=>{entry.expires=Date.now()+30000;return [];});
+    entry.promise=recentGames(sport,league,teamId).catch(error=>{entry.expires=0;throw error;});
     recentCache.set(key,entry);
     if(recentCache.size>250)recentCache.delete(recentCache.keys().next().value);
   }
@@ -56,7 +56,7 @@ function slim(match,prediction,tip=prediction.safe) {
 export async function generatePicks(date=new Date(),onProgress,{past=false}={}) {
   const empty={modelVersion:MODEL_VERSION,date:ymd(date),generatedAt:Date.now(),provenance:'forecast',scanned:0,modelled:0,threshold:PICK_THRESHOLD,picks:[]};
   if(past || ymd(date)<ymd(new Date()))return {...empty,kind:'unrecorded'};
-  const boards=[],seen=new Set();
+  const boards=[],seen=new Set(),scanErrors=[];
   for(const sport of SUPPORTED){
     onProgress?.(`Scanning ${sportByKey(sport).name.toLowerCase()}…`);
     try{
@@ -65,28 +65,31 @@ export async function generatePicks(date=new Date(),onProgress,{past=false}={}) 
         if(match.kind!=='match'||match.state!=='pre'||match.postponed||new Date(match.date).getTime()<=Date.now()+60000||seen.has(match.key))continue;
         seen.add(match.key);boards.push(match);
       }
-    }catch{}
+    }catch(error){scanErrors.push(String(error?.message||error));}
   }
+  if(!boards.length&&scanErrors.length)throw new Error('Could not load today’s fixtures. Check your connection and try again.');
   const candidates=boards.sort((a,b)=>(b.priority||0)-(a.priority||0)||new Date(a.date)-new Date(b.date)).slice(0,160);
   onProgress?.(`Checking evidence for ${candidates.length} matches…`);
   const preds=await pool(candidates,4,async match=>{
-    const prediction=await predictMatch(match);
-    if(!prediction)return null;
-    // real prices make the pick about value, not just likelihood (best effort, never blocks)
-    let odds=null;
-    if(match.sport==='soccer' || match.sport==='basketball' || match.sport==='hockey'){
-      try{odds=await Promise.race([matchOdds(match),new Promise(r=>setTimeout(()=>r(null),6000))]);}catch{}
-    }
-    const tip=choosePick(prediction,odds);
-    const relaxed=tip?null:choosePick(prediction,odds,PICK_RULES_RELAXED);
-    // last resort: the model's most likely market, at its fair price
-    const fallback=prediction.safe||((prediction.tip?.prob>=.65&&Math.min(prediction.sample?.home||0,prediction.sample?.away||0)>=8)?prediction.tip:null);
-    const safe=!tip&&!relaxed&&fallback?{...fallback,price:Math.round(100/fallback.prob)/100,priceSource:'model',rewardScore:0}:null;
-    const best=tip||relaxed||safe;
-    return best?{match,prediction,tip:best,tier:tip?0:relaxed?1:2}:null;
+    try{
+      const prediction=await predictMatch(match);
+      if(!prediction)return null;
+      // Real prices are useful for rejecting bad value, but never block a forecast.
+      let odds=null;
+      if(match.sport==='soccer' || match.sport==='basketball' || match.sport==='hockey'){
+        try{odds=await Promise.race([matchOdds(match),new Promise(r=>setTimeout(()=>r(null),6000))]);}catch{}
+      }
+      const tip=choosePick(prediction,odds);
+      const relaxed=tip?null:choosePick(prediction,odds,PICK_RULES_RELAXED);
+      const fallback=prediction.safe||((prediction.tip?.prob>=.65&&Math.min(prediction.sample?.home||0,prediction.sample?.away||0)>=8)?prediction.tip:null);
+      const safe=!tip&&!relaxed&&fallback?{...fallback,price:Math.round(100/fallback.prob)/100,priceSource:'model',rewardScore:0}:null;
+      const best=tip||relaxed||safe;
+      return best?{match,prediction,tip:best,tier:tip?0:relaxed?1:2}:null;
+    }catch(error){return {error:String(error?.message||error)};}
   });
-  // main-rule picks first; the relaxed tier and then the safest picks only fill the list up to five
-  const ranked=preds.filter(Boolean).sort((a,b)=>a.tier-b.tier||b.tip.rewardScore-a.tip.rewardScore||b.tip.prob-a.tip.prob);
+  const ranked=preds.filter(value=>value?.match).sort((a,b)=>a.tier-b.tier||b.tip.rewardScore-a.tip.rewardScore||b.tip.prob-a.tip.prob);
+  const evidenceErrors=preds.filter(value=>value?.error);
+  if(!ranked.length&&evidenceErrors.length)throw new Error('Could not load prior results for the prediction model. Check your connection and try again.');
   const picks=[],counts=new Map(),teams=new Set();
   for(const {match,prediction,tip} of ranked){
     if(new Date(match.date).getTime()<=Date.now()+60000)continue;
@@ -95,7 +98,7 @@ export async function generatePicks(date=new Date(),onProgress,{past=false}={}) 
     picks.push(slim(match,prediction,tip));teams.add(home);teams.add(away);counts.set(league,(counts.get(league)||0)+1);
     if(picks.length===PICKS_PER_DAY)break;
   }
-  return {...empty,generatedAt:Date.now(),scanned:boards.length,modelled:preds.filter(Boolean).length,candidateLimit:160,picks};
+  return {...empty,generatedAt:Date.now(),scanned:boards.length,modelled:ranked.length,candidateLimit:160,warnings:scanErrors.length?[`${scanErrors.length} sports could not be scanned`]:[],picks};
 }
 
 let pickIndexWrite=Promise.resolve();
@@ -133,12 +136,7 @@ export function judgePick(p,match){
   if(match.state!=='post'||(p.sport==='soccer'&&/AET|PEN|W\/O|Awd|Ret/i.test(match.short||'')))return null;
   const h=validScore(match.home?.score),a=validScore(match.away?.score);
   if(h==null||a==null)return null;
-  switch(p.tip.side){
-    case 'home':return h>a;case 'away':return a>h;case 'draw':return h===a;
-    case 'over':return h+a>=3;case 'under':return h+a<3;case 'btts':return h>0&&a>0;
-    case 'dc1x':return h>=a;case 'dcx2':return a>=h;case 'over15':return h+a>=2;case 'under35':return h+a<=3;
-    default:return null;
-  }
+  return judgeScore(p.tip.side,h,a);
 }
 async function settle(key,day,date){
   let changed=false;
