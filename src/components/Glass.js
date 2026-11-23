@@ -373,7 +373,7 @@ export function ScrollGlowProvider({ children }) { return <ScrollGlowContext.Pro
 export function ScrollGlowScrollView(props) { return <NativeScrollView {...props} />; }
 export function ScrollGlowFlatList(props) {
   const low = useContext(PerformanceModeContext);
-  return <NativeFlatList {...props} {...(low ? {initialNumToRender:8,maxToRenderPerBatch:6,windowSize:5,updateCellsBatchingPeriod:50} : {})} />;
+  return <NativeFlatList {...(low ? {initialNumToRender:8,maxToRenderPerBatch:6,windowSize:5,updateCellsBatchingPeriod:50} : {})} {...props} />;
 }
 export function Backdrop({ style }) {
   const t=useTheme();

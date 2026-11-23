@@ -215,14 +215,14 @@ export function LeagueHeader({ league, sport, country, count, liveCount, pinned,
 }
 
 /** A competition card: header plus its matches */
-export function LeagueBlock({ group, sport, showOdds }) {
+export function LeagueBlock({ group, sport, showOdds, matches = group.items, continuation = false }) {
   const nav = useNav();
   const { isFav, toggle } = useStore();
   const lk = `${sport}/${group.league.slug}`;
-  const live = group.items.filter((x) => x.state === 'in').length;
+  const live = continuation ? 0 : group.items.filter((x) => x.state === 'in').length;
   return (
     <Glass radius={24} strong style={{ marginHorizontal: 16, marginBottom: 14 }}>
-      <LeagueHeader
+      {continuation ? null : <LeagueHeader
         league={group.league}
         sport={sport}
         country={group.items[0] && group.items[0].country}
@@ -234,10 +234,10 @@ export function LeagueBlock({ group, sport, showOdds }) {
           toggle('leagues', lk);
         }}
         onPress={() => nav.push({ name: 'league', sport, league: group.league.slug, title: group.league.name, logo: group.league.logo })}
-      />
+      />}
       <View style={{ paddingHorizontal: 6, paddingBottom: 4 }}>
-        {group.items.map((m, i) => (
-          <MatchRow key={m.key} m={m} last={i === group.items.length - 1} showOdds={showOdds} />
+        {matches.map((m, i) => (
+          <MatchRow key={m.key} m={m} last={i === matches.length - 1} showOdds={showOdds} />
         ))}
       </View>
     </Glass>

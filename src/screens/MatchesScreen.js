@@ -150,6 +150,22 @@ export default function MatchesScreen({ liveMode = false }) {
     return gs;
   }, [groups, live, favs.leagues]);
 
+  // Virtualize small batches of matches so a busy league cannot mount its
+  // entire fixture list in a single list cell.
+  const leaguePages = useMemo(() => shown.flatMap((group) => {
+    const pages = [];
+    const pageSize = 6;
+    for (let start = 0; start < group.items.length; start += pageSize) {
+      pages.push({
+        key: `${group.sport}/${group.league.slug}/${start}`,
+        group,
+        matches: group.items.slice(start, start + pageSize),
+        continuation: start > 0,
+      });
+    }
+    return pages;
+  }), [shown]);
+
   const total = shown.reduce((n, g) => n + g.items.length, 0);
   const liveCount = (groups || []).reduce((n, g) => n + g.items.filter((m) => m.state === 'in').length, 0);
 
@@ -157,7 +173,7 @@ export default function MatchesScreen({ liveMode = false }) {
   const marked = useMemo(() => new Set(favs.matches.filter((m) => sport === 'all' || m.sport === sport).map((m) => new Date(m.date).toDateString())), [favs.matches, sport]);
   const sportName = sport === 'all' ? 'All sports' : sp.name;
   const renderLeague = useCallback(
-    ({ item }) => <LeagueBlock group={item} sport={item.sport || sport} showOdds />,
+    ({ item }) => <LeagueBlock group={item.group} sport={item.group.sport || sport} matches={item.matches} continuation={item.continuation} showOdds />,
     [sport],
   );
 
@@ -195,8 +211,8 @@ export default function MatchesScreen({ liveMode = false }) {
       {fixed}
       <FlatList
         style={{ flex: 1 }}
-        data={groups ? shown : []}
-        keyExtractor={(g) => `${g.sport}/${g.league.slug}`}
+        data={leaguePages}
+        keyExtractor={(page) => page.key}
         renderItem={renderLeague}
         ListEmptyComponent={
           !groups ? (
@@ -233,10 +249,10 @@ export default function MatchesScreen({ liveMode = false }) {
             }}
           />
         }
-        initialNumToRender={3}
+        initialNumToRender={4}
         maxToRenderPerBatch={3}
         updateCellsBatchingPeriod={40}
-        windowSize={5}
+        windowSize={7}
       />
     </View>
   );
