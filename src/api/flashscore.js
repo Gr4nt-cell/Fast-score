@@ -6,6 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { parseSquad, teamCompetition } from './flashscoreTeamPage';
 
 const HOSTS = ['https://global.flashscore.ninja/2/x/feed', 'https://2.flashscore.ninja/2/x/feed', 'https://d.flashscore.com/x/feed'];
 const SIGN = 'SW9D1eZo';
@@ -30,7 +31,7 @@ const teamEvent = new Map();
 
 // participant id -> url slug (team pages need it); kept on disk for favourites
 let slugs = {};
-AsyncStorage.getItem('fs:slugs')
+const slugsReady = AsyncStorage.getItem('fs:slugs')
   .then((s) => {
     if (s) slugs = { ...JSON.parse(s), ...slugs };
   })
@@ -420,7 +421,7 @@ export async function teams(sport, slug) {
   return groups
     .flatMap((g) => g.rows)
     .filter((r) => r.teamId && !seen.has(r.teamId) && seen.add(r.teamId))
-    .map((r) => ({ id: r.teamId, name: r.name, logo: r.logo }))
+    .map((r) => ({ id: r.teamId, name: r.name, logo: r.logo, sport, league: slug }))
     .sort((a, b) => a.name.localeCompare(b.name));
 }
 
@@ -844,19 +845,27 @@ function rowsToGames(rows, sport) {
 }
 
 /** A team's page (results + fixtures), read from the HTML flashscore.com serves. */
-async function teamPage(id, tab) {
-  const slug = slugs[id] || 'team';
+async function teamPage(id, tab, title) {
   const key = `page:${id}:${tab}`;
   const hit = mem.get(key);
   if (hit && Date.now() - hit.t < 10 * 60000) return hit.data;
-  const r = await fetchText(`${WEB}/team/${slug}/${id}/${tab}/`, 15000, { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' });
+  await slugsReady;
+  let slug = slugs[id];
+  if (!slug && title) {
+    await search(title);
+    slug = slugs[id];
+  }
+  if (!slug) throw new Error('Team page could not be found');
+  const r = await fetchText(`${WEB}/team/${encodeURIComponent(slug)}/${encodeURIComponent(id)}/${tab}/`, 15000, { 'User-Agent': 'Mozilla/5.0 (Linux; Android 14) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Mobile Safari/537.36' });
   if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
   const html = r.body;
   const feeds = [...html.matchAll(/cjs\.initialFeeds\["([^"]+)"\]\s*=\s*\{\s*data:\s*`([^`]*)`/g)].map((m) => ({ name: m[1], data: m[2] }));
   const name = (html.match(/<meta property="og:title" content="([^"]+)"/) || [])[1];
   const logo = (html.match(/<img[^>]+class="heading__logo[^"]*"[^>]+src="([^"]+)"/) || [])[1];
-  const data = { feeds, name: name ? name.replace(/ (Results|Fixtures|Squad|Summary).*$/i, '') : '', logo };
-  mem.set(key, { t: Date.now(), data });
+  const squad = tab === 'squad' ? parseSquad(html) : null;
+  const competition = tab === 'standings' ? teamCompetition(html) : null;
+  const data = { feeds, squad, competition, name: name ? name.replace(/ (Results|Fixtures|Squad|Summary).*$/i, '') : '', logo };
+  if (tab !== 'squad' || squad.groups.length || squad.coach) mem.set(key, { t: Date.now(), data });
   return data;
 }
 
@@ -914,8 +923,31 @@ export async function team(id) {
   };
 }
 
-export async function roster() {
-  return { groups: [], coach: '' };
+export async function roster(sport, id, title) {
+  if (INDIVIDUAL.has(sport)) return { groups: [], coach: '' };
+  return (await teamPage(id, 'squad', title)).squad;
+}
+
+export async function teamStandings(sport, league, id, title) {
+  if (INDIVIDUAL.has(sport)) return [];
+  let leagueError;
+  if (isTpl(league) || /^fs:[a-z\d]+_[a-z\d]+$/i.test(league)) {
+    try {
+      const groups = await standings(league, sport);
+      if (groups.some((group) => group.rows.some((row) => row.teamId === id))) {
+        return groups.map((group) => ({ ...group, league }));
+      }
+    } catch (error) {
+      leagueError = error;
+    }
+  }
+  const { competition } = await teamPage(id, 'standings', title);
+  if (leagueError && (!competition || competition === league)) throw leagueError;
+  if (!competition || competition === league) return [];
+  const groups = await standings(competition, sport);
+  return groups.some((group) => group.rows.some((row) => row.teamId === id))
+    ? groups.map((group) => ({ ...group, league: competition }))
+    : [];
 }
 
 export async function player(id) {

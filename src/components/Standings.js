@@ -64,7 +64,7 @@ export default function Standings({ groups, sport, league, highlight = [] }) {
                 <Pressable
                   key={r.teamId + i}
                   feedback="subtle"
-                  onPress={() => r.teamId && nav.push({ name: 'team', sport, league, id: r.teamId, title: r.name, logo: r.logo })}
+                  onPress={() => r.teamId && nav.push({ name: 'team', sport, league: g.league || league, id: r.teamId, title: r.name, logo: r.logo })}
                 >
                   <View style={[styles.row, { borderBottomColor: t.separator, backgroundColor: hi ? (t.dark ? 'rgba(10,132,255,0.18)' : 'rgba(0,122,255,0.08)') : 'transparent', borderRadius: hi ? 10 : 0 }]}>
                     <View style={[styles.posBox, { backgroundColor: r.note && r.note.color ? '#' + String(r.note.color).replace('#', '') : 'transparent' }]}>

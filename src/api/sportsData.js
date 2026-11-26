@@ -75,8 +75,12 @@ export function teamSchedule(sport, _league, id) {
   return flashscore.teamSchedule(sport, id);
 }
 
-export function roster() {
-  return flashscore.roster();
+export function roster(sport, _league, id, title) {
+  return flashscore.roster(sport, id, title);
+}
+
+export function teamStandings(sport, league, id, title) {
+  return flashscore.teamStandings(sport, league, id, title);
 }
 
 export function athlete(_sport, _league, id) {

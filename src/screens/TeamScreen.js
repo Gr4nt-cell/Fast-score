@@ -4,7 +4,7 @@ import { Text } from '../components/Text';
 import { useTheme } from '../theme';
 import { useNav } from '../nav';
 import { useStore } from '../store';
-import { roster as fetchRoster, standings as fetchStandings, team as fetchTeam, teamSchedule } from '../api/sportsData';
+import { roster as fetchRoster, teamStandings as fetchStandings, team as fetchTeam, teamSchedule } from '../api/sportsData';
 import { Glass, ScrollGlowScrollView as ScrollView } from '../components/Glass';
 import Standings from '../components/Standings';
 import { MatchRow } from '../components/match';
@@ -14,7 +14,7 @@ export default function TeamScreen({ route }) {
   const t = useTheme();
   const nav = useNav();
   const { isFav, toggle } = useStore();
-  const { sport, league, id } = route;
+  const { sport, league, id, title } = route;
   const [info, setInfo] = useState(null);
   const [games, setGames] = useState(null);
   const [gamesError, setGamesError] = useState(null);
@@ -39,23 +39,23 @@ export default function TeamScreen({ route }) {
     setSquad(null);
     setSquadError(null);
     try {
-      setSquad(await fetchRoster(sport, league, id));
+      setSquad(await fetchRoster(sport, league, id, title));
     } catch (error) {
       setSquad({ groups: [] });
       setSquadError(String(error && error.message ? error.message : error));
     }
-  }, [sport, league, id]);
+  }, [sport, league, id, title]);
 
   const loadTable = useCallback(async () => {
     setTable(null);
     setTableError(null);
     try {
-      setTable(await fetchStandings(sport, league));
+      setTable(await fetchStandings(sport, league, id, title));
     } catch (error) {
       setTable([]);
       setTableError(String(error && error.message ? error.message : error));
     }
-  }, [sport, league]);
+  }, [sport, league, id, title]);
 
   useEffect(() => {
     fetchTeam(sport, league, id).then(setInfo).catch(() => setInfo({}));
@@ -183,7 +183,7 @@ export default function TeamScreen({ route }) {
             <Empty icon="cloud-offline-outline" title="Couldn’t load squad" body={squadError} action="Try again" onAction={loadSquad} />
           ) : squad == null ? (
             <Loading />
-          ) : squad.groups.length ? (
+          ) : (squad.groups.length || squad.coach) ? (
             <View>
               {squad.coach ? (
                 <Card>
@@ -209,7 +209,7 @@ export default function TeamScreen({ route }) {
               ))}
             </View>
           ) : (
-            <Empty icon="people-outline" title="Squad not available" />
+            <Empty icon="people-outline" title="Squad not available" action="Try again" onAction={loadSquad} />
           )
         ) : null}
         {tab === 'standings' ? (
@@ -222,7 +222,7 @@ export default function TeamScreen({ route }) {
               <Standings groups={table} sport={sport} league={league} highlight={[String(id)]} />
             </Card>
           ) : (
-            <Empty icon="list-outline" title="No table available" />
+            <Empty icon="list-outline" title="No table available" action="Try again" onAction={loadTable} />
           )
         ) : null}
       </ScrollView>
