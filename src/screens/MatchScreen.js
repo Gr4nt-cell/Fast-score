@@ -19,6 +19,8 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 const LOWER_BETTER = /foul|card|offside|turnover|error|penalt|giveaway/i;
 const LIVE_SCORE_POLL_MS = 3000;
 const DETAILS_POLL_MS = 20000;
+const PREMATCH_LINEUP_WINDOW_MS = 90 * 60000;
+const PREMATCH_LINEUP_POLL_MS = 30000;
 
 function mergeMatch(old, next) {
   if (!next) return old;
@@ -1043,6 +1045,16 @@ export default function MatchScreen({ route }) {
     const iv = setInterval(refresh, DETAILS_POLL_MS);
     return () => clearInterval(iv);
   }, [m.state, refresh, teamGame]);
+
+  useEffect(() => {
+    if (tab !== 'lineups' || sport !== 'soccer' || m.state !== 'pre' || !teamGame) return undefined;
+    const kickoff = new Date(m.date).getTime();
+    refresh();
+    const iv = setInterval(() => {
+      if (AppState.currentState === 'active' && kickoff - Date.now() <= PREMATCH_LINEUP_WINDOW_MS) refresh();
+    }, PREMATCH_LINEUP_POLL_MS);
+    return () => clearInterval(iv);
+  }, [tab, sport, m.state, m.date, teamGame, refresh]);
 
   // Live scores use one small feed. Slow requests are skipped rather than stacked, and polling
   // pauses in the background. A failure keeps the last valid score visible and retries on the next tick.
