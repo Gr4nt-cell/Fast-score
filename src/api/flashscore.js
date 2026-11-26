@@ -6,6 +6,7 @@
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Platform } from 'react-native';
+import { parseMatchLineups } from './flashscoreLineups';
 import { parseSquad, teamCompetition } from './flashscoreTeamPage';
 
 const HOSTS = ['https://global.flashscore.ninja/2/x/feed', 'https://2.flashscore.ninja/2/x/feed', 'https://d.flashscore.com/x/feed'];
@@ -542,7 +543,7 @@ export async function summary(sport, eventId) {
     settled(feed(`dc_${s}_${eventId}`, 3000)),
     settled(feed(`df_sui_${s}_${eventId}`, 15000)),
     settled(feed(`df_st_${s}_${eventId}`, 20000)),
-    settled(feed(`df_li_${s}_${eventId}`, 60000)),
+    settled(sport === 'soccer' ? dsJson(`_hash=dlie2&eventId=${encodeURIComponent(eventId)}&projectId=2`, 25000) : Promise.resolve(null)),
     settled(feed(`df_hh_${s}_${eventId}`, 30 * 60000)),
     settled(feed(`df_sur_${s}_${eventId}`, 15000)),
     settled(feed(`df_lc_${s}_${eventId}`, 15000)),
@@ -552,7 +553,6 @@ export async function summary(sport, eventId) {
   const core = coreResult.value || '';
   const sui = suiResult.value || '';
   const st = stResult.value || '';
-  const li = liResult.value || '';
   const hh = hhResult.value || '';
   const sur = surResult.value || '';
   const lc = lcResult.value || '';
@@ -606,36 +606,7 @@ export async function summary(sport, eventId) {
       }
     : undefined;
 
-  // lineups -> rosters
-  const sides = { 1: [], 2: [] };
-  const formation = {};
-  let section = '';
-  let teamNo = 1;
-  parse(li).forEach((r) => {
-    if (r.LA != null) section = r.LA;
-    if (r.LC != null) teamNo = Number(r.LC);
-    if (!r.LP || !r.LI) return;
-    if (r.LD && !formation[teamNo]) formation[teamNo] = r.LD;
-    if (!/^(Starters|Starting|Substitutes)/i.test(section)) return;
-    sides[teamNo] &&
-      sides[teamNo].push({
-        starter: /^Start/i.test(section),
-        jersey: r.LJ || '',
-        athlete: { id: r.LP, displayName: r.LI, lastName: r.LN || r.LI },
-        position: { abbreviation: r.LR === '(G)' ? 'G' : '', displayName: r.LS || '' },
-        formationPlace: sides[teamNo].length + 1,
-        subbedIn: false,
-        subbedOut: false,
-      });
-  });
-  const rosters = [1, 2]
-    .filter((n) => sides[n].length)
-    .map((n) => ({
-      homeAway: n === 1 ? 'home' : 'away',
-      team: { id: n === 1 ? hid : aid, displayName: match ? match[n === 1 ? 'home' : 'away'].name : '' },
-      formation: formation[n] || null,
-      roster: sides[n],
-    }));
+  const rosters = parseMatchLineups(liResult.value, match);
 
   // head to head + each side's recent form
   const h2h = hhSections(hh);
@@ -731,8 +702,11 @@ async function dsJson(q, ttl) {
   if (hit && Date.now() - hit.t < ttl) return hit.data;
   const r = await fetchText(`${DS}?${q}`, 12000, { Accept: 'application/json', Referer: WEB + '/', Origin: WEB });
   if (r.status !== 200) throw new Error(`HTTP ${r.status}`);
-  const data = JSON.parse(r.body).data;
+  const payload = JSON.parse(r.body);
+  if (!payload.data || payload.errors?.length) throw new Error('Flashscore could not load match data');
+  const data = payload.data;
   mem.set(key, { t: Date.now(), data });
+  if (mem.size > 150) mem.delete(mem.keys().next().value);
   return data;
 }
 

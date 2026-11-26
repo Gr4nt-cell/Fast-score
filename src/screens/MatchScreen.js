@@ -636,13 +636,13 @@ function SoccerLineups({ m, sum, onRetry }) {
   const t = useTheme();
   const nav = useNav();
   const rosters = (sum.rosters || []).map(parseRoster);
-  const home = rosters.find((r) => r.homeAway === 'home') || rosters[0];
-  const away = rosters.find((r) => r.homeAway === 'away') || rosters[1];
+  const home = rosters.find((r) => r.homeAway === 'home');
+  const away = rosters.find((r) => r.homeAway === 'away');
   if (sum.__errors && sum.__errors.lineups && !rosters.length) {
     return <Empty icon="cloud-offline-outline" title="Couldn’t load lineups" body="Check your connection. Any previously loaded lineups remain visible while the app retries." action="Try again" onAction={onRetry} />;
   }
-  if (!home || !away || !home.starters.length) {
-    return <Empty icon="people-outline" title={m.state === 'pre' ? 'Lineups not available yet' : 'Lineups unavailable'} body={m.state === 'pre' ? 'They usually appear about an hour before kick-off.' : 'The sports provider has not supplied lineups for this match.'} />;
+  if (!home?.starters.length || !away?.starters.length) {
+    return <Empty icon="people-outline" title={m.state === 'pre' ? 'Lineups not available yet' : 'Lineups unavailable'} body={m.state === 'pre' ? 'They usually appear about an hour before kick-off.' : 'The sports provider has not supplied both lineups for this match.'} action="Try again" onAction={onRetry} />;
   }
   const openP = (p) => p.id && nav.push({ name: 'player', sport: m.sport, league: m.league, id: p.id, title: p.name });
   const hl = buildLines(home.starters, home.formation);
