@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { RefreshControl, View } from 'react-native';
+import { AppState, RefreshControl, View } from 'react-native';
 import { Text } from '../components/Text';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { useTheme, TAB_BAR_SPACE } from '../theme';
@@ -8,12 +8,12 @@ import { useNav } from '../nav';
 import { SPORTS, sportByKey } from '../sports';
 import { dayBoard, sameDay } from '../api/sportsData';
 import { LeagueBlock, SportPill } from '../components/match';
-import { attachOdds } from '../api/msport';
+import { attachOdds, cachedOdds } from '../api/msport';
 import DateStrip, { startOfDay } from '../components/DateStrip';
 import { Empty, GlassCircle, LiveDot, Loading } from '../components/ui';
 import { ScrollGlowFlatList as FlatList } from '../components/Glass';
 import { fixtureBoardKey, savedOnLocalDay } from '../api/fixtureBoardCache';
-import { fixtureRefreshPlan } from '../api/fixtureRefreshPlan';
+import { fixtureRefreshPlan, LIVE_FIXTURE_POLL_MS } from '../api/fixtureRefreshPlan';
 import { fixtureBoardCache } from '../api/fixtureBoardStore';
 
 /**
@@ -32,6 +32,8 @@ export default function MatchesScreen({ liveMode = false }) {
   const [error, setError] = useState(null);
   const [refreshing, setRefreshing] = useState(false);
   const reqId = useRef(0);
+  const pollBusy = useRef(false);
+  const persisted = useRef(null);
   const live = liveMode;
   const dayStamp = live ? startOfDay(new Date()).getTime() : startOfDay(date).getTime();
   const day = new Date(dayStamp);
@@ -53,7 +55,7 @@ export default function MatchesScreen({ liveMode = false }) {
   }, [sport]);
 
   const load = useCallback(
-    async (quiet, force = false) => {
+    async (quiet, force = false, liveTick = false) => {
       const id = ++reqId.current;
       const isToday = sameDay(day, new Date());
       if (!quiet) {
@@ -73,7 +75,7 @@ export default function MatchesScreen({ liveMode = false }) {
       }
       setError(null);
       try {
-        const ttl = force ? 0 : isToday || live ? 20000 : 5 * 60 * 1000;
+        const ttl = liveTick ? LIVE_FIXTURE_POLL_MS : force ? 0 : isToday || live ? 20000 : 5 * 60 * 1000;
         let res;
         if (sport === 'all') {
           const per = await Promise.all(SPORTS.map(async (s) => {
@@ -93,10 +95,19 @@ export default function MatchesScreen({ liveMode = false }) {
           res.source = b.source;
         }
         if (id !== reqId.current) return;
-        await fixtureBoardCache.set(boardKey, res);
+        const saveBoard = !liveTick || persisted.current?.key !== boardKey || Date.now() - persisted.current.time >= 20000;
+        if (saveBoard) {
+          await fixtureBoardCache.set(boardKey, res);
+          if (id === reqId.current) persisted.current = { key: boardKey, time: Date.now() };
+        }
+        if (liveTick && !live) {
+          res.forEach((group) => group.items.forEach((match) => {
+            if (match.state === 'pre') match.odds = cachedOdds(match);
+          }));
+        }
         if (id !== reqId.current) return;
         setBoard({ key: boardKey, groups: res });
-        withOdds(res, id, boardKey);
+        if (saveBoard && !live) withOdds(res, id, boardKey);
       } catch (e) {
         if (id !== reqId.current) return;
         setError(e.message || 'Could not load matches');
@@ -112,28 +123,28 @@ export default function MatchesScreen({ liveMode = false }) {
 
   // Keep today's board updating, with faster polling around live matches.
   const refreshPlan = useMemo(() => fixtureRefreshPlan(groups), [groups]);
+  const pollIntervalMs = live ? LIVE_FIXTURE_POLL_MS : refreshPlan.pollIntervalMs || (sameDay(date, new Date()) ? 60_000 : null);
+  const refreshAt = refreshPlan.refreshAt;
   useEffect(() => {
-    let busy = false;
     const refresh = async () => {
-      if (busy) return;
-      busy = true;
+      if (pollBusy.current || AppState.currentState !== 'active') return;
+      pollBusy.current = true;
       try {
-        await load(true, true);
+        await load(true, true, pollIntervalMs === LIVE_FIXTURE_POLL_MS);
       } finally {
-        busy = false;
+        pollBusy.current = false;
       }
     };
-    const pollIntervalMs = refreshPlan.pollIntervalMs || ((live || sameDay(date, new Date())) ? 60_000 : null);
     if (pollIntervalMs) {
       const iv = setInterval(refresh, pollIntervalMs);
       return () => clearInterval(iv);
     }
-    if (refreshPlan.refreshAt != null) {
-      const timer = setTimeout(refresh, Math.max(0, refreshPlan.refreshAt - Date.now()));
+    if (refreshAt != null) {
+      const timer = setTimeout(refresh, Math.max(0, refreshAt - Date.now()));
       return () => clearTimeout(timer);
     }
     return undefined;
-  }, [refreshPlan, load, live, date]);
+  }, [pollIntervalMs, refreshAt, load]);
 
   const sp = sportByKey(sport);
   const shown = useMemo(() => {

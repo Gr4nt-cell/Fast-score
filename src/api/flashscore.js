@@ -328,7 +328,7 @@ function group(items) {
 export async function dayBoard(sport, date, ttl = 30000) {
   const off = dayOffset(date);
   if (off < -7 || off > 7) throw new Error('Scores are available only within a week of the selected date');
-      const text = await feed(`f_${FS_SPORT[sport]}_${off}_${tzHours()}_en_1`, Math.max(ttl, off === 0 ? 5000 : 5 * 60000), 8000);
+      const text = await feed(`f_${FS_SPORT[sport]}_${off}_${tzHours()}_en_1`, off === 0 ? ttl : Math.max(ttl, 5 * 60000), 8000);
   const items = matchesOf(text, sport).filter((m) => m.state === 'in' || sameLocalDay(new Date(m.date).getTime(), date));
   if (!items.length && sport === 'soccer') {
     // football always has games somewhere: an empty day means the feed isn't answering properly

@@ -108,5 +108,5 @@ test('fixture refreshes are scheduled only for active or imminent matches', () =
   assert.equal(fixtureRefreshPlan(idleGroups, now).pollIntervalMs, null);
   assert.ok(fixtureRefreshPlan(idleGroups, now).refreshAt > now);
   assert.equal(fixtureRefreshPlan(soonGroups, now).pollIntervalMs, 15000);
-  assert.equal(fixtureRefreshPlan(liveGroups, now).pollIntervalMs, 15000);
+  assert.equal(fixtureRefreshPlan(liveGroups, now).pollIntervalMs, 1000);
 });

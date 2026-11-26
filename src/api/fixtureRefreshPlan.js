@@ -1,3 +1,4 @@
+export const LIVE_FIXTURE_POLL_MS = 1000;
 const ACTIVE_POLL_MS = 15000;
 const NEAR_KICKOFF_MS = 15 * 60 * 1000;
 const REFRESH_BEFORE_KICKOFF_MS = 30000;
@@ -20,7 +21,7 @@ export function fixtureRefreshPlan(groups, now = Date.now()) {
   }
 
   const nearKickoff = nextKickoff != null && nextKickoff - now <= NEAR_KICKOFF_MS;
-  const pollIntervalMs = anyLive || stalePre || nearKickoff ? ACTIVE_POLL_MS : null;
+  const pollIntervalMs = anyLive ? LIVE_FIXTURE_POLL_MS : stalePre || nearKickoff ? ACTIVE_POLL_MS : null;
   const refreshAt = !pollIntervalMs && nextKickoff != null
     ? Math.max(now + ACTIVE_POLL_MS, nextKickoff - REFRESH_BEFORE_KICKOFF_MS)
     : null;

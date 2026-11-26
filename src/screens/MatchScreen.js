@@ -17,7 +17,7 @@ import { Card, Empty, FormPills, GlassCircle, Loading, Logo, Row, StatBar, TabSt
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 const LOWER_BETTER = /foul|card|offside|turnover|error|penalt|giveaway/i;
-const LIVE_SCORE_POLL_MS = 3000;
+const LIVE_SCORE_POLL_MS = 1000;
 const DETAILS_POLL_MS = 20000;
 const PREMATCH_LINEUP_WINDOW_MS = 90 * 60000;
 const PREMATCH_LINEUP_POLL_MS = 30000;
@@ -255,12 +255,12 @@ function Timeline({ m, events }) {
           <View key={i} style={{ flexDirection: home ? 'row' : 'row-reverse', alignItems: 'center', paddingVertical: 7, borderBottomWidth: i === events.length - 1 ? 0 : StyleSheet.hairlineWidth, borderBottomColor: t.separator }}>
             <Text style={{ width: 44, textAlign: home ? 'left' : 'right', color: t.secondary, fontSize: 13, fontWeight: '700' }}>{e.clock}</Text>
             <View style={{ width: 22, alignItems: 'center' }}>{icon(e)}</View>
-            <View style={{ flex: 1, paddingHorizontal: 8, alignItems: home ? 'flex-start' : 'flex-end' }}>
-              <Text style={{ color: t.text, fontSize: 14, fontWeight: e.scoring ? '700' : '500' }} numberOfLines={2}>
+            <View style={{ flex: 1, paddingHorizontal: 8 }}>
+              <Text style={{ color: t.text, fontSize: 14, fontWeight: e.scoring ? '700' : '500', textAlign: home ? 'left' : 'right' }} numberOfLines={2}>
                 {e.title}
               </Text>
               {e.sub2 ? (
-                <Text style={{ color: t.secondary, fontSize: 12 }} numberOfLines={2}>
+                <Text style={{ color: t.secondary, fontSize: 12, textAlign: home ? 'left' : 'right' }} numberOfLines={2}>
                   {e.sub2}
                 </Text>
               ) : null}
@@ -1077,7 +1077,7 @@ export default function MatchScreen({ route }) {
         }
         setScoreError(null);
       } catch {
-        if (alive) setScoreError('Connection interrupted. Retrying every 3 seconds; the last valid score is still shown.');
+        if (alive) setScoreError('Connection interrupted. Retrying automatically. The last valid score is still shown.');
       } finally {
         busy = false;
       }
